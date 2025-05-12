@@ -1,0 +1,107 @@
+* {
+    font-family: Arial, Helvetica, sans-serif
+}
+
+body {
+    margin: 0;
+    padding: 0;
+}
+
+table {
+    padding: 0;
+    margin: 0;
+    border-spacing: 0;
+}
+
+td {
+    border: 1px solid #ccc;
+    padding: 3px;
+}
+
+/* ===== ===== Root Styles ===== ===== */
+#root-container {
+    overflow-y: hidden;
+}
+
+#root-container::after {
+    clear: both;
+    float: none;
+    content: ' ';
+    height: 0;
+    display: table;
+}
+
+#fragment-images {
+    box-sizing: border-box;
+    overflow-y: scroll;
+}
+
+#fragment-navigation {
+    box-sizing: border-box;
+    overflow-y: scroll;
+}
+
+#fragment-settings {
+    display: none;
+    box-sizing: border-box;
+    overflow-y: scroll;
+}
+
+#fragment-preview {
+    box-sizing: border-box;
+    overflow-y: scroll;
+}
+
+#fragment-editor {
+    display: none;
+    box-sizing: border-box;
+    overflow-y: scroll;
+}
+
+.root-container {
+    float: left;
+    box-sizing: border-box;
+    padding: 5px;
+}
+
+#root-nav-container {
+    width: 20%;
+    background-color: #ddd;
+}
+
+#root-content-container{
+    width: 80%;
+    background-color: #eee;
+}
+/* ===== ===== Root Styles ===== ===== */
+
+/* ===== ===== Navigation Styles ===== ===== */
+#fragment-navigation-button-container {
+    text-align: center;
+}
+
+.navigation-button {
+    width: 90%;
+    margin: 2px;
+    box-sizing: border-box;
+}
+/* ===== ===== Navigation Styles ===== ===== */
+
+/* ===== ===== Editor Styles ===== ===== */
+.editor-button {
+    margin: 2px;
+    min-width: 200px;
+}
+
+.editor-title-input {
+    margin: 10px;
+    min-width: 200px;
+}
+/* ===== ===== Editor Styles ===== ===== */
+
+/* ===== ===== Settings Styles ===== ===== */
+.standard-button {
+    margin: 2px;
+    min-width: 200px;
+}
+/* ===== ===== Settings Styles ===== ===== */

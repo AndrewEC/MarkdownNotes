@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style type="text/css">
+            {{awesome-embed-font.css}}
+        </style>
+        <style type="text/css">
+            {{font-awesome.min.css}}
+        </style>
+        <style type="text/css">
+            {{easymde.min.css}}
+        </style>
+        <script type="text/javascript">
+            {{easymde.min.js}}
+        </script>
+
+        <script type="text/javascript">
+            {{marked.min.js}}
+        </script>
+
+        <style type="text/css">
+            {{styles.css}}
+        </style>
+        <script type="text/javascript">
+            {{script.js}}
+        </script>
+    </head>
+
+    <body>
+        <div id="root-container">
+            <div id="root-nav-container" class="root-container">
+                {{fragment_navigation.html}}
+            </div>
+            <div id="root-content-container" class="root-container">
+                {{fragment_preview.html}}
+                {{fragment_editor.html}}
+                {{fragment_settings.html}}
+                {{fragment_images.html}}
+            </div>
+        </div>
+
+        <p id="root-state-container" style="display: none;">
+            {"pages":[{"title":"MarkdownNotes","contents":"# Welcome to MarkdownNotes!!!","slug":"41fb5605-37b6-4bfa-b2e7-a507d77faca6","parent":null}],"order":["41fb5605-37b6-4bfa-b2e7-a507d77faca6"],"title":"MarkdownNotes","images":[]}
+        </p>
+    </body>
+</html>
