@@ -324,9 +324,7 @@ td {
                 console.error('Could not parse state from root-state-container. Error: ' + error);
             }
 
-            if (!Persistence.validateState(state)) {
-                return;
-            }
+            Persistence.validateState(state)
 
             currentPage = Utils.getPage(state.order[0]);
             Preview.previewPage(currentPage);
@@ -466,7 +464,9 @@ td {
             return list;
         },
 
-        getImmediateChildren: (parent) => state.pages.filter(page => page.parent === parent.slug),
+        getImmediateChildren: (parent) => state.order
+                .map(slug => state.pages.find(page => page.slug === slug))
+                .filter(page => page.parent === parent.slug),
 
         buildLink: (page) => {
             const link = document.createElement('a');

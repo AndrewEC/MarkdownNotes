@@ -313,7 +313,9 @@
             return list;
         },
 
-        getImmediateChildren: (parent) => state.pages.filter(page => page.parent === parent.slug),
+        getImmediateChildren: (parent) => state.order
+                .map(slug => state.pages.find(page => page.slug === slug))
+                .filter(page => page.parent === parent.slug),
 
         buildLink: (page) => {
             const link = document.createElement('a');
