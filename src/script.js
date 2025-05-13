@@ -63,6 +63,9 @@
         Prefixes: {
             embeddedImageSrc: 'image/',
             pageLink: 'page/'
+        },
+        Versions: {
+            v1: '1'
         }
     };
 
@@ -78,7 +81,8 @@
         ],
         order: [defaultSlug],
         title: 'MarkdownNotes',
-        images: []
+        images: [],
+        version: '1'
     };
 
     let hasUnsavedChanges = false;
@@ -87,21 +91,31 @@
 
     // ===== ===== Utility Function ===== =====
     const Utils = {
-        getPage: (slug) => state.pages.filter(page => page.slug === slug)[0],
+        getPage: (slug) => state.pages.find(page => page.slug === slug),
 
         getElement: (id) => {
             const element = document.getElementById(id);
             if (!element) {
-                throw Error(`Could not find element on page with ID of ${id}`);
+                throw new Error(`Could not find element on page with ID of ${id}`);
             }
             return element;
         },
 
         confirmCancelEdit: () => {
-            if (Editor.isInitialized() && Editor.isShowingEditor() && Editor.instance.value() !== currentPage.contents) {
+            if (Editor.isInitialized()
+                && Editor.isShowingEditor()
+                && Editor.instance.value() !== currentPage.contents) {
+
                 return confirm('All changes made to the page will be lost. Are you sure you want to continue?');
             }
             return true;
+        },
+
+        registerButtonClicks: (definitions) => {
+            for (let i = 0; i < definitions.length; i++) {
+                const definition = definitions[i];
+                Utils.getElement(definition.id).onclick = definition.callback;
+            }
         },
 
         resize: () => {
@@ -125,6 +139,13 @@
     const Persistence = {
         save: () => {
             hasUnsavedChanges = false;
+
+            // The EasyMDE editor generates a few elements on the page.
+            // These elements need to be removed so they are not included
+            // in the resulting html file. This is to prevent an issue
+            // where re-initializing the editor on a subsequent load of the page
+            // can cause duplicate elements to be appended causing the file size
+            // to expand infinitely.
             Editor.removeEditor();
 
             const stateContainer = Utils.getElement(Constants.Ids.stateContainer);
@@ -152,6 +173,10 @@
                 console.error('Could not parse state from root-state-container. Error: ' + error);
             }
 
+            if (!Persistence.validateState(state)) {
+                return;
+            }
+
             currentPage = Utils.getPage(state.order[0]);
             Preview.previewPage(currentPage);
             Navigation.updateNavList();
@@ -160,7 +185,98 @@
             Settings.resetTitle();
             Images.updateImageList();
             Settings.displayData();
-        }
+        },
+
+        getVersion: (state) => {
+            if (!state || !state.version || typeof state.version !== 'string') {
+                console.warn('Unknown state version provided. Defaulting to version 1.');
+                return '1';
+            }
+            return state.version;
+        },
+
+        validateState: (state) => {
+            try {
+                const version = Persistence.getVersion(state);
+                if (version === Constants.Versions.v1) {
+                    Persistence.validateStateV1(state);
+                } else {
+                    throw new Error(`Data contains an invalid version of: ${version}`);
+                }
+                return true;
+            } catch (error) {
+                alert(error);
+                return false
+            }
+        },
+
+        validateStateV1: (state) => {
+            if (!state) {
+                throw new Error("Data was null or undefined.");
+            }
+
+            // Validate pages array.
+            if (!Persistence.isNonEmptyArray(state.pages)) {
+                throw new Error("Invalid pages value. Pages must be an array with at least one element.");
+            }
+            for (let i = 0; i < state.pages.length; i++) {
+                const page = state.pages[i];
+                if (!Persistence.isNonEmptyString(page.slug)) {
+                    throw new Error(`Invalid pages value. Page at index [${i}] has an empty or non-string slug property.`);
+                } else if (!Persistence.isNonEmptyString(page.title)) {
+                    throw new Error(`Invalid pages value. Page at index [${i}] has an empty or non-string title property.`);
+                } else if (!Persistence.isString(page.contents)) {
+                    throw new Error(`Invalid pages value. Page at index [${i}] has an empty or non-string contents property.`);
+                }
+            }
+            if (!Persistence.areAllUnique(state.pages.map(page => page.title))) {
+                throw new Error('Invalid pages value. All pages must have a unique title.');
+            } else if (!Persistence.areAllUnique(state.pages.map(page => page.slug))) {
+                throw new Error('Invalid pages value. All pages must have a unique slug.');
+            }
+            
+            // Validate images array.
+            if (!Persistence.isArray(state.images)) {
+                throw new Error("Invalid images value. Images must be an array.");
+            }
+            for (let i = 0; i < state.images.length; i++) {
+                const image = state.images[i];
+                if (!Persistence.isNonEmptyString(image.name)) {
+                    throw new Error(`Invalid image value. Image at index [${i}] has an empty or non-string name property.`);
+                } else if (!Persistence.isNonEmptyString(image.data)) {
+                    throw new Error(`Invalid image value. Image at index [${i}] has an empty or non-string data property.`);
+                }
+            }
+            if (!Persistence.areAllUnique(state.images.map(image => image.name))) {
+                throw new Error('Invalid images. All image must have a unique name.');
+            }
+         
+            // Validate order array.
+            if (!Persistence.isNonEmptyArray(state.order)) {
+                throw new Error("Invalid order value. Order must be an array with at least one element.");
+            }
+            for (let i = 0; i < state.order.length; i++) {
+                const slug = state.order[i];
+                if (!Persistence.isNonEmptyString(slug)) {
+                    throw new Error(`Invalid order value. Order at index [${i}] must be a non-empty string.`);
+                }
+
+                const matchingPage = state.pages.find(page => page.slug === slug);
+                if (!matchingPage) {
+                    throw new Error(`Invalid order value. Order at index [${i}] does match the slug of any known page.`);
+                }
+            }
+        },
+
+        areAllUnique: (values) => [...new Set(values)].length === values.length,
+
+        isString: (value) => typeof value === 'string',
+
+        isNonEmptyString: (value) => Persistence.isString(value) && value.trim() !== '',
+        
+        isArray: (value) => value && Array.isArray(value),
+
+        isNonEmptyArray: (value) => Persistence.isArray(value) && value.length > 0
     };
     // ===== ===== Save/Load Functions ===== =====
 
@@ -237,7 +353,7 @@
         },
 
         Title: {
-            getInputValue: () => Utils.getElement(Constants.Ids.Fragments.Editor.inputTitle).value,
+            getInputValue: () => Utils.getElement(Constants.Ids.Fragments.Editor.inputTitle).value.trim(),
             setInputValue: (value) => Utils.getElement(Constants.Ids.Fragments.Editor.inputTitle).value = value
         },
 
@@ -246,6 +362,14 @@
         isShowingEditor: () =>
             Utils.getElement(Constants.Ids.Fragments.Editor.root).style.display.toLowerCase()
                 !== Constants.Display.none,
+        
+        doesPageTitleExist: (title, currentPageSlug) => {
+            if (!currentPageSlug) {
+                return state.pages.find(page => page.title === title) !== undefined;
+            }
+            return state.pages.find(page => page.title === title
+                && page.slug !== currentPageSlug) !== undefined;
+        },
         
         editPage: (page) => {
             Visibility.toggle(Constants.VisibilityOptions.revealEditor);
@@ -270,6 +394,8 @@
             }
         },
 
+        // Checks to see if the "first" page is a parent of the
+        // "second" page.
         isParentOf: (first, second) => {
             let nextPage = second.parent;
             while (nextPage) {
@@ -282,6 +408,9 @@
         },
 
         populateParentPageSelect: (page) => {
+            // Populates a dropdown that allows the user to select
+            // a page to be a parent of this page.
+
             const select = Utils.getElement(Constants.Ids.Fragments.Editor.selectParent);
             select.innerHTML = '';
 
@@ -292,7 +421,6 @@
 
             for (let i = 0; i < state.order.length; i++) {
                 const otherPage = Utils.getPage(state.order[i]);
-                console.log(otherPage);
                 if (page && (otherPage.slug === page.slug || Editor.isParentOf(page, otherPage))) {
                     continue;
                 }
@@ -312,8 +440,15 @@
         updatePage: () => {
             hasUnsavedChanges = true;
             if (Editor.creatingNewPage) {
+                const newPageTitle = Editor.Title.getInputValue();
+                if (Editor.doesPageTitleExist(newPageTitle)) {
+                    return alert('A page with this title already exists. Ensure that all page titles are unique.');
+                }
+
+                // Make sure to not reference the current page in this
+                // as the current page doesn't reference the page being added.
                 const newPage = {
-                    title: Editor.Title.getInputValue(),
+                    title: newPageTitle,
                     contents: Editor.instance.value(),
                     slug: crypto.randomUUID(),
                     parent: null
@@ -330,8 +465,13 @@
                 currentPage = newPage;
                 Preview.previewPage(newPage);
             } else {
+                const nextPageTitle = Editor.Title.getInputValue();
+                if (Editor.doesPageTitleExist(nextPageTitle, currentPage.slug)) {
+                    return alert('A page with this title already exists. Ensure that all page titles are unique.');
+                }
+
                 currentPage.contents = Editor.instance.value();
-                currentPage.title = Editor.Title.getInputValue();
+                currentPage.title = nextPageTitle;
 
                 const parent = Editor.getSelectedParent();
                 if (parent !== Constants.noParentOption) {
@@ -397,7 +537,8 @@
                     continue;
                 }
 
-                const desiredPageTitle = href.replace(Constants.Prefixes.pageLink, '').replaceAll('_', ' ');
+                const desiredPageTitle = href.replace(Constants.Prefixes.pageLink, '')
+                    .replaceAll('_', ' ');
                 const page = state.pages.find(page => page.title === desiredPageTitle);
                 if (page) {
                     linkElement.setAttribute('href', 'javascript:void(0);');
@@ -479,6 +620,7 @@
 
         updateTitle: () => {
             hasUnsavedChanges = true;
+
             const titleValue = Utils.getElement(Constants.Ids.Fragments.Settings.inputTitle).value;
             state.title = titleValue;
 
@@ -489,7 +631,7 @@
             Utils.getElement(Constants.Ids.Fragments.Settings.inputTitle).value = state.title;
         },
 
-        updateOrderList: () => {
+        updateOrderTable: () => {
             if (Settings.nextOrder.length === 0) {
                 Settings.nextOrder = state.order.slice()
             }
@@ -535,7 +677,7 @@
             const temp = Settings.nextOrder[index - 1];
             Settings.nextOrder[index - 1] = Settings.nextOrder[index];
             Settings.nextOrder[index] = temp;
-            Settings.updateOrderList();
+            Settings.updateOrderTable();
         },
 
         moveDown: (slug) => {
@@ -547,12 +689,12 @@
             const temp = Settings.nextOrder[index + 1];
             Settings.nextOrder[index + 1] = Settings.nextOrder[index];
             Settings.nextOrder[index] = temp;
-            Settings.updateOrderList();
+            Settings.updateOrderTable();
         },
 
         resetOrder: () => {
             Settings.nextOrder = state.order.slice();
-            Settings.updateOrderList()
+            Settings.updateOrderTable()
         },
 
         saveReorder: () => {
@@ -562,18 +704,25 @@
         },
 
         importData: () => {
+            let newState = Utils.getElement(Constants.Ids.Fragments.Settings.dataArea).value;
+            try {
+                newState = JSON.parse(newState);
+            } catch (error) {
+                return alert('The data provided could not be parsed as JSON. Error: ' + error);
+            }
+
+            if (!Persistence.validateState(newState)) {
+                return;
+            }
+
             if (!confirm('This action will overwrite all data in the current Notebook. Are you sure you want to continue?')) {
                 return;
             }
 
-            const newState = Utils.getElement(Constants.Ids.Fragments.Settings.dataArea).value;
-            try {
-                state = JSON.parse(newState);
-                Utils.getElement(Constants.Ids.stateContainer).innerText = newState;
-                Persistence.rehydrateState();
-            } catch (error) {
-                alert('The data provided could not be parsed as JSON.');
-            }
+            state = newState;
+
+            Utils.getElement(Constants.Ids.stateContainer).innerText = newState;
+            Persistence.rehydrateState();
         },
 
         displayData: () => {
@@ -665,25 +814,72 @@
         Persistence.rehydrateState();
 
         // Preview buttons
-        Utils.getElement(Constants.Ids.Fragments.Preview.buttonEdit).onclick = () => Editor.editPage(currentPage);
-        Utils.getElement(Constants.Ids.Fragments.Preview.buttonDelete).onclick = () => Preview.deletePage(currentPage);
+        Utils.registerButtonClicks([
+            {
+                id: Constants.Ids.Fragments.Preview.buttonEdit,
+                callback: () => Editor.editPage(currentPage)
+            },
+            {
+                id: Constants.Ids.Fragments.Preview.buttonDelete,
+                callback: () => Preview.deletePage(currentPage)
+            }
+        ]);
 
         // Editor buttons
-        Utils.getElement(Constants.Ids.Fragments.Editor.buttonUpdate).onclick = () => Editor.updatePage();
-        Utils.getElement(Constants.Ids.Fragments.Editor.buttonCancel).onclick = () => Preview.previewPage(currentPage);
+        Utils.registerButtonClicks([
+            {
+                id: Constants.Ids.Fragments.Editor.buttonUpdate,
+                callback: () => Editor.updatePage()
+            },
+            {
+                id: Constants.Ids.Fragments.Editor.buttonCancel,
+                callback: () => Preview.previewPage(currentPage)
+            }
+        ])
 
         // Navigation buttons
-        Utils.getElement(Constants.Ids.Fragments.Navigation.buttonSave).onclick = () => Persistence.save();
-        Utils.getElement(Constants.Ids.Fragments.Navigation.buttonNewPage).onclick = () => Editor.editPage();
-        Utils.getElement(Constants.Ids.Fragments.Navigation.buttonSettings).onclick = () => Visibility.showSettings();
-        Utils.getElement(Constants.Ids.Fragments.Navigation.buttonImages).onclick = () => Visibility.showImages();
+        Utils.registerButtonClicks([
+            {
+                id: Constants.Ids.Fragments.Navigation.buttonSave,
+                callback: () => Persistence.save()
+            },
+            {
+                id: Constants.Ids.Fragments.Navigation.buttonNewPage,
+                callback: () => Editor.editPage()
+            },
+            {
+                id: Constants.Ids.Fragments.Navigation.buttonSettings,
+                callback: () => Visibility.showSettings()
+            },
+            {
+                id: Constants.Ids.Fragments.Navigation.buttonImages,
+                callback: () => Visibility.showImages()
+            }
+        ]);
 
         // Settings buttons
-        Utils.getElement(Constants.Ids.Fragments.Settings.buttonResetOrder).onclick = () => Settings.resetOrder();
-        Utils.getElement(Constants.Ids.Fragments.Settings.buttonSaveOrder).onclick = () => Settings.saveReorder();
-        Utils.getElement(Constants.Ids.Fragments.Settings.buttonUpdateTitle).onclick = () => Settings.updateTitle();
-        Utils.getElement(Constants.Ids.Fragments.Settings.buttonResetTitle).onclick = () => Settings.resetTitle();
-        Utils.getElement(Constants.Ids.Fragments.Settings.buttonDataImport).onclick = () => Settings.importData();
+        Utils.registerButtonClicks([
+            {
+                id: Constants.Ids.Fragments.Settings.buttonResetOrder,
+                callback: () => Settings.resetOrder()
+            },
+            {
+                id: Constants.Ids.Fragments.Settings.buttonSaveOrder,
+                callback: () => Settings.saveReorder()
+            },
+            {
+                id: Constants.Ids.Fragments.Settings.buttonUpdateTitle,
+                callback: () => Settings.updateTitle()
+            },
+            {
+                id: Constants.Ids.Fragments.Settings.buttonResetTitle,
+                callback: () => Settings.resetTitle()
+            },
+            {
+                id: Constants.Ids.Fragments.Settings.buttonDataImport,
+                callback: () => Settings.importData()
+            }
+        ])
 
         // Image buttons
         Utils.getElement(Constants.Ids.Fragments.Images.buttonEmbed).onclick = () => Images.embed();
