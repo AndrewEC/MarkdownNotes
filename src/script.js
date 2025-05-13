@@ -173,9 +173,7 @@
                 console.error('Could not parse state from root-state-container. Error: ' + error);
             }
 
-            if (!Persistence.validateState(state)) {
-                return;
-            }
+            Persistence.validateState(state)
 
             currentPage = Utils.getPage(state.order[0]);
             Preview.previewPage(currentPage);
