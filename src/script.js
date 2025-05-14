@@ -2,6 +2,7 @@
 
     // ===== ===== Globals ===== =====
     const Constants = {
+        currentVersion: '0.0.1',
         Ids: {
             rootContainer: 'root-container',
             Fragments: {
@@ -27,7 +28,8 @@
                     currentTitle: 'fragment-settings-current-title',
                     orderTable: 'fragment-settings-order-table',
                     dataArea: 'fragment-settings-data-area',
-                    buttonDataImport: 'fragment-settings-button-data-import'
+                    buttonDataImport: 'fragment-settings-button-data-import',
+                    versionNumberText: 'fragment-settings-version-number'
                 },
                 Navigation: {
                     root: 'fragment-navigation',
@@ -176,13 +178,12 @@
             Persistence.validateState(state)
 
             currentPage = Utils.getPage(state.order[0]);
+
+            Navigation.rehydrate();
+            Settings.rehydrate();
+            Images.rehydrate();
+
             Preview.previewPage(currentPage);
-            Navigation.updateNavList();
-            Settings.resetOrder();
-            Navigation.updateTitle(state.title);
-            Settings.resetTitle();
-            Images.updateImageList();
-            Settings.displayData();
         },
 
         getVersion: (state) => {
@@ -280,6 +281,11 @@
 
     // ===== ===== Navigation Functions ===== =====
     const Navigation = {
+        rehydrate: () => {
+            Navigation.updateNavList();
+            Navigation.updateTitle(state.title);
+        },
+
         updateNavList: () => {
             const navContainer = Utils.getElement(Constants.Ids.Fragments.Navigation.listContainer);
 
@@ -624,6 +630,16 @@
     const Settings = {
         nextOrder: [],
 
+        rehydrate: () => {
+            Settings.resetOrder();
+            Settings.resetTitle();
+            Settings.displayData();
+            Settings.displayVersion();
+        },
+
+        displayVersion: () => Utils.getElement(Constants.Ids.Fragments.Settings.versionNumberText).innerText
+            = Constants.currentVersion,
+
         updateTitle: () => {
             let nextTitle = prompt('New Notebook title:');
             if (nextTitle === null) {
@@ -744,6 +760,8 @@
 
     // ===== ===== Image Functions ===== =====
     const Images = {
+        rehydrate: () => Images.updateImageList(),
+
         embed: () => {
             const imageNameInput = Utils.getElement(Constants.Ids.Fragments.Images.imageName);
             const imageName = imageNameInput.value.trim();

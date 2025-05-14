@@ -1,14 +1,15 @@
+/* ===== ===== Global Styles ===== ===== */
 * {
     font-family: Arial, Helvetica, sans-serif
-}
-
-a {
-    text-decoration: none;
 }
 
 body {
     margin: 0;
     padding: 0;
+}
+
+a {
+    text-decoration: none;
 }
 
 table {
@@ -22,9 +23,12 @@ td {
     padding: 3px;
 }
 
-.lookup-error {
-    color: #f11;
+.standard-button {
+    margin: 2px;
+    min-width: 200px;
 }
+/* ===== ===== Global Styles ===== ===== */
+
 
 /* ===== ===== Root Styles ===== ===== */
 #root-container {
@@ -39,42 +43,10 @@ td {
     display: table;
 }
 
-#fragment-images {
-    box-sizing: border-box;
-    overflow-y: scroll;
-}
-
-#fragment-navigation {
-    box-sizing: border-box;
-    overflow-y: scroll;
-}
-
-#fragment-settings {
-    display: none;
-    box-sizing: border-box;
-    overflow-y: scroll;
-}
-
-#fragment-preview {
-    box-sizing: border-box;
-    overflow-y: scroll;
-}
-
-#fragment-editor {
-    display: none;
-    box-sizing: border-box;
-    overflow-y: scroll;
-}
-
 .root-container {
     float: left;
     box-sizing: border-box;
     padding: 5px;
-}
-
-#root-nav-container {
-    width: 20%;
-    background-color: #ddd;
 }
 
 #root-content-container{
@@ -83,7 +55,42 @@ td {
 }
 /* ===== ===== Root Styles ===== ===== */
 
-/* ===== ===== Navigation Styles ===== ===== */
+
+/* ===== ===== Images Fragment Styles ===== ===== */
+#fragment-images {
+    box-sizing: border-box;
+    overflow-y: scroll;
+}
+/* ===== ===== Images Fragment Styles ===== ===== */
+
+
+/* ===== ===== Preview Fragment Styles ===== ===== */
+#fragment-preview {
+    box-sizing: border-box;
+    overflow-y: scroll;
+}
+
+#fragment-preview-view-container {
+    max-width: 800px;
+}
+
+.lookup-error {
+    color: #f11;
+}
+/* ===== ===== Preview Fragment Styles ===== ===== */
+
+
+/* ===== ===== Navigation Fragment Styles ===== ===== */
+#fragment-navigation {
+    box-sizing: border-box;
+    overflow-y: scroll;
+}
+
+#root-nav-container {
+    width: 20%;
+    background-color: #ddd;
+}
+
 #fragment-navigation-button-container {
     text-align: center;
 }
@@ -93,9 +100,16 @@ td {
     margin: 2px;
     box-sizing: border-box;
 }
-/* ===== ===== Navigation Styles ===== ===== */
+/* ===== ===== Navigation Fragment Styles ===== ===== */
 
-/* ===== ===== Editor Styles ===== ===== */
+
+/* ===== ===== Editor Fragment Styles ===== ===== */
+#fragment-editor {
+    display: none;
+    box-sizing: border-box;
+    overflow-y: scroll;
+}
+
 .editor-button {
     margin: 2px;
     min-width: 200px;
@@ -105,12 +119,14 @@ td {
     margin: 10px;
     min-width: 200px;
 }
-/* ===== ===== Editor Styles ===== ===== */
+/* ===== ===== Editor Fragment Styles ===== ===== */
 
-/* ===== ===== Settings Styles ===== ===== */
-.standard-button {
-    margin: 2px;
-    min-width: 200px;
+
+/* ===== ===== Settings Fragment Styles ===== ===== */
+#fragment-settings {
+    display: none;
+    box-sizing: border-box;
+    overflow-y: scroll;
 }
 
 #fragment-settings-data-area {
@@ -118,4 +134,4 @@ td {
     box-sizing: border-box;
     min-height: 200px;
 }
-/* ===== ===== Settings Styles ===== ===== */
+/* ===== ===== Settings Fragment Styles ===== ===== */
