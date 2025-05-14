@@ -60,6 +60,7 @@ td {
 #fragment-images {
     box-sizing: border-box;
     overflow-y: scroll;
+    display: none;
 }
 /* ===== ===== Images Fragment Styles ===== ===== */
 

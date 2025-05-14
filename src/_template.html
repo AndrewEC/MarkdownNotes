@@ -22,7 +22,17 @@
             {{styles.css}}
         </style>
         <script type="text/javascript">
-            {{script.js}}
+            (function() {
+                {{state.js}}
+                {{utils.js}}
+                {{persistence.js}}
+                {{navigation.js}}
+                {{editor.js}}
+                {{preview.js}}
+                {{settings.js}}
+                {{images.js}}
+                {{init.js}}
+            })();
         </script>
     </head>
 

@@ -1,0 +1,29 @@
+window.onload = () => {
+
+    const appState = new AppState();
+    const utils = new Utils();
+    const visibility = new Visibility(utils);
+
+    const editor = new Editor(appState, visibility, utils);
+    const persistence = new Persistence(appState, editor, utils);
+    new Images(appState, utils);
+    new Navigation(appState, utils, visibility);
+    new Preview(appState, utils, visibility);
+    new Settings(appState, utils, persistence);
+
+    utils.state = appState;
+    utils.editor = editor;
+
+    persistence.rehydrateState();
+
+    utils.registerButtonClicks([
+        {
+            id: Constants.Ids.Fragments.Navigation.buttonSave,
+            callback: () => persistence.save()
+        }
+    ]);
+
+    utils.resize();
+    window.onresize = () => utils.resize();
+    window.onbeforeunload = () => utils.beforeUnload();
+};
