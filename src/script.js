@@ -23,9 +23,8 @@
                     root: 'fragment-settings',
                     buttonSaveOrder: 'fragment-settings-save-order',
                     buttonResetOrder: 'fragment-settings-reset-order',
-                    inputTitle: 'fragment-settings-input-title',
                     buttonUpdateTitle: 'fragment-settings-button-title-update',
-                    buttonResetTitle: 'fragment-settings-button-title-reset',
+                    currentTitle: 'fragment-settings-current-title',
                     orderTable: 'fragment-settings-order-table',
                     dataArea: 'fragment-settings-data-area',
                     buttonDataImport: 'fragment-settings-button-data-import'
@@ -50,6 +49,7 @@
             stateContainer: 'root-state-container'
         },
         noParentOption: 'none',
+        lookupErrorClass: 'lookup-error',
         VisibilityOptions: {
             revealEditor: 'revealEditor',
             revealPreview: 'revealPreview',
@@ -518,6 +518,8 @@
                 const desiredImageName = src.replace(Constants.Prefixes.embeddedImageSrc, '');
                 const image = state.images.find(image => image.name === desiredImageName);
                 if (!image) {
+                    imageElement.setAttribute('alt', `[Image Error: image with name not found: ${desiredImageName}]`);
+                    imageElement.classList.add(Constants.lookupErrorClass);
                     continue;
                 }
                 imageElement.setAttribute('src', image.data);
@@ -545,6 +547,10 @@
                     linkElement.onclick = () => {
                         Preview.previewPage(page);
                     };
+                } else {
+                    linkElement.removeAttribute('href');
+                    linkElement.innerText = `[Link Error: Page with title not found: ${desiredPageTitle}]`;
+                    linkElement.classList.add(Constants.lookupErrorClass);
                 }
             }
         },
@@ -619,16 +625,21 @@
         nextOrder: [],
 
         updateTitle: () => {
+            let nextTitle = prompt('New Notebook title:');
+            if (nextTitle === null) {
+                return;
+            }
+            nextTitle = nextTitle.trim();
+
             hasUnsavedChanges = true;
 
-            const titleValue = Utils.getElement(Constants.Ids.Fragments.Settings.inputTitle).value;
-            state.title = titleValue;
-
-            Navigation.updateTitle(titleValue);
+            state.title = nextTitle;
+            Utils.getElement(Constants.Ids.Fragments.Settings.currentTitle).innerText = nextTitle;
+            Navigation.updateTitle(nextTitle);
         },
 
         resetTitle: () => {
-            Utils.getElement(Constants.Ids.Fragments.Settings.inputTitle).value = state.title;
+            Utils.getElement(Constants.Ids.Fragments.Settings.currentTitle).innerText = state.title;
         },
 
         updateOrderTable: () => {
@@ -770,32 +781,58 @@
 
         updateImageList: () => {
             const imageTable = Utils.getElement(Constants.Ids.Fragments.Images.imageTable);
-            imageTable.innerHTML = '<tr><td>Image</td><td>Name</td><td>Delete</td></tr>';
+            imageTable.innerHTML = '<tr><td>Image</td><td>Name</td><td>Rename</td><td>Delete</td></tr>';
 
-            for (let i = 0; i < state.images.length; i++) {
+            const sortedImages = state.images.sort((first, second) => first.name.localeCompare(second.name));
+            for (let i = 0; i < sortedImages.length; i++) {
                 const row = document.createElement('tr');
 
                 const imagecell = document.createElement('td');
                 const image = document.createElement('img');
-                image.setAttribute('src', state.images[i].data);
+                image.setAttribute('src', sortedImages[i].data);
                 image.style.maxWidth = '300px';
                 image.style.maxHeight = '300px';
                 imagecell.appendChild(image);
                 row.appendChild(imagecell);
 
                 const imageNameCell = document.createElement('td');
-                imageNameCell.innerText = state.images[i].name;
+                imageNameCell.innerText = sortedImages[i].name;
                 row.appendChild(imageNameCell);
 
-                const buttonCell = document.createElement('td');
+                const updateNameButtonCell = document.createElement('td');
+                const updateNameButton = document.createElement('button');
+                updateNameButton.innerText = 'Update Name';
+                updateNameButton.onclick = () => Images.updateName(sortedImages[i].name);
+                updateNameButtonCell.appendChild(updateNameButton);
+                row.append(updateNameButtonCell);
+
+                const deleteButtonCell = document.createElement('td');
                 const deleteButton = document.createElement('button');
                 deleteButton.innerText = 'Delete';
-                buttonCell.appendChild(deleteButton);
-                deleteButton.onclick = () => Images.deleteImage(state.images[i].name);
-                row.append(buttonCell);
+                deleteButton.onclick = () => Images.deleteImage(sortedImages[i].name);
+                deleteButtonCell.appendChild(deleteButton);
+                row.append(deleteButtonCell);
 
                 imageTable.append(row);
             }
+        },
+
+        updateName: (currentImageName) => {
+            let newImageName = prompt('Enter new name for image:');
+            if (newImageName === null) {
+                return;
+            }
+            newImageName = newImageName.trim();
+
+            if (newImageName.length === 0 || newImageName.includes(' ')) {
+                return alert('The image name cannot be empty or contain spaces.');
+            } else if (Images.doesNameExist(newImageName)) {
+                return alert('Image name cannot be used because another image has that name. All image names must be unique.');
+            }
+
+            const image = state.images.find(image => image.name === currentImageName);
+            image.name = newImageName;
+            Images.updateImageList();
         },
 
         deleteImage: (imageName) => {
@@ -870,10 +907,6 @@
             {
                 id: Constants.Ids.Fragments.Settings.buttonUpdateTitle,
                 callback: () => Settings.updateTitle()
-            },
-            {
-                id: Constants.Ids.Fragments.Settings.buttonResetTitle,
-                callback: () => Settings.resetTitle()
             },
             {
                 id: Constants.Ids.Fragments.Settings.buttonDataImport,

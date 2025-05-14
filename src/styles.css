@@ -2,6 +2,10 @@
     font-family: Arial, Helvetica, sans-serif
 }
 
+a {
+    text-decoration: none;
+}
+
 body {
     margin: 0;
     padding: 0;
@@ -16,6 +20,10 @@ table {
 td {
     border: 1px solid #ccc;
     padding: 3px;
+}
+
+.lookup-error {
+    color: #f11;
 }
 
 /* ===== ===== Root Styles ===== ===== */
@@ -103,5 +111,11 @@ td {
 .standard-button {
     margin: 2px;
     min-width: 200px;
+}
+
+#fragment-settings-data-area {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 200px;
 }
 /* ===== ===== Settings Styles ===== ===== */
