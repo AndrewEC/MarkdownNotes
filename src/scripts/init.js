@@ -19,7 +19,12 @@ window.onload = () => {
     utils.registerButtonClicks([
         {
             id: Constants.Ids.Fragments.Navigation.buttonSave,
-            callback: () => persistence.save()
+            callback: () => {
+                if (editor.isShowingEditor()) {
+                    return;
+                }
+                persistence.save();
+            }
         }
     ]);
 

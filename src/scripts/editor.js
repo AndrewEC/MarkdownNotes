@@ -11,9 +11,15 @@ class Editor {
         this.#appState = appState;
         this.#visibility = visibility;
         this.#utils = utils;
-
+        this.#appState.addPropertyChangedListener(this.#onPropertyChanged.bind(this));
         this.#registerButtonClickEvents();
     }
+
+    #onPropertyChanged(propertyName) {
+        if (propertyName === Constants.StateProperties.currentPage) {
+            this.editPage(this.#appState.currentPage);
+        }
+    };
 
     #registerButtonClickEvents() {
         this.#utils.registerButtonClicks([

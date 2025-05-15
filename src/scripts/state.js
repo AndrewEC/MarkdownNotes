@@ -223,6 +223,7 @@ class AppState {
 
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.pages);
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.order);
+        this.#invokePropertyChangedCallbacks(Constants.StateProperties.currentPage);
 
         window.location.hash = `#${page.title}`;
     };

@@ -26,11 +26,15 @@ class Navigation {
     };
 
     showSettings() {
-        this.#visibility.showSettings()
+        this.#visibility.showSettings();
     };
 
     showImages() {
-        this.#visibility.showImages()
+        this.#visibility.showImages();
+    };
+
+    showEditor() {
+        this.#visibility.showEditor();
     };
 
     onStatePropertyChanged(propertyName) {
@@ -91,8 +95,15 @@ class Navigation {
 
     #buildLink(page) {
         const link = document.createElement('a');
-        link.href = `#${page.title}`;
+        link.href = `javascript:void(0);`;
         link.innerText = page.title;
+        const thisRef = this;
+        link.onclick = () => {
+            if (!thisRef.#utils.confirmCancelEdit()) {
+                return;
+            }
+            window.location.hash = `#${page.title}`;
+        };
         return link;
     };
 
@@ -125,12 +136,14 @@ class Navigation {
                 return thisRef.navigateTo();
             }
 
-            const urlHash = currentUrl.substring(hashStart + 1);
+            let urlHash = currentUrl.substring(hashStart + 1);
 
             if (urlHash === Constants.LocationHashes.settings) {
                 thisRef.showSettings();
             } else if (urlHash === Constants.LocationHashes.images) {
                 thisRef.showImages();
+            } else if (urlHash === Constants.LocationHashes.editor) {
+                thisRef.showEditor();
             } else {
                 thisRef.navigateTo(urlHash);
             }
