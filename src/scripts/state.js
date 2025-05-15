@@ -26,7 +26,8 @@ const Constants = {
                 orderTable: 'fragment-settings-order-table',
                 dataArea: 'fragment-settings-data-area',
                 buttonDataImport: 'fragment-settings-button-data-import',
-                versionNumberText: 'fragment-settings-version-number'
+                versionNumberText: 'fragment-settings-version-number',
+                buttonCopyData: 'fragment-settings-button-data-copy'
             },
             Navigation: {
                 root: 'fragment-navigation',
@@ -156,6 +157,7 @@ class AppState {
             .filter(o => nextPages.find(page => page.slug === o));
 
         this.hasUnsavedChanges = true;
+
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.pages);
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.order);
     }
@@ -211,8 +213,6 @@ class AppState {
 
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.pages);
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.order);
-
-        window.location.hash = `#${page.title}`;
     };
 
     setPage(title, page) {
@@ -224,7 +224,5 @@ class AppState {
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.pages);
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.order);
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.currentPage);
-
-        window.location.hash = `#${page.title}`;
     };
 };

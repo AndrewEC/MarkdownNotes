@@ -175,6 +175,7 @@ class Editor {
             }
 
             this.#appState.addPage(newPage);
+            this.#utils.updateQuery(newPage.title);
         } else {
             const currentPage = this.#appState.currentPage;
             const currentPageTitle = currentPage.title;
@@ -195,6 +196,7 @@ class Editor {
             }
 
             this.#appState.setPage(currentPageTitle, currentPage);
+            this.#utils.updateQuery(currentPage.title);
         }
     }
 };

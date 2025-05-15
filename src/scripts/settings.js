@@ -30,9 +30,18 @@ class Settings {
             {
                 id: Constants.Ids.Fragments.Settings.buttonDataImport,
                 callback: this.importData.bind(this)
+            },
+            {
+                id: Constants.Ids.Fragments.Settings.buttonCopyData,
+                callback: this.copyData.bind(this)
             }
         ])
     };
+
+    copyData() {
+        const data = this.#utils.getElement(Constants.Ids.Fragments.Settings.dataArea).value;
+        navigator.clipboard.writeText(data).then((_) => alert('Data copied to clipboard.'));
+    }
 
     onPropertyChanged(propertyName) {
         if (propertyName === Constants.StateProperties.state) {
@@ -166,7 +175,6 @@ class Settings {
             return;
         }
 
-        window.location.hash = '';
         this.#utils.getElement(Constants.Ids.stateContainer).innerText = newState;
         this.#appState.hydrate(newState);
     };

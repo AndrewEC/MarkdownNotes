@@ -45,7 +45,11 @@ class Utils {
         if (this.state.hasUnsavedChanges) {
             return 'You have unsaved changes. Are you sure you want to leave?';
         }
-    }
+    };
+
+    updateQuery(pageTitle) {
+        history.pushState(null, '', `?page=${pageTitle}`);
+    };
 };
 
 class Visibility {

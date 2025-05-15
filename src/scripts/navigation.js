@@ -13,14 +13,15 @@ class Navigation {
     }
 
     #registerButtonClickEvents() {
+        const thisRef = this;
         this.#utils.registerButtonClicks([
             {
                 id: Constants.Ids.Fragments.Navigation.buttonSettings,
-                callback: () => window.location.hash = `#${Constants.LocationHashes.settings}`
+                callback: () => thisRef.#utils.updateQuery(Constants.LocationHashes.settings)
             },
             {
                 id: Constants.Ids.Fragments.Navigation.buttonImages,
-                callback: () => window.location.hash = `#${Constants.LocationHashes.images}`
+                callback: () => thisRef.#utils.updateQuery(Constants.LocationHashes.images)
             }
         ]);
     };
@@ -102,7 +103,7 @@ class Navigation {
             if (!thisRef.#utils.confirmCancelEdit()) {
                 return;
             }
-            window.location.hash = `#${page.title}`;
+            thisRef.#utils.updateQuery(page.title);
         };
         return link;
     };
@@ -131,21 +132,22 @@ class Navigation {
             }
             currentUrl = nextUrl;
 
-            const hashStart = currentUrl.indexOf('#');
-            if (hashStart === -1) {
-                return thisRef.navigateTo();
+            let pageTitle = '';
+            if (window.location.search) {
+                const page = new URLSearchParams(window.location.search).get('page');
+                if (page) {
+                    pageTitle = decodeURIComponent(page);
+                }
             }
 
-            let urlHash = currentUrl.substring(hashStart + 1);
-
-            if (urlHash === Constants.LocationHashes.settings) {
+            if (pageTitle === Constants.LocationHashes.settings) {
                 thisRef.showSettings();
-            } else if (urlHash === Constants.LocationHashes.images) {
+            } else if (pageTitle === Constants.LocationHashes.images) {
                 thisRef.showImages();
-            } else if (urlHash === Constants.LocationHashes.editor) {
+            } else if (pageTitle === Constants.LocationHashes.editor) {
                 thisRef.showEditor();
             } else {
-                thisRef.navigateTo(urlHash);
+                thisRef.navigateTo(pageTitle);
             }
         }, 100);
     }
