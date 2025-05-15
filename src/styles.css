@@ -10,6 +10,7 @@ body {
 
 a {
     text-decoration: none;
+    color: #2CB83C;
 }
 
 table {
@@ -26,6 +27,29 @@ td {
 .standard-button {
     margin: 2px;
     min-width: 200px;
+}
+
+.standard-button-link {
+    box-sizing: border-box;
+    border-radius: 0;
+    border: 0;
+    padding: 5px;
+    color: #fff;
+    background-color: #2CB83C;
+}
+
+.standard-button-link-fixed {
+    display: inline-block;
+    width: 200px;
+}
+
+.standard-button-link:hover {
+    background-color: #60D96E;
+}
+
+.standard-table-button-link {
+    padding: 2px;
+    display: inline;
 }
 /* ===== ===== Global Styles ===== ===== */
 
@@ -96,10 +120,19 @@ td {
     text-align: center;
 }
 
+.navigation-title {
+    color: #20852b;
+}
+
 .navigation-button {
+    margin: 0 auto;
+    width: 80%;
+    display: block;
+}
+
+.navigation-rule {
     width: 90%;
-    margin: 2px;
-    box-sizing: border-box;
+    color: #2CB83C;
 }
 /* ===== ===== Navigation Fragment Styles ===== ===== */
 

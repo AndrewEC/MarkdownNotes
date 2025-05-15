@@ -94,14 +94,20 @@ class Settings {
             row.appendChild(nameCell);
 
             const upButtonCell = document.createElement('td');
-            const upButton = document.createElement('button');
+            const upButton = document.createElement('a');
+            upButton.href = 'javascript:void(0);';
+            upButton.classList.add('standard-button-link');
+            upButton.classList.add('standard-table-button-link');
             upButton.innerText = 'Move Up';
             upButton.onclick = () => this.moveUp(page.slug);
             upButtonCell.appendChild(upButton);
             row.appendChild(upButtonCell);
 
             const downButtonCell = document.createElement('td');
-            const downButton = document.createElement('button');
+            const downButton = document.createElement('a');
+            downButton.href = 'javascript:void(0);';
+            downButton.classList.add('standard-button-link');
+            downButton.classList.add('standard-table-button-link');
             downButton.innerText = 'Move Down';
             downButton.onclick = () => this.moveDown(page.slug);
             downButtonCell.appendChild(downButton);
@@ -160,6 +166,7 @@ class Settings {
             return;
         }
 
+        window.location.hash = '';
         this.#utils.getElement(Constants.Ids.stateContainer).innerText = newState;
         this.#appState.hydrate(newState);
     };

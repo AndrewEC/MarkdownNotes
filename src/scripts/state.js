@@ -47,6 +47,10 @@ const Constants = {
         },
         stateContainer: 'root-state-container'
     },
+    LocationHashes: {
+        settings: '__settings__',
+        images: '__images__'
+    },
     StateProperties: {
         state: '__state__',
         title: 'title',
@@ -72,6 +76,7 @@ const Constants = {
         pageLink: 'page/'
     },
     Versions: {
+        Current: '1',
         v1: '1'
     }
 };
@@ -201,13 +206,13 @@ class AppState {
     addPage(page) {
         this.#serializableState.pages.push(page);
         this.#serializableState.order.push(page.slug);
-        this.#currentPage = page;
 
         this.hasUnsavedChanges = true;
 
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.pages);
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.order);
-        this.#invokePropertyChangedCallbacks(Constants.StateProperties.currentPage);
+
+        window.location.hash = `#${page.title}`;
     };
 
     setPage(title, page) {
@@ -218,6 +223,7 @@ class AppState {
 
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.pages);
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.order);
-        this.#invokePropertyChangedCallbacks(Constants.StateProperties.currentPage);
+
+        window.location.hash = `#${page.title}`;
     };
 };

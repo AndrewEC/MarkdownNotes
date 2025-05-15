@@ -53,7 +53,8 @@ class Persistence {
     #getVersion(state) {
         if (!state || !state.version || typeof state.version !== 'string') {
             console.warn('Unknown state version provided. Defaulting to version 1.');
-            return '1';
+            state.version = Constants.Versions.Current;
+            return Constants.Versions.Current;
         }
         return state.version;
     };

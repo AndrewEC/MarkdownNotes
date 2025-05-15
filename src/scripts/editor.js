@@ -37,7 +37,7 @@ class Editor {
     }
 
     removeEditor() {
-        this.instance = null;
+        this.#instance = null;
 
         const editorContainer = document.getElementsByClassName('EasyMDEContainer');
         if (editorContainer.length > 0) {

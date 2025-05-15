@@ -79,14 +79,20 @@ class Images {
             row.appendChild(imageNameCell);
 
             const updateNameButtonCell = document.createElement('td');
-            const updateNameButton = document.createElement('button');
+            const updateNameButton = document.createElement('a');
+            updateNameButton.href = 'javascript:void(0);';
+            updateNameButton.classList.add('standard-button-link');
+            updateNameButton.classList.add('standard-table-button-link');
             updateNameButton.innerText = 'Update Name';
             updateNameButton.onclick = () => this.onUpdateImageNameClicked(sortedImages[i].name);
             updateNameButtonCell.appendChild(updateNameButton);
             row.append(updateNameButtonCell);
 
             const deleteButtonCell = document.createElement('td');
-            const deleteButton = document.createElement('button');
+            const deleteButton = document.createElement('a');
+            deleteButton.href = 'javascript:void(0);';
+            deleteButton.classList.add('standard-button-link');
+            deleteButton.classList.add('standard-table-button-link');
             deleteButton.innerText = 'Delete';
             deleteButton.onclick = () => this.onDeleteImageClicked(sortedImages[i].name);
             deleteButtonCell.appendChild(deleteButton);

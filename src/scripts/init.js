@@ -7,7 +7,7 @@ window.onload = () => {
     const editor = new Editor(appState, visibility, utils);
     const persistence = new Persistence(appState, editor, utils);
     new Images(appState, utils);
-    new Navigation(appState, utils, visibility);
+    const navigation = new Navigation(appState, utils, visibility);
     new Preview(appState, utils, visibility);
     new Settings(appState, utils, persistence);
 
@@ -26,4 +26,5 @@ window.onload = () => {
     utils.resize();
     window.onresize = () => utils.resize();
     window.onbeforeunload = () => utils.beforeUnload();
+    navigation.listenForUrlChange();
 };

@@ -16,11 +16,11 @@ class Navigation {
         this.#utils.registerButtonClicks([
             {
                 id: Constants.Ids.Fragments.Navigation.buttonSettings,
-                callback: this.showSettings.bind(this)
+                callback: () => window.location.hash = `#${Constants.LocationHashes.settings}`
             },
             {
                 id: Constants.Ids.Fragments.Navigation.buttonImages,
-                callback: this.showImages.bind(this)
+                callback: () => window.location.hash = `#${Constants.LocationHashes.images}`
             }
         ]);
     };
@@ -91,20 +91,49 @@ class Navigation {
 
     #buildLink(page) {
         const link = document.createElement('a');
-        link.setAttribute('data-slug', page.slug);
-        link.href = 'javascript:void(0);'
+        link.href = `#${page.title}`;
         link.innerText = page.title;
-        link.onclick = () => this.onNavigateClick(page.slug);
         return link;
-    };
-
-    onNavigateClick(slug) {
-        if (this.#utils.confirmCancelEdit()) {
-            this.#appState.currentPage = this.#utils.getPage(slug);
-        }
     };
 
     #updateTitle(title) {
         this.#utils.getElement(Constants.Ids.Fragments.Navigation.title).innerText = title;
     };
+
+    navigateTo(pageTitle) {
+        pageTitle = decodeURIComponent(pageTitle);
+        const nextPage = this.#appState.pages.find(page => page.title === pageTitle);
+        if (!nextPage) {
+            this.#appState.currentPage = this.#appState.getFirstPage();
+            return;
+        }
+        this.#appState.currentPage = nextPage;
+    };
+
+    listenForUrlChange() {
+        const thisRef = this;
+        let currentUrl = '';
+        setInterval(() => {
+            const nextUrl = window.location.href;
+            if (nextUrl === currentUrl) {
+                return;
+            }
+            currentUrl = nextUrl;
+
+            const hashStart = currentUrl.indexOf('#');
+            if (hashStart === -1) {
+                return thisRef.navigateTo();
+            }
+
+            const urlHash = currentUrl.substring(hashStart + 1);
+
+            if (urlHash === Constants.LocationHashes.settings) {
+                thisRef.showSettings();
+            } else if (urlHash === Constants.LocationHashes.images) {
+                thisRef.showImages();
+            } else {
+                thisRef.navigateTo(urlHash);
+            }
+        }, 100);
+    }
 };

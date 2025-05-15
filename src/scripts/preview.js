@@ -88,9 +88,7 @@ class Preview {
             const page = this.#appState.pages.find(page => page.title === desiredPageTitle);
             if (page) {
                 linkElement.setAttribute('href', 'javascript:void(0);');
-                linkElement.onclick = () => {
-                    this.#appState.currentPage = page;
-                };
+                linkElement.href = `#${page.title}`;
             } else {
                 linkElement.removeAttribute('href');
                 linkElement.innerText = `[Link Error: Page with title not found: ${desiredPageTitle}]`;
@@ -124,6 +122,7 @@ class Preview {
         }
 
         this.#appState.pages = pages;
-        this.#appState.currentPage = this.#appState.getFirstPage();
+        
+        window.location.href = `#${this.#appState.getFirstPage().title}`;
     }
 };
