@@ -38,8 +38,6 @@ class Preview {
 
         this.#visibility.toggle(Constants.VisibilityOptions.revealPreview);
 
-        document.title = page.title;
-
         const viewContainer = this.#utils.getElement(Constants.Ids.Fragments.Preview.viewContainer);
         viewContainer.innerHTML = marked.parse(page.contents);
         this.#addEmbededImages(viewContainer);

@@ -28,10 +28,12 @@ class Navigation {
 
     showSettings() {
         this.#visibility.showSettings();
+        document.title = this.#appState.title;
     };
 
     showImages() {
         this.#visibility.showImages();
+        document.title = this.#appState.title;
     };
 
     showEditor() {
@@ -39,8 +41,10 @@ class Navigation {
     };
 
     onStatePropertyChanged(propertyName) {
-        if (propertyName === Constants.StateProperties.title) {
-            this.#updateTitle(this.#appState.title);
+        if (propertyName === Constants.StateProperties.title
+            || propertyName === Constants.StateProperties.currentPage) {
+
+            this.#updateTitle();
         } else if (propertyName === Constants.StateProperties.state) {
             this.#rehydrate();
         } else if (propertyName === Constants.StateProperties.pages
@@ -108,8 +112,14 @@ class Navigation {
         return link;
     };
 
-    #updateTitle(title) {
-        this.#utils.getElement(Constants.Ids.Fragments.Navigation.title).innerText = title;
+    #updateTitle() {
+        const notebookTitle = this.#appState.title;
+        
+        this.#utils.getElement(Constants.Ids.Fragments.Navigation.title).innerText = notebookTitle;
+        
+        const pageTitle = this.#appState.currentPage.title;
+        const nextTitle = `${notebookTitle} | ${pageTitle}`;
+        document.title = nextTitle
     };
 
     navigateTo(pageTitle) {

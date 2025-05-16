@@ -87,7 +87,7 @@ class AppState {
     #serializableState = {
         pages: [
             {
-                title: 'MarkdownNotes',
+                title: 'Welcome',
                 contents: '# Welcome to MarkdownNotes!!!',
                 slug: defaultSlug,
                 parent: null
@@ -130,7 +130,9 @@ class AppState {
 
     set title(newTitle) {
         this.#serializableState.title = newTitle;
+
         this.hasUnsavedChanges = true;
+
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.title);
     };
 
