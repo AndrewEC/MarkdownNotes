@@ -1,45 +1,64 @@
 class Editor {
 
     #instance = null;
-    #creatingNewPage = false;
 
     #appState = null;
     #visibility = null;
     #utils = null;
+    #lastAutosaveCheckTime = null;
 
     constructor(appState, visibility, utils) {
         this.#appState = appState;
         this.#visibility = visibility;
         this.#utils = utils;
-        this.#appState.addPropertyChangedListener(this.#onPropertyChanged.bind(this));
         this.#registerButtonClickEvents();
+        this.#startPageEditListener();
     }
 
-    #onPropertyChanged(propertyName) {
-        if (propertyName === Constants.StateProperties.currentPage) {
-            this.editPage(this.#appState.currentPage);
-        }
-    };
+    #startPageEditListener() {
+        const thisRef = this;
+        setInterval(() => {
+            if (thisRef.isInitialized() && thisRef.isShowingEditor()) {
+
+                const currentTime = Date.now();
+                const diff = currentTime - thisRef.#lastAutosaveCheckTime;
+                if (diff < 1_000) {
+                    return;
+                }
+                thisRef.#lastAutosaveCheckTime = currentTime;
+
+                const savedContent = thisRef.#appState.currentPage.contents;
+                const currentContent = thisRef.#instance.value();
+                if (savedContent === currentContent) {
+                    return;
+                }
+
+                let pageSlug = thisRef.#appState.currentPage.slug;
+                thisRef.#appState.addAutoSaveChange(pageSlug, currentContent);
+            }
+        }, 1_000);
+    }
 
     #registerButtonClickEvents() {
         this.#utils.registerButtonClicks([
             {
                 id: Constants.Ids.Fragments.Preview.buttonEdit,
-                callback: this.editCurrentPage.bind(this)
-            },
-            {
-                id: Constants.Ids.Fragments.Navigation.buttonNewPage,
-                callback: this.editPage.bind(this)
+                callback: this.#editPage.bind(this)
             },
             {
                 id: Constants.Ids.Fragments.Editor.buttonUpdate,
-                callback: this.updatePage.bind(this)
+                callback: this.#updatePage.bind(this)
+            },
+            {
+                id: Constants.Ids.Fragments.Editor.buttonCancel,
+                callback: this.#cancelEdit.bind(this)
             }
         ]);
     };
 
-    editCurrentPage() {
-        this.editPage(this.#appState.currentPage);
+    #cancelEdit() {
+        this.#appState.removeAutoSaveChange(this.#appState.currentPage.slug);
+        this.#visibility.showPreview();
     }
 
     removeEditor() {
@@ -76,15 +95,16 @@ class Editor {
     }
     
     #doesPageTitleExist(title, currentPageSlug) {
-        const pages = this.#appState.pages;
-        if (!currentPageSlug) {
-            return pages.find(page => page.title === title) !== undefined;
-        }
-        return pages.find(page => page.title === title && page.slug !== currentPageSlug)
-            !== undefined;
+        return this.#appState.pages
+            .find(page => page.title === title && page.slug !== currentPageSlug)
+                !== undefined;
     };
     
-    editPage(page) {
+    #editPage() {
+        const page = this.#appState.currentPage;
+
+        this.#lastAutosaveCheckTime = Date.now();
+
         this.#visibility.toggle(Constants.VisibilityOptions.revealEditor);
         this.#populateParentPageSelect(page);
 
@@ -96,14 +116,16 @@ class Editor {
             });
         }
 
-        if (page) {
-            this.#creatingNewPage = false;
-            this.#instance.value(page.contents);
-            this.#setTitleValue(page.title);
-        } else {
-            this.#creatingNewPage = true;
-            this.#instance.value('');
-            this.#setTitleValue('New Page');
+        this.#setTitleValue(page.title);
+        this.#instance.value(page.contents);
+
+        const unsavedChanges = this.#appState.getAutoSaveChange(page.slug);
+        if (unsavedChanges) {
+            if (!confirm('You have unsaved changes for this page. Pickup where you leftoff?')) {
+                this.#appState.removeAutoSaveChange(page.slug);
+            } else {
+                this.#instance.value(unsavedChanges.contents);
+            }
         }
     };
 
@@ -153,50 +175,28 @@ class Editor {
         return this.#utils.getElement(Constants.Ids.Fragments.Editor.selectParent).value;
     }
 
-    updatePage() {
-        if (this.#creatingNewPage) {
-            const newPageTitle = this.getTitleValue();
-            if (this.#doesPageTitleExist(newPageTitle)) {
-                return alert('A page with this title already exists. Ensure that all page titles are unique.');
-            }
+    #updatePage() {
+        const currentPage = this.#appState.currentPage;
+        const currentPageTitle = currentPage.title;
+        
+        this.#appState.removeAutoSaveChange(this.#appState.currentPage.slug);
 
-            // Make sure to not reference the current page in this
-            // as the current page doesn't reference the page being added.
-            const newPage = {
-                title: newPageTitle,
-                contents: this.#instance.value(),
-                slug: crypto.randomUUID(),
-                parent: null
-            }
-
-            const parent = this.#getSelectedParent();
-            if (parent !== Constants.noParentOption) {
-                newPage.parent = parent;
-            }
-
-            this.#appState.addPage(newPage);
-            this.#utils.updateQuery(newPage.title);
-        } else {
-            const currentPage = this.#appState.currentPage;
-            const currentPageTitle = currentPage.title;
-
-            const nextPageTitle = this.getTitleValue();
-            if (this.#doesPageTitleExist(nextPageTitle, currentPage.slug)) {
-                return alert('A page with this title already exists. Ensure that all page titles are unique.');
-            }
-
-            currentPage.contents = this.#instance.value();
-            currentPage.title = nextPageTitle;
-
-            const parent = this.#getSelectedParent();
-            if (parent !== Constants.noParentOption) {
-                currentPage.parent = parent;
-            } else {
-                currentPage.parent = null;
-            }
-
-            this.#appState.setPage(currentPageTitle, currentPage);
-            this.#utils.updateQuery(currentPage.title);
+        const nextPageTitle = this.getTitleValue();
+        if (this.#doesPageTitleExist(nextPageTitle, currentPage.slug)) {
+            return alert('A page with this title already exists. Ensure that all page titles are unique.');
         }
+
+        currentPage.contents = this.#instance.value();
+        currentPage.title = nextPageTitle;
+
+        const parent = this.#getSelectedParent();
+        if (parent !== Constants.noParentOption) {
+            currentPage.parent = parent;
+        } else {
+            currentPage.parent = null;
+        }
+
+        this.#appState.setPage(currentPageTitle, currentPage);
+        this.#utils.updateQuery(currentPage.title);
     }
 };

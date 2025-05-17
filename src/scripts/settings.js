@@ -44,17 +44,21 @@ class Settings {
     }
 
     onPropertyChanged(propertyName) {
-        if (propertyName === Constants.StateProperties.state) {
-            this.#rehydrate();
-        } else if (propertyName === Constants.StateProperties.title) {
-            this.#resetTitle();
-        } else if (propertyName === Constants.StateProperties.pages
-            || propertyName === Constants.StateProperties.order) {
-
-            this.resetOrder();
+        console.log(propertyName);
+        switch (propertyName) {
+            case Constants.StateProperties.state:
+                this.#rehydrate();
+                break;
+            case Constants.StateProperties.title:
+                this.#resetTitle();
+                this.#displayData();
+                break;
+            case Constants.StateProperties.pages:
+            case Constants.StateProperties.order:
+                this.resetOrder();
+                this.#displayData();
+                break;
         }
-
-        this.#displayData();
     }
 
     #rehydrate() {
@@ -79,8 +83,7 @@ class Settings {
     };
 
     #resetTitle() {
-        this.#utils.getElement(Constants.Ids.Fragments.Settings.currentTitle).innerText
-            = this.#appState.title;
+        this.#utils.getElement(Constants.Ids.Fragments.Settings.currentTitle).innerText = this.#appState.title;
     };
 
     updateOrderTable() {
@@ -175,6 +178,9 @@ class Settings {
             return;
         }
 
+        this.#utils.updateQuery('');
+
+        this.#appState.hasUnsavedChanges = true;
         this.#utils.getElement(Constants.Ids.stateContainer).innerText = newState;
         this.#appState.hydrate(newState);
     };

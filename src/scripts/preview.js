@@ -17,10 +17,6 @@ class Preview {
             {
                 id: Constants.Ids.Fragments.Preview.buttonDelete,
                 callback: this.deletePage.bind(this)
-            },
-            {
-                id: Constants.Ids.Fragments.Editor.buttonCancel,
-                callback: this.previewPage.bind(this)
             }
         ]);
     };

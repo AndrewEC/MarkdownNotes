@@ -15,16 +15,6 @@ class Utils {
         return element;
     };
 
-    confirmCancelEdit() {
-        if (this.editor.isInitialized()
-            && this.editor.isShowingEditor()
-            && this.editor.getEditorValue() !== this.state.currentPage.contents) {
-
-            return confirm('All changes made to the page will be lost. Are you sure you want to continue?');
-        }
-        return true;
-    };
-
     registerButtonClicks(definitions) {
         for (let i = 0; i < definitions.length; i++) {
             const definition = definitions[i];
@@ -42,7 +32,7 @@ class Utils {
     };
 
     beforeUnload() {
-        if (this.state.hasUnsavedChanges) {
+        if (this.state.hasAnyUnsavedChange()) {
             return 'You have unsaved changes. Are you sure you want to leave?';
         }
     };
@@ -60,6 +50,10 @@ class Visibility {
         this.#utils = utils;
     }
 
+    showPreview() {
+        this.toggle(Constants.VisibilityOptions.revealPreview);
+    };
+
     showSettings() {
         this.toggle(Constants.VisibilityOptions.revealSettings)
     };
@@ -73,10 +67,6 @@ class Visibility {
         const fragmentPreview = this.#utils.getElement(Constants.Ids.Fragments.Preview.root);
         const fragmentSettings = this.#utils.getElement(Constants.Ids.Fragments.Settings.root);
         const fragmentImages = this.#utils.getElement(Constants.Ids.Fragments.Images.root);
-
-        if (revealOption !== Constants.VisibilityOptions.revealEditor && !this.#utils.confirmCancelEdit()) {
-            return;
-        }
 
         if (revealOption === Constants.VisibilityOptions.revealEditor) {
             this.#utils.getElement(Constants.Ids.Fragments.Navigation.buttonSave).disabled = true;

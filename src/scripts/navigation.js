@@ -20,11 +20,32 @@ class Navigation {
                 callback: () => thisRef.#utils.updateQuery(Constants.LocationHashes.settings)
             },
             {
+                id: Constants.Ids.Fragments.Navigation.buttonNewPage,
+                callback: this.#createNewPage.bind(this)
+            },
+            {
                 id: Constants.Ids.Fragments.Navigation.buttonImages,
                 callback: () => thisRef.#utils.updateQuery(Constants.LocationHashes.images)
             }
         ]);
     };
+
+    #createNewPage() {
+        const newPageTitle = prompt('New Page Title:');
+        if (this.#appState.doesPageTitleExist(newPageTitle)) {
+            return alert('A page with that name already exists. Page names must be unique.');
+        }
+
+        const newPage = {
+            title: newPageTitle,
+            contents: '',
+            slug: crypto.randomUUID(),
+            parent: null
+        };
+
+        this.#appState.addPage(newPage);
+        this.#utils.updateQuery(newPage.title);
+    }
 
     showSettings() {
         this.#visibility.showSettings();
@@ -41,16 +62,23 @@ class Navigation {
     };
 
     onStatePropertyChanged(propertyName) {
-        if (propertyName === Constants.StateProperties.title
-            || propertyName === Constants.StateProperties.currentPage) {
-
-            this.#updateTitle();
-        } else if (propertyName === Constants.StateProperties.state) {
-            this.#rehydrate();
-        } else if (propertyName === Constants.StateProperties.pages
-            || propertyName === Constants.StateProperties.order) {
-
-            this.#updateNavList();
+        switch (propertyName) {
+            case Constants.StateProperties.title:
+            case Constants.StateProperties.currentPage:
+            case Constants.StateProperties.hasUnsavedChanges:
+                this.#updateTitle();
+                break;
+            case Constants.StateProperties.state:
+                this.#rehydrate();
+                break;
+            case Constants.StateProperties.pages:
+            case Constants.StateProperties.order:
+                this.#updateNavList();
+                break;
+            case Constants.StateProperties.autoSavedChanges:
+                this.#updateTitle();
+                this.#updateNavList();
+                break;
         }
     };
 
@@ -99,21 +127,28 @@ class Navigation {
     };
 
     #buildLink(page) {
+        let prefix = '';
+        if (this.#appState.getAutoSaveChange(page.slug)) {
+            prefix = '* ';
+        }
+
         const link = document.createElement('a');
         link.href = `javascript:void(0);`;
-        link.innerText = page.title;
+        link.innerText = `${prefix}${page.title}`;
         const thisRef = this;
         link.onclick = () => {
-            if (!thisRef.#utils.confirmCancelEdit()) {
-                return;
-            }
             thisRef.#utils.updateQuery(page.title);
         };
         return link;
     };
 
     #updateTitle() {
-        const notebookTitle = this.#appState.title;
+        let prefix = '';
+        if (this.#appState.hasAnyUnsavedChange()) {
+            prefix = '* ';
+        }
+
+        const notebookTitle = `${prefix}${this.#appState.title}`;
         
         this.#utils.getElement(Constants.Ids.Fragments.Navigation.title).innerText = notebookTitle;
         
