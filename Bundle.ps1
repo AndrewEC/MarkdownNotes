@@ -1,3 +1,7 @@
+param(
+    [switch]$Open
+)
+
 function Get-SourceDirectory {
     [OutputType([string])]
     param(
@@ -71,6 +75,9 @@ function Get-MergedContents {
 }
 
 function Invoke-Bundle {
+    [OutputType([string])]
+    param()
+
     $SourceDir = Get-SourceDirectory $PSScriptRoot
     Write-Host "Using source directory: [$SourceDir]."
 
@@ -93,9 +100,16 @@ function Invoke-Bundle {
         $TemplateContents = $TemplateContents.Replace($FilePlaceholder, $FileContents)
     }
 
-    $BundlePath = Join-Path $BundleDir "index.html"
+    $BundlePath = Join-Path $BundleDir "MarkdownNotes.html"
     Set-Content -Path $BundlePath -Value $TemplateContents
     Write-Host "Bundled file written to: [$BundlePath]."
+
+    return $BundlePath
 }
 
-Invoke-Bundle
+$BundlePath = Invoke-Bundle
+
+if ($Open) {
+    Invoke-Item $BundlePath
+}
+

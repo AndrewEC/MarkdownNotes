@@ -9,7 +9,7 @@ class Settings {
         this.#appState = appState;
         this.#utils = utils;
         this.#persistence = persistence;
-        this.#appState.addPropertyChangedListener(this.onPropertyChanged.bind(this));
+        this.#appState.addPropertyChangedListener(this.#onPropertyChanged.bind(this));
         this.#registerButtonClickEvents();
     }
 
@@ -17,34 +17,28 @@ class Settings {
         this.#utils.registerButtonClicks([
             {
                 id: Constants.Ids.Fragments.Settings.buttonResetOrder,
-                callback: this.resetOrder.bind(this)
+                callback: this.#resetOrder.bind(this)
             },
             {
                 id: Constants.Ids.Fragments.Settings.buttonSaveOrder,
-                callback: this.saveReorder.bind(this)
+                callback: this.#saveReorder.bind(this)
             },
             {
                 id: Constants.Ids.Fragments.Settings.buttonUpdateTitle,
-                callback: this.updateTitle.bind(this)
+                callback: this.#updateSettingsTitle.bind(this)
             },
             {
                 id: Constants.Ids.Fragments.Settings.buttonDataImport,
-                callback: this.importData.bind(this)
+                callback: this.#importData.bind(this)
             },
             {
                 id: Constants.Ids.Fragments.Settings.buttonCopyData,
-                callback: this.copyData.bind(this)
+                callback: this.#copyData.bind(this)
             }
         ])
     };
 
-    copyData() {
-        const data = this.#utils.getElement(Constants.Ids.Fragments.Settings.dataArea).value;
-        navigator.clipboard.writeText(data).then((_) => alert('Data copied to clipboard.'));
-    }
-
-    onPropertyChanged(propertyName) {
-        console.log(propertyName);
+    #onPropertyChanged(propertyName) {
         switch (propertyName) {
             case Constants.StateProperties.state:
                 this.#rehydrate();
@@ -55,14 +49,14 @@ class Settings {
                 break;
             case Constants.StateProperties.pages:
             case Constants.StateProperties.order:
-                this.resetOrder();
+                this.#resetOrder();
                 this.#displayData();
                 break;
         }
     }
 
     #rehydrate() {
-        this.resetOrder();
+        this.#resetOrder();
         this.#resetTitle();
         this.#displayData();
         this.#displayVersion();
@@ -72,7 +66,12 @@ class Settings {
         this.#utils.getElement(Constants.Ids.Fragments.Settings.versionNumberText).innerText = Constants.currentVersion
     }
 
-    updateTitle() {
+    #copyData() {
+        const data = this.#utils.getElement(Constants.Ids.Fragments.Settings.dataArea).value;
+        navigator.clipboard.writeText(data).then((_) => alert('Data copied to clipboard.'));
+    }
+
+    #updateSettingsTitle() {
         let nextTitle = prompt('New Notebook title:');
         if (nextTitle === null) {
             return;
@@ -86,7 +85,7 @@ class Settings {
         this.#utils.getElement(Constants.Ids.Fragments.Settings.currentTitle).innerText = this.#appState.title;
     };
 
-    updateOrderTable() {
+    #updateOrderTable() {
         if (this.#nextOrder.length === 0) {
             this.#nextOrder = this.#appState.order.slice()
         }
@@ -97,7 +96,7 @@ class Settings {
         orderTable.innerHTML = headerMarkup;
 
         for (let i = 0; i < this.#nextOrder.length; i++) {
-            const page = this.#utils.getPage(this.#nextOrder[i]);
+            const page = this.#appState.getPage(this.#nextOrder[i]);
 
             const row = document.createElement('tr');
 
@@ -111,7 +110,7 @@ class Settings {
             upButton.classList.add('standard-button-link');
             upButton.classList.add('standard-table-button-link');
             upButton.innerText = 'Move Up';
-            upButton.onclick = () => this.moveUp(page.slug);
+            upButton.onclick = () => this.#moveUp(page.slug);
             upButtonCell.appendChild(upButton);
             row.appendChild(upButtonCell);
 
@@ -121,7 +120,7 @@ class Settings {
             downButton.classList.add('standard-button-link');
             downButton.classList.add('standard-table-button-link');
             downButton.innerText = 'Move Down';
-            downButton.onclick = () => this.moveDown(page.slug);
+            downButton.onclick = () => this.#moveDown(page.slug);
             downButtonCell.appendChild(downButton);
             row.appendChild(downButtonCell);
 
@@ -129,7 +128,7 @@ class Settings {
         }
     };
 
-    moveUp(slug) {
+    #moveUp(slug) {
         const index = this.#nextOrder.indexOf(slug);
         if (index === 0) {
             return;
@@ -138,10 +137,10 @@ class Settings {
         const temp = this.#nextOrder[index - 1];
         this.#nextOrder[index - 1] = this.#nextOrder[index];
         this.#nextOrder[index] = temp;
-        this.updateOrderTable();
+        this.#updateOrderTable();
     };
 
-    moveDown(slug) {
+    #moveDown(slug) {
         const index = this.#nextOrder.indexOf(slug);
         if (index >= this.#nextOrder.length - 1) {
             return;
@@ -150,19 +149,19 @@ class Settings {
         const temp = this.#nextOrder[index + 1];
         this.#nextOrder[index + 1] = this.#nextOrder[index];
         this.#nextOrder[index] = temp;
-        this.updateOrderTable();
+        this.#updateOrderTable();
     };
 
-    resetOrder() {
+    #resetOrder() {
         this.#nextOrder = this.#appState.order.slice();
-        this.updateOrderTable()
+        this.#updateOrderTable()
     };
 
-    saveReorder() {
+    #saveReorder() {
         this.#appState.order = this.#nextOrder.slice();
     };
 
-    importData() {
+    #importData() {
         let newState = this.#utils.getElement(Constants.Ids.Fragments.Settings.dataArea).value;
         try {
             newState = JSON.parse(newState);

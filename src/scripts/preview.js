@@ -8,7 +8,7 @@ class Preview {
         this.#appState = appState;
         this.#utils = utils;
         this.#visibility = visibility;
-        this.#appState.addPropertyChangedListener(this.onAppStateChanged.bind(this));
+        this.#appState.addPropertyChangedListener(this.#onAppStateChanged.bind(this));
         this.#registerButtonClickEvents();
     }
 
@@ -16,23 +16,23 @@ class Preview {
         this.#utils.registerButtonClicks([
             {
                 id: Constants.Ids.Fragments.Preview.buttonDelete,
-                callback: this.deletePage.bind(this)
+                callback: this.#deletePage.bind(this)
             }
         ]);
     };
 
-    onAppStateChanged(propertyName) {
+    #onAppStateChanged(propertyName) {
         if (propertyName === Constants.StateProperties.state
             || propertyName === Constants.StateProperties.currentPage) {
 
-            this.previewPage();
+            this.#previewPage();
         }
     };
 
-    previewPage() {
+    #previewPage() {
         const page = this.#appState.currentPage;
 
-        this.#visibility.toggle(Constants.VisibilityOptions.revealPreview);
+        this.#visibility.showPreview();
 
         const viewContainer = this.#utils.getElement(Constants.Ids.Fragments.Preview.viewContainer);
         viewContainer.innerHTML = marked.parse(page.contents);
@@ -94,7 +94,7 @@ class Preview {
         }
     };
 
-    deletePage() {
+    #deletePage() {
         const pageToDelete = this.#appState.currentPage;
 
         let pages = this.#appState.pages;

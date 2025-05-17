@@ -42,7 +42,7 @@ class Persistence {
             const stateContainer = this.#utils.getElement(Constants.Ids.stateContainer);
             nextState = JSON.parse(stateContainer.innerText);
         } catch (error) {
-            console.error('Could not parse state from root-state-container. Error: ' + error);
+            alert('Previous save data could not be loaded. It may be corrupt or incompatible with this version of MarkdownNotes.');
         }
 
         this.validateState(nextState);
@@ -52,7 +52,6 @@ class Persistence {
 
     #getVersion(state) {
         if (!state || !state.version || typeof state.version !== 'string') {
-            console.warn('Unknown state version provided. Defaulting to version 1.');
             state.version = Constants.Versions.Current;
             return Constants.Versions.Current;
         }

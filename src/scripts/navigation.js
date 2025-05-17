@@ -8,7 +8,7 @@ class Navigation {
         this.#appState = appState;
         this.#utils = utils;
         this.#visibility = visibility;
-        this.#appState.addPropertyChangedListener(this.onStatePropertyChanged.bind(this));
+        this.#appState.addPropertyChangedListener(this.#onStatePropertyChanged.bind(this));
         this.#registerButtonClickEvents();
     }
 
@@ -30,38 +30,7 @@ class Navigation {
         ]);
     };
 
-    #createNewPage() {
-        const newPageTitle = prompt('New Page Title:');
-        if (this.#appState.doesPageTitleExist(newPageTitle)) {
-            return alert('A page with that name already exists. Page names must be unique.');
-        }
-
-        const newPage = {
-            title: newPageTitle,
-            contents: '',
-            slug: crypto.randomUUID(),
-            parent: null
-        };
-
-        this.#appState.addPage(newPage);
-        this.#utils.updateQuery(newPage.title);
-    }
-
-    showSettings() {
-        this.#visibility.showSettings();
-        document.title = this.#appState.title;
-    };
-
-    showImages() {
-        this.#visibility.showImages();
-        document.title = this.#appState.title;
-    };
-
-    showEditor() {
-        this.#visibility.showEditor();
-    };
-
-    onStatePropertyChanged(propertyName) {
+    #onStatePropertyChanged(propertyName) {
         switch (propertyName) {
             case Constants.StateProperties.title:
             case Constants.StateProperties.currentPage:
@@ -80,6 +49,46 @@ class Navigation {
                 this.#updateNavList();
                 break;
         }
+    };
+
+    #createNewPage() {
+        let newPageTitle = prompt('New Page Title:');
+        if (!newPageTitle) {
+            return;
+        }
+
+        newPageTitle = newPageTitle.trim();
+        if (!newPageTitle) {
+            return;
+        }
+
+        if (this.#appState.doesPageTitleExist(newPageTitle)) {
+            return alert('A page with that name already exists. Page names must be unique.');
+        }
+
+        const newPage = {
+            title: newPageTitle,
+            contents: '',
+            slug: crypto.randomUUID(),
+            parent: null
+        };
+
+        this.#appState.addPage(newPage);
+        this.#utils.updateQuery(newPage.title);
+    }
+
+    #showSettings() {
+        this.#visibility.showSettings();
+        document.title = this.#appState.title;
+    };
+
+    #showImages() {
+        this.#visibility.showImages();
+        document.title = this.#appState.title;
+    };
+
+    #showEditor() {
+        this.#visibility.showEditor();
     };
 
     #rehydrate() {
@@ -136,9 +145,7 @@ class Navigation {
         link.href = `javascript:void(0);`;
         link.innerText = `${prefix}${page.title}`;
         const thisRef = this;
-        link.onclick = () => {
-            thisRef.#utils.updateQuery(page.title);
-        };
+        link.onclick = () => thisRef.#utils.updateQuery(page.title);
         return link;
     };
 
@@ -157,7 +164,7 @@ class Navigation {
         document.title = nextTitle
     };
 
-    navigateTo(pageTitle) {
+    #navigateTo(pageTitle) {
         pageTitle = decodeURIComponent(pageTitle);
         const nextPage = this.#appState.pages.find(page => page.title === pageTitle);
         if (!nextPage) {
@@ -185,14 +192,19 @@ class Navigation {
                 }
             }
 
-            if (pageTitle === Constants.LocationHashes.settings) {
-                thisRef.showSettings();
-            } else if (pageTitle === Constants.LocationHashes.images) {
-                thisRef.showImages();
-            } else if (pageTitle === Constants.LocationHashes.editor) {
-                thisRef.showEditor();
-            } else {
-                thisRef.navigateTo(pageTitle);
+            switch (pageTitle) {
+                case Constants.LocationHashes.settings:
+                    thisRef.#showSettings();
+                    break;
+                case Constants.LocationHashes.images:
+                    thisRef.#showImages();
+                    break;
+                case Constants.LocationHashes.editor:
+                    thisRef.#showEditor();
+                    break;
+                default:
+                    thisRef.#navigateTo(pageTitle);
+                    break;
             }
         }, 100);
     }

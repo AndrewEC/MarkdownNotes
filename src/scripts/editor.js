@@ -18,7 +18,7 @@ class Editor {
     #startPageEditListener() {
         const thisRef = this;
         setInterval(() => {
-            if (thisRef.isInitialized() && thisRef.isShowingEditor()) {
+            if (thisRef.#isInitialized() && thisRef.isShowingEditor()) {
 
                 const currentTime = Date.now();
                 const diff = currentTime - thisRef.#lastAutosaveCheckTime;
@@ -71,13 +71,13 @@ class Editor {
     };
 
     getEditorValue() {
-        if (!this.isInitialized()) {
+        if (!this.#isInitialized()) {
             return null;
         }
         return this.#instance.value();
     };
 
-    getTitleValue() {
+    #getTitleValue() {
         return this.#utils.getElement(Constants.Ids.Fragments.Editor.inputTitle).value.trim();
     };
 
@@ -85,7 +85,7 @@ class Editor {
         this.#utils.getElement(Constants.Ids.Fragments.Editor.inputTitle).value = value;
     };
 
-    isInitialized() {
+    #isInitialized() {
         return this.#instance && this.#instance !== null;
     };
 
@@ -105,10 +105,10 @@ class Editor {
 
         this.#lastAutosaveCheckTime = Date.now();
 
-        this.#visibility.toggle(Constants.VisibilityOptions.revealEditor);
+        this.#visibility.showEditor();
         this.#populateParentPageSelect(page);
 
-        if (!this.isInitialized()) {
+        if (!this.#isInitialized()) {
             this.#instance = new EasyMDE({
                 element: this.#utils.getElement(Constants.Ids.Fragments.Editor.area),
                 autoDownloadFontAwesome: false,
@@ -156,7 +156,7 @@ class Editor {
 
         const order = this.#appState.order;
         for (let i = 0; i < order.length; i++) {
-            const otherPage = this.#utils.getPage(order[i]);
+            const otherPage = this.#appState.getPage(order[i]);
             if (page && (otherPage.slug === page.slug || this.#isParentOf(page, otherPage))) {
                 continue;
             }
@@ -181,7 +181,7 @@ class Editor {
         
         this.#appState.removeAutoSaveChange(this.#appState.currentPage.slug);
 
-        const nextPageTitle = this.getTitleValue();
+        const nextPageTitle = this.#getTitleValue();
         if (this.#doesPageTitleExist(nextPageTitle, currentPage.slug)) {
             return alert('A page with this title already exists. Ensure that all page titles are unique.');
         }

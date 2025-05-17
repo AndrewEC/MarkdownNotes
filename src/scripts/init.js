@@ -12,7 +12,6 @@ window.onload = () => {
     new Settings(appState, utils, persistence);
 
     utils.state = appState;
-    utils.editor = editor;
 
     persistence.rehydrateState();
 

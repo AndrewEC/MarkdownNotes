@@ -6,16 +6,16 @@ class Images {
     constructor(appState, utils) {
         this.#appState = appState;
         this.#utils = utils;
-        this.#appState.addPropertyChangedListener(this.onStatePropertyChanged.bind(this));
+        this.#appState.addPropertyChangedListener(this.#onStatePropertyChanged.bind(this));
         this.#registerButtonClickEvents();
     }
 
     #registerButtonClickEvents() {
         this.#utils.getElement(Constants.Ids.Fragments.Images.buttonEmbed)
-            .onclick = this.onEmbedImageClicked.bind(this);
+            .onclick = this.#onEmbedImageClicked.bind(this);
     };
 
-    onStatePropertyChanged(propertyName) {
+    #onStatePropertyChanged(propertyName) {
         if (propertyName === Constants.StateProperties.images
             || propertyName === Constants.StateProperties.state) {
 
@@ -23,7 +23,7 @@ class Images {
         }
     };
 
-    onEmbedImageClicked() {
+    #onEmbedImageClicked() {
         const imageNameInput = this.#utils.getElement(Constants.Ids.Fragments.Images.imageName);
         const imageName = imageNameInput.value.trim();
         if (!imageName || imageName === '') {
@@ -84,7 +84,7 @@ class Images {
             updateNameButton.classList.add('standard-button-link');
             updateNameButton.classList.add('standard-table-button-link');
             updateNameButton.innerText = 'Update Name';
-            updateNameButton.onclick = () => this.onUpdateImageNameClicked(sortedImages[i].name);
+            updateNameButton.onclick = () => this.#onUpdateImageNameClicked(sortedImages[i].name);
             updateNameButtonCell.appendChild(updateNameButton);
             row.append(updateNameButtonCell);
 
@@ -94,7 +94,7 @@ class Images {
             deleteButton.classList.add('standard-button-link');
             deleteButton.classList.add('standard-table-button-link');
             deleteButton.innerText = 'Delete';
-            deleteButton.onclick = () => this.onDeleteImageClicked(sortedImages[i].name);
+            deleteButton.onclick = () => this.#onDeleteImageClicked(sortedImages[i].name);
             deleteButtonCell.appendChild(deleteButton);
             row.append(deleteButtonCell);
 
@@ -102,7 +102,7 @@ class Images {
         }
     };
 
-    onUpdateImageNameClicked(currentImageName) {
+    #onUpdateImageNameClicked(currentImageName) {
         let newImageName = prompt('Enter new name for image:');
         if (newImageName === null) {
             return;
@@ -122,7 +122,7 @@ class Images {
         this.#appState.setImage(index, image);
     };
 
-    onDeleteImageClicked(imageName) {
+    #onDeleteImageClicked(imageName) {
         if (!confirm('Are you sure you want to delete this image? This action cannot be undone.')) {
             return;
         }

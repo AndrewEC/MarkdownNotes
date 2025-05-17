@@ -1,11 +1,6 @@
 class Utils {
 
-    editor = null;
     state = null;
-
-    getPage(slug) {
-        return this.state.pages.find(page => page.slug === slug)
-    };
 
     getElement(id) {
         const element = document.getElementById(id);
@@ -24,11 +19,14 @@ class Utils {
 
     resize() {
         const height = `${window.innerHeight - 10}px`;
-        this.getElement(Constants.Ids.Fragments.Navigation.root).style.height = height;
-        this.getElement(Constants.Ids.Fragments.Preview.root).style.height = height;
-        this.getElement(Constants.Ids.Fragments.Editor.root).style.height = height;
-        this.getElement(Constants.Ids.Fragments.Settings.root).style.height = height;
-        this.getElement(Constants.Ids.Fragments.Images.root).style.height = height;
+
+        this.#getElementsAndApply([
+            Constants.Ids.Fragments.Navigation.root,
+            Constants.Ids.Fragments.Preview.root,
+            Constants.Ids.Fragments.Editor.root,
+            Constants.Ids.Fragments.Settings.root,
+            Constants.Ids.Fragments.Images.root
+        ], (element) => element.style.height = height);
     };
 
     beforeUnload() {
@@ -38,7 +36,14 @@ class Utils {
     };
 
     updateQuery(pageTitle) {
-        history.pushState(null, '', `?page=${pageTitle}`);
+        history.pushState(null, '', `?page=${encodeURIComponent(pageTitle)}`);
+    };
+
+    #getElementsAndApply(ids, consumer) {
+        const elements = ids.map(id => this.getElement(id));
+        for (let i = 0; i < elements.length; i++) {
+            consumer(elements[i]);
+        }
     };
 };
 
@@ -51,18 +56,22 @@ class Visibility {
     }
 
     showPreview() {
-        this.toggle(Constants.VisibilityOptions.revealPreview);
+        this.#toggle(Constants.VisibilityOptions.revealPreview);
     };
 
     showSettings() {
-        this.toggle(Constants.VisibilityOptions.revealSettings)
+        this.#toggle(Constants.VisibilityOptions.revealSettings)
     };
 
     showImages() {
-        this.toggle(Constants.VisibilityOptions.revealImages)
+        this.#toggle(Constants.VisibilityOptions.revealImages)
     };
 
-    toggle(revealOption) {
+    showEditor() {
+        this.#toggle(Constants.VisibilityOptions.revealEditor);
+    }
+
+    #toggle(revealOption) {
         const fragmentEditor = this.#utils.getElement(Constants.Ids.Fragments.Editor.root);
         const fragmentPreview = this.#utils.getElement(Constants.Ids.Fragments.Preview.root);
         const fragmentSettings = this.#utils.getElement(Constants.Ids.Fragments.Settings.root);

@@ -124,10 +124,6 @@ class AppState {
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.state);
     };
 
-    hasAnyUnsavedChange() {
-        return this.#hasUnsavedChanges || this.#autoSavedChanges.length > 0;
-    }
-
     set hasUnsavedChanges(hasUnsavedChanges) {
         this.#hasUnsavedChanges = hasUnsavedChanges;
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.hasUnsavedChanges);
@@ -136,45 +132,6 @@ class AppState {
     get hasUnsavedChanges() {
         return this.#hasUnsavedChanges;
     }
-
-    addAutoSaveChange(pageSlug, content) {
-        const existingSave = this.getAutoSaveChange(pageSlug);
-        if (existingSave) {
-            existingSave.content = content;
-            return;
-        }
-
-        this.#autoSavedChanges.push({
-            slug: pageSlug,
-            contents: content
-        });
-
-        this.#invokePropertyChangedCallbacks(Constants.StateProperties.autoSavedChanges);
-    }
-
-    removeAutoSaveChange(pageSlug) {
-        const existingSave = this.getAutoSaveChange(pageSlug);
-        if (!existingSave) {
-            return;
-        }
-
-        this.#autoSavedChanges = this.#autoSavedChanges.filter(change => change.slug !== pageSlug);
-
-        this.#invokePropertyChangedCallbacks(Constants.StateProperties.autoSavedChanges);
-    }
-
-    getAutoSaveChange(pageSlug) {
-        return this.#autoSavedChanges.find(change => change.slug === pageSlug);        
-    };
-
-    getFirstPage() {
-        const firstPageSlug = this.#serializableState.order[0];
-        return this.#serializableState.pages.find(page => page.slug === firstPageSlug);
-    };
-
-    getSerializableState() {
-        return this.#serializableState;
-    };
 
     set title(newTitle) {
         this.#serializableState.title = newTitle;
@@ -212,10 +169,6 @@ class AppState {
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.order);
     }
 
-    doesPageTitleExist(pageTitle) {
-        return this.#serializableState.pages.find(page => page.title === pageTitle) !== undefined;
-    }
-
     get images() {
         return this.#serializableState.images;
     }
@@ -247,18 +200,6 @@ class AppState {
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.images);
     };
 
-    deletePage(pageTitle) {
-        const pageIndex = this.#serializableState.pages.findIndex(page => page.title === pageTitle);
-        const pageToDelete = this.#serializableState.pages[pageIndex];
-
-        this.#serializableState.order = this.#serializableState.order(order => order !== pageToDelete.slug);
-        this.#serializableState.pages.splice(pageIndex, 1);
-
-        this.#hasUnsavedChanges = true;
-        this.#invokePropertyChangedCallbacks(Constants.StateProperties.pages);
-        this.#invokePropertyChangedCallbacks(Constants.StateProperties.order);
-    };
-
     addPage(page) {
         this.#serializableState.pages.push(page);
         this.#serializableState.order.push(page.slug);
@@ -279,4 +220,55 @@ class AppState {
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.order);
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.currentPage);
     };
+
+    doesPageTitleExist(pageTitle) {
+        return this.#serializableState.pages.find(page => page.title === pageTitle) !== undefined;
+    };
+
+    addAutoSaveChange(pageSlug, content) {
+        const existingSave = this.getAutoSaveChange(pageSlug);
+        if (existingSave) {
+            existingSave.content = content;
+            return;
+        }
+
+        this.#autoSavedChanges.push({
+            slug: pageSlug,
+            contents: content
+        });
+
+        this.#invokePropertyChangedCallbacks(Constants.StateProperties.autoSavedChanges);
+    };
+
+    removeAutoSaveChange(pageSlug) {
+        const existingSave = this.getAutoSaveChange(pageSlug);
+        if (!existingSave) {
+            return;
+        }
+
+        this.#autoSavedChanges = this.#autoSavedChanges.filter(change => change.slug !== pageSlug);
+
+        this.#invokePropertyChangedCallbacks(Constants.StateProperties.autoSavedChanges);
+    };
+
+    getAutoSaveChange(pageSlug) {
+        return this.#autoSavedChanges.find(change => change.slug === pageSlug);        
+    };
+
+    getFirstPage() {
+        const firstPageSlug = this.#serializableState.order[0];
+        return this.getPage(firstPageSlug);
+    };
+
+    getPage(slug) {
+        return this.#serializableState.pages.find(page => page.slug === slug)
+    };
+
+    getSerializableState() {
+        return this.#serializableState;
+    };
+
+    hasAnyUnsavedChange() {
+        return this.#hasUnsavedChanges || this.#autoSavedChanges.length > 0;
+    }
 };
