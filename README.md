@@ -8,11 +8,15 @@ An empty file ready for editing is available at [MarkdownNotes.html](./MarkdownN
 
 This project is heavily inspired by [FeatherWiki](https://codeberg.org/Alamantus/FeatherWiki). Though inspired by, this project has different goals and features like a built-in markdown editor using EasyMDE, an "autosave" system, and fewer additional bells and whistles to keep things simple. This project also produces a much larger file. If you are looking for something easier to redistribute check out [FeatherWiki](https://codeberg.org/Alamantus/FeatherWiki) or [TiddlyWiki](https://tiddlywiki.com/)
 
+---
+
 ### Updating
 
 To update MarkdownNotes simply make a change to any of the source files provided then run the `Bundle.ps1` script.
 
 This script will combine all the source files into a single html file and write it to `./build/MarkdownNotes.html`
+
+---
 
 ### Architecture
 

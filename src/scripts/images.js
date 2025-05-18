@@ -59,10 +59,17 @@ class Images {
     };
 
     #updateImageList() {
+        const images = this.#appState.images;
+
         const imageTable = this.#utils.getElement(Constants.Ids.Fragments.Images.imageTable);
+        if (images.length === 0) {
+            imageTable.innerHTML = '';
+            return;
+        }
+
         imageTable.innerHTML = '<tr><td>Image</td><td>Name</td><td>Rename</td><td>Delete</td></tr>';
 
-        const sortedImages = this.#appState.images.sort((first, second) => first.name.localeCompare(second.name));
+        const sortedImages = images.sort((first, second) => first.name.localeCompare(second.name));
         for (let i = 0; i < sortedImages.length; i++) {
             const row = document.createElement('tr');
 

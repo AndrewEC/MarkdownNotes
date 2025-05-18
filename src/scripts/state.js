@@ -78,6 +78,15 @@ const Constants = {
         embeddedImageSrc: 'image/',
         pageLink: 'page/'
     },
+    KeyCodes: {
+        e: 69,
+        n: 78,
+        q: 81,
+        s: 83,
+        escape: 27,
+        comma: 188,
+        period: 190
+    },
     Versions: {
         Current: '1',
         v1: '1'
@@ -136,7 +145,7 @@ class AppState {
     set title(newTitle) {
         this.#serializableState.title = newTitle;
 
-        this.#hasUnsavedChanges = true;
+        this.hasUnsavedChanges = true;
 
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.title);
     };
@@ -163,7 +172,7 @@ class AppState {
         this.#serializableState.order = this.#serializableState.order
             .filter(o => nextPages.find(page => page.slug === o));
 
-        this.#hasUnsavedChanges = true;
+        this.hasUnsavedChanges = true;
 
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.pages);
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.order);
@@ -179,24 +188,26 @@ class AppState {
 
     set order(nextOrder) {
         this.#serializableState.order = nextOrder;
-        this.#invokePropertyChangedCallbacks(Constants.StateProperties.order);        
+        this.#invokePropertyChangedCallbacks(Constants.StateProperties.order);
+
+        this.hasUnsavedChanges = true;
     };
 
     addImage(image) {
         this.#serializableState.images.push(image);
-        this.#hasUnsavedChanges = true;
+        this.hasUnsavedChanges = true;
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.images)
     };
 
     deleteImage(imageName) {
         this.#serializableState.images = this.#serializableState.images.filter(image => image.name !== imageName);
-        this.#hasUnsavedChanges = true;
+        this.hasUnsavedChanges = true;
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.images);
     };
 
     setImage(index, image) {
         this.#serializableState.images[index] = image;
-        this.#hasUnsavedChanges = true;
+        this.hasUnsavedChanges = true;
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.images);
     };
 
@@ -204,7 +215,7 @@ class AppState {
         this.#serializableState.pages.push(page);
         this.#serializableState.order.push(page.slug);
 
-        this.#hasUnsavedChanges = true;
+        this.hasUnsavedChanges = true;
 
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.pages);
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.order);
@@ -214,7 +225,7 @@ class AppState {
         const index = this.#serializableState.pages.findIndex(page => page.title === title);
         this.#serializableState.pages[index] = page;
 
-        this.#hasUnsavedChanges = true;
+        this.hasUnsavedChanges = true;
 
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.pages);
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.order);

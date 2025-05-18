@@ -40,6 +40,28 @@ class Preview {
         this.#addPageLinks(viewContainer);
     };
 
+    previewPreviousPage() {
+        const order = this.#appState.order;
+        const currentIndex = order.findIndex(o => o === this.#appState.currentPage.slug);
+        if (currentIndex <= 0) {
+            return;
+        }
+
+        const nextPage = this.#appState.getPage(order[currentIndex - 1]);
+        this.#utils.updateQuery(nextPage.title);
+    };
+
+    previewNextPage() {
+        const order = this.#appState.order;
+        const currentIndex = order.findIndex(o => o === this.#appState.currentPage.slug);
+        if (currentIndex < 0 || currentIndex >= order.length - 1) {
+            return;
+        }
+
+        const nextPage = this.#appState.getPage(order[currentIndex + 1]);
+        this.#utils.updateQuery(nextPage.title);
+    };
+
     #addEmbededImages(viewContainer) {
         const images = viewContainer.getElementsByTagName('img');
         if (images.length === 0) {

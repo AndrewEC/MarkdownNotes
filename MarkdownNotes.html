@@ -57,13 +57,17 @@ a {
     color: #2CB83C;
 }
 
+p, li, a {
+    line-height: 1.35em;
+}
+
 table {
     padding: 0;
     margin: 0;
     border-spacing: 0;
 }
 
-td {
+td, th {
     border: 1px solid #ccc;
     padding: 3px;
 }
@@ -145,6 +149,14 @@ td {
 
 .lookup-error {
     color: #f11;
+}
+
+#fragment-preview-view-container li {
+    margin-bottom: 7px;
+}
+
+#fragment-preview-view-container td, th {
+    padding: 5px;
 }
 /* ===== ===== Preview Fragment Styles ===== ===== */
 
@@ -309,6 +321,15 @@ td {
         embeddedImageSrc: 'image/',
         pageLink: 'page/'
     },
+    KeyCodes: {
+        e: 69,
+        n: 78,
+        q: 81,
+        s: 83,
+        escape: 27,
+        comma: 188,
+        period: 190
+    },
     Versions: {
         Current: '1',
         v1: '1'
@@ -367,7 +388,7 @@ class AppState {
     set title(newTitle) {
         this.#serializableState.title = newTitle;
 
-        this.#hasUnsavedChanges = true;
+        this.hasUnsavedChanges = true;
 
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.title);
     };
@@ -394,7 +415,7 @@ class AppState {
         this.#serializableState.order = this.#serializableState.order
             .filter(o => nextPages.find(page => page.slug === o));
 
-        this.#hasUnsavedChanges = true;
+        this.hasUnsavedChanges = true;
 
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.pages);
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.order);
@@ -410,24 +431,26 @@ class AppState {
 
     set order(nextOrder) {
         this.#serializableState.order = nextOrder;
-        this.#invokePropertyChangedCallbacks(Constants.StateProperties.order);        
+        this.#invokePropertyChangedCallbacks(Constants.StateProperties.order);
+
+        this.hasUnsavedChanges = true;
     };
 
     addImage(image) {
         this.#serializableState.images.push(image);
-        this.#hasUnsavedChanges = true;
+        this.hasUnsavedChanges = true;
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.images)
     };
 
     deleteImage(imageName) {
         this.#serializableState.images = this.#serializableState.images.filter(image => image.name !== imageName);
-        this.#hasUnsavedChanges = true;
+        this.hasUnsavedChanges = true;
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.images);
     };
 
     setImage(index, image) {
         this.#serializableState.images[index] = image;
-        this.#hasUnsavedChanges = true;
+        this.hasUnsavedChanges = true;
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.images);
     };
 
@@ -435,7 +458,7 @@ class AppState {
         this.#serializableState.pages.push(page);
         this.#serializableState.order.push(page.slug);
 
-        this.#hasUnsavedChanges = true;
+        this.hasUnsavedChanges = true;
 
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.pages);
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.order);
@@ -445,7 +468,7 @@ class AppState {
         const index = this.#serializableState.pages.findIndex(page => page.title === title);
         this.#serializableState.pages[index] = page;
 
-        this.#hasUnsavedChanges = true;
+        this.hasUnsavedChanges = true;
 
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.pages);
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.order);
@@ -459,7 +482,7 @@ class AppState {
     addAutoSaveChange(pageSlug, content) {
         const existingSave = this.getAutoSaveChange(pageSlug);
         if (existingSave) {
-            existingSave.content = content;
+            existingSave.contents = content;
             return;
         }
 
@@ -574,6 +597,19 @@ class Visibility {
 
     showEditor() {
         this.#toggle(Constants.VisibilityOptions.revealEditor);
+    };
+
+    isSettingsPageVisible() {
+        return this.#isVisible(Constants.Ids.Fragments.Settings.root);
+    };
+
+    isImagesPageVisible() {
+        return this.#isVisible(Constants.Ids.Fragments.Images.root);
+    };
+
+    #isVisible(elementId) {
+        const element = this.#utils.getElement(elementId);
+        return element.style.display !== Constants.Display.none;
     }
 
     #toggle(revealOption) {
@@ -780,7 +816,7 @@ class Visibility {
             },
             {
                 id: Constants.Ids.Fragments.Navigation.buttonNewPage,
-                callback: this.#createNewPage.bind(this)
+                callback: this.createNewPage.bind(this)
             },
             {
                 id: Constants.Ids.Fragments.Navigation.buttonImages,
@@ -810,7 +846,7 @@ class Visibility {
         }
     };
 
-    #createNewPage() {
+    createNewPage() {
         let newPageTitle = prompt('New Page Title:');
         if (!newPageTitle) {
             return;
@@ -1013,11 +1049,11 @@ class Visibility {
         this.#utils.registerButtonClicks([
             {
                 id: Constants.Ids.Fragments.Preview.buttonEdit,
-                callback: this.#editPage.bind(this)
+                callback: this.editPage.bind(this)
             },
             {
                 id: Constants.Ids.Fragments.Editor.buttonUpdate,
-                callback: this.#updatePage.bind(this)
+                callback: this.updatePage.bind(this)
             },
             {
                 id: Constants.Ids.Fragments.Editor.buttonCancel,
@@ -1070,7 +1106,7 @@ class Visibility {
                 !== undefined;
     };
     
-    #editPage() {
+    editPage() {
         const page = this.#appState.currentPage;
 
         this.#lastAutosaveCheckTime = Date.now();
@@ -1085,6 +1121,14 @@ class Visibility {
                 spellChecker: false
             });
         }
+
+        // Move page focus to the text area created by EasyMDE.
+        setTimeout(function() {
+            const editorTextArea = document.querySelector('.CodeMirror > div:nth-child(1) > textarea:nth-child(1)');
+            if (editorTextArea) {
+                editorTextArea.focus();
+            }
+        }, 0);
 
         this.#setTitleValue(page.title);
         this.#instance.value(page.contents);
@@ -1145,7 +1189,7 @@ class Visibility {
         return this.#utils.getElement(Constants.Ids.Fragments.Editor.selectParent).value;
     }
 
-    #updatePage() {
+    updatePage() {
         const currentPage = this.#appState.currentPage;
         const currentPageTitle = currentPage.title;
         
@@ -1210,6 +1254,28 @@ class Visibility {
         viewContainer.innerHTML = marked.parse(page.contents);
         this.#addEmbededImages(viewContainer);
         this.#addPageLinks(viewContainer);
+    };
+
+    previewPreviousPage() {
+        const order = this.#appState.order;
+        const currentIndex = order.findIndex(o => o === this.#appState.currentPage.slug);
+        if (currentIndex <= 0) {
+            return;
+        }
+
+        const nextPage = this.#appState.getPage(order[currentIndex - 1]);
+        this.#utils.updateQuery(nextPage.title);
+    };
+
+    previewNextPage() {
+        const order = this.#appState.order;
+        const currentIndex = order.findIndex(o => o === this.#appState.currentPage.slug);
+        if (currentIndex < 0 || currentIndex >= order.length - 1) {
+            return;
+        }
+
+        const nextPage = this.#appState.getPage(order[currentIndex + 1]);
+        this.#utils.updateQuery(nextPage.title);
     };
 
     #addEmbededImages(viewContainer) {
@@ -1547,10 +1613,17 @@ class Visibility {
     };
 
     #updateImageList() {
+        const images = this.#appState.images;
+
         const imageTable = this.#utils.getElement(Constants.Ids.Fragments.Images.imageTable);
+        if (images.length === 0) {
+            imageTable.innerHTML = '';
+            return;
+        }
+
         imageTable.innerHTML = '<tr><td>Image</td><td>Name</td><td>Rename</td><td>Delete</td></tr>';
 
-        const sortedImages = this.#appState.images.sort((first, second) => first.name.localeCompare(second.name));
+        const sortedImages = images.sort((first, second) => first.name.localeCompare(second.name));
         for (let i = 0; i < sortedImages.length; i++) {
             const row = document.createElement('tr');
 
@@ -1628,7 +1701,7 @@ class Visibility {
     const persistence = new Persistence(appState, editor, utils);
     new Images(appState, utils);
     const navigation = new Navigation(appState, utils, visibility);
-    new Preview(appState, utils, visibility);
+    const preview = new Preview(appState, utils, visibility);
     new Settings(appState, utils, persistence);
 
     utils.state = appState;
@@ -1646,6 +1719,67 @@ class Visibility {
             }
         }
     ]);
+
+    window.onkeydown = (e) => {
+        switch (e.keyCode) {
+            case Constants.KeyCodes.escape:
+                if (editor.isShowingEditor()) {
+                    visibility.showPreview();
+                    e.preventDefault();
+                    return;
+                }
+                break;
+        }
+
+        if (!e.ctrlKey) {
+            return;
+        }
+
+        const isPreviewingPage = () => !editor.isShowingEditor()
+            && !visibility.isImagesPageVisible()
+            && !visibility.isSettingsPageVisible()
+
+        switch (e.keyCode) {
+            case Constants.KeyCodes.s:
+                if (editor.isShowingEditor()) {
+                    editor.updatePage();
+                } else {
+                    persistence.save();
+                }
+                e.preventDefault();
+                break;
+            case Constants.KeyCodes.n:
+                e.preventDefault();
+                if (!editor.isShowingEditor()) {
+                    navigation.createNewPage();
+                }
+                break;
+            case Constants.KeyCodes.escape:
+                if (editor.isShowingEditor()) {
+                    visibility.showPreview();
+                    e.preventDefault();
+                }
+                break;
+            case Constants.KeyCodes.e:
+                e.preventDefault();
+                if (isPreviewingPage()) {
+                    editor.editPage();
+                }
+                break;
+            case Constants.KeyCodes.comma:
+                if (isPreviewingPage()) {
+                    preview.previewPreviousPage();
+                }
+                e.preventDefault();
+                break;
+            case Constants.KeyCodes.period:
+                if (isPreviewingPage()) {
+                    preview.previewNextPage();
+                }
+                e.preventDefault();
+                break;
+        }
+    };
 
     utils.resize();
     window.onresize = () => utils.resize();
@@ -1760,19 +1894,22 @@ class Visibility {
     <h3>Data Import/Export</h3>
     <p>The text below is the JSON representation of the data store in this Notebook.</p>
     <p>
-        You can copy/paste this data into another Notebook or paste data into this
-        notebook and click the <strong>Update</strong> button to sync this Notebook with the data provided.
+        You can copy date from another Notebook into the area below and click the
+        <strong>Import</strong> button to sync this Notebook with the data entered.
     </p>
 
-    <a href="javascript:void(0);"
-        id="fragment-settings-button-data-import"
-        class="standard-button-link standard-button-link-fixed">Import</a>
-    
-    <a href="javascript:void(0);"
-        id="fragment-settings-button-data-copy"
-        class="standard-button-link standard-button-link-fixed">Copy</a>
+    <div>
+        <a href="javascript:void(0);"
+            id="fragment-settings-button-data-import"
+            class="standard-button-link standard-button-link-fixed">Import</a>
+        
+        <a href="javascript:void(0);"
+            id="fragment-settings-button-data-copy"
+            class="standard-button-link standard-button-link-fixed">Copy</a>
+    </div>
 
     <br />
+
     <textarea id="fragment-settings-data-area"></textarea>
 </div>
                 <div id="fragment-images">

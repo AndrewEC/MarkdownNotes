@@ -69,6 +69,19 @@ class Visibility {
 
     showEditor() {
         this.#toggle(Constants.VisibilityOptions.revealEditor);
+    };
+
+    isSettingsPageVisible() {
+        return this.#isVisible(Constants.Ids.Fragments.Settings.root);
+    };
+
+    isImagesPageVisible() {
+        return this.#isVisible(Constants.Ids.Fragments.Images.root);
+    };
+
+    #isVisible(elementId) {
+        const element = this.#utils.getElement(elementId);
+        return element.style.display !== Constants.Display.none;
     }
 
     #toggle(revealOption) {

@@ -43,11 +43,11 @@ class Editor {
         this.#utils.registerButtonClicks([
             {
                 id: Constants.Ids.Fragments.Preview.buttonEdit,
-                callback: this.#editPage.bind(this)
+                callback: this.editPage.bind(this)
             },
             {
                 id: Constants.Ids.Fragments.Editor.buttonUpdate,
-                callback: this.#updatePage.bind(this)
+                callback: this.updatePage.bind(this)
             },
             {
                 id: Constants.Ids.Fragments.Editor.buttonCancel,
@@ -100,7 +100,7 @@ class Editor {
                 !== undefined;
     };
     
-    #editPage() {
+    editPage() {
         const page = this.#appState.currentPage;
 
         this.#lastAutosaveCheckTime = Date.now();
@@ -115,6 +115,14 @@ class Editor {
                 spellChecker: false
             });
         }
+
+        // Move page focus to the text area created by EasyMDE.
+        setTimeout(function() {
+            const editorTextArea = document.querySelector('.CodeMirror > div:nth-child(1) > textarea:nth-child(1)');
+            if (editorTextArea) {
+                editorTextArea.focus();
+            }
+        }, 0);
 
         this.#setTitleValue(page.title);
         this.#instance.value(page.contents);
@@ -175,7 +183,7 @@ class Editor {
         return this.#utils.getElement(Constants.Ids.Fragments.Editor.selectParent).value;
     }
 
-    #updatePage() {
+    updatePage() {
         const currentPage = this.#appState.currentPage;
         const currentPageTitle = currentPage.title;
         

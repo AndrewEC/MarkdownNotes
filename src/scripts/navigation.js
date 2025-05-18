@@ -21,7 +21,7 @@ class Navigation {
             },
             {
                 id: Constants.Ids.Fragments.Navigation.buttonNewPage,
-                callback: this.#createNewPage.bind(this)
+                callback: this.createNewPage.bind(this)
             },
             {
                 id: Constants.Ids.Fragments.Navigation.buttonImages,
@@ -51,7 +51,7 @@ class Navigation {
         }
     };
 
-    #createNewPage() {
+    createNewPage() {
         let newPageTitle = prompt('New Page Title:');
         if (!newPageTitle) {
             return;
