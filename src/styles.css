@@ -19,7 +19,7 @@ table {
     border-spacing: 0;
 }
 
-td {
+td, th {
     border: 1px solid #ccc;
     padding: 3px;
 }
@@ -101,6 +101,14 @@ td {
 
 .lookup-error {
     color: #f11;
+}
+
+#fragment-preview-view-container li {
+    margin-bottom: 10px;
+}
+
+#fragment-preview-view-container td, th {
+    padding: 5px;
 }
 /* ===== ===== Preview Fragment Styles ===== ===== */
 

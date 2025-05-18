@@ -228,7 +228,7 @@ class AppState {
     addAutoSaveChange(pageSlug, content) {
         const existingSave = this.getAutoSaveChange(pageSlug);
         if (existingSave) {
-            existingSave.content = content;
+            existingSave.contents = content;
             return;
         }
 
