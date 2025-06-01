@@ -54,7 +54,7 @@ class Editor {
                 callback: this.#cancelEdit.bind(this)
             }
         ]);
-    };
+    }
 
     #cancelEdit() {
         this.#appState.removeAutoSaveChange(this.#appState.currentPage.slug);
@@ -68,26 +68,26 @@ class Editor {
         if (editorContainer.length > 0) {
             editorContainer[0].remove();
         }
-    };
+    }
 
     getEditorValue() {
         if (!this.#isInitialized()) {
             return null;
         }
         return this.#instance.value();
-    };
+    }
 
     #getTitleValue() {
         return this.#utils.getElement(Constants.Ids.Fragments.Editor.inputTitle).value.trim();
-    };
+    }
 
     #setTitleValue(value) {
         this.#utils.getElement(Constants.Ids.Fragments.Editor.inputTitle).value = value;
-    };
+    }
 
     #isInitialized() {
         return this.#instance && this.#instance !== null;
-    };
+    }
 
     isShowingEditor() {
         return this.#utils.getElement(Constants.Ids.Fragments.Editor.root).style.display.toLowerCase()
@@ -98,7 +98,7 @@ class Editor {
         return this.#appState.pages
             .find(page => page.title === title && page.slug !== currentPageSlug)
                 !== undefined;
-    };
+    }
     
     editPage() {
         const page = this.#appState.currentPage;
@@ -135,7 +135,7 @@ class Editor {
                 this.#instance.value(unsavedChanges.contents);
             }
         }
-    };
+    }
 
     // Checks to see if the "first" page is a parent of the
     // "second" page.
@@ -148,7 +148,7 @@ class Editor {
             nextPage = nextPage.parent;
         }
         return false;
-    };
+    }
 
     #populateParentPageSelect(page) {
         // Populates a dropdown that allows the user to select
@@ -177,7 +177,7 @@ class Editor {
             }
             select.appendChild(option);
         }
-    };
+    }
 
     #getSelectedParent() {
         return this.#utils.getElement(Constants.Ids.Fragments.Editor.selectParent).value;
@@ -207,4 +207,4 @@ class Editor {
         this.#appState.setPage(currentPageTitle, currentPage);
         this.#utils.updateQuery(currentPage.title);
     }
-};
+}

@@ -19,7 +19,7 @@ class Preview {
                 callback: this.#deletePage.bind(this)
             }
         ]);
-    };
+    }
 
     #onAppStateChanged(propertyName) {
         if (propertyName === Constants.StateProperties.state
@@ -27,7 +27,7 @@ class Preview {
 
             this.#previewPage();
         }
-    };
+    }
 
     #previewPage() {
         const page = this.#appState.currentPage;
@@ -38,7 +38,7 @@ class Preview {
         viewContainer.innerHTML = marked.parse(page.contents);
         this.#addEmbededImages(viewContainer);
         this.#addPageLinks(viewContainer);
-    };
+    }
 
     previewPreviousPage() {
         const order = this.#appState.order;
@@ -49,7 +49,7 @@ class Preview {
 
         const nextPage = this.#appState.getPage(order[currentIndex - 1]);
         this.#utils.updateQuery(nextPage.title);
-    };
+    }
 
     previewNextPage() {
         const order = this.#appState.order;
@@ -60,7 +60,7 @@ class Preview {
 
         const nextPage = this.#appState.getPage(order[currentIndex + 1]);
         this.#utils.updateQuery(nextPage.title);
-    };
+    }
 
     #addEmbededImages(viewContainer) {
         const images = viewContainer.getElementsByTagName('img');
@@ -81,10 +81,12 @@ class Preview {
                 imageElement.setAttribute('alt', `[Image Error: image with name not found: ${desiredImageName}]`);
                 imageElement.classList.add(Constants.lookupErrorClass);
                 continue;
+            } else {
+                imageElement.setAttribute('src', image.data);
+                imageElement.setAttribute('style', 'max-width: 100%;');
             }
-            imageElement.setAttribute('src', image.data);
         }
-    };
+    }
 
     #addPageLinks(viewContainer) {
         const links = viewContainer.getElementsByTagName('a');
@@ -114,7 +116,7 @@ class Preview {
                 linkElement.classList.add(Constants.lookupErrorClass);
             }
         }
-    };
+    }
 
     #deletePage() {
         const pageToDelete = this.#appState.currentPage;
@@ -144,4 +146,4 @@ class Preview {
         
         this.#utils.updateQuery(this.#appState.getFirstPage().title);
     }
-};
+}

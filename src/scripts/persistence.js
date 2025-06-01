@@ -34,7 +34,7 @@ class Persistence {
         link.download = `${this.#appState.title}.html`;
         link.click();
         URL.revokeObjectURL(objectUrl);
-    };
+    }
 
     rehydrateState() {
         let nextState = null;
@@ -48,7 +48,7 @@ class Persistence {
         this.validateState(nextState);
 
         this.#appState.hydrate(nextState);
-    };
+    }
 
     #getVersion(state) {
         if (!state || !state.version || typeof state.version !== 'string') {
@@ -56,7 +56,7 @@ class Persistence {
             return Constants.Versions.Current;
         }
         return state.version;
-    };
+    }
 
     validateState(state) {
         try {
@@ -71,7 +71,7 @@ class Persistence {
             alert(error);
             return false
         }
-    };
+    }
 
     #validateStateV1(state) {
         if (!state) {
@@ -129,25 +129,25 @@ class Persistence {
                 throw new Error(`Invalid order value. Order at index [${i}] does match the slug of any known page.`);
             }
         }
-    };
+    }
 
     #areAllUnique(values){
         return [...new Set(values)].length === values.length;
-    };
+    }
 
     #isString(value) {
         return typeof value === 'string'
-    };
+    }
 
     #isNonEmptyString(value) {
         return this.#isString(value) && value.trim() !== ''
-    };
+    }
     
     #isArray(value){
         return value && Array.isArray(value)
-    };
+    }
 
     #isNonEmptyArray(value) {
         return this.#isArray(value) && value.length > 0
-    };
-};
+    }
+}

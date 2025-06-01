@@ -8,14 +8,14 @@ class Utils {
             throw new Error(`Could not find element on page with ID of ${id}`);
         }
         return element;
-    };
+    }
 
     registerButtonClicks(definitions) {
         for (let i = 0; i < definitions.length; i++) {
             const definition = definitions[i];
             this.getElement(definition.id).onclick = () => definition.callback();
         }
-    };
+    }
 
     resize() {
         const height = `${window.innerHeight - 10}px`;
@@ -27,25 +27,25 @@ class Utils {
             Constants.Ids.Fragments.Settings.root,
             Constants.Ids.Fragments.Images.root
         ], (element) => element.style.height = height);
-    };
+    }
 
     beforeUnload() {
         if (this.state.hasAnyUnsavedChange()) {
             return 'You have unsaved changes. Are you sure you want to leave?';
         }
-    };
+    }
 
     updateQuery(pageTitle) {
         history.pushState(null, '', `?page=${encodeURIComponent(pageTitle)}`);
-    };
+    }
 
     #getElementsAndApply(ids, consumer) {
         const elements = ids.map(id => this.getElement(id));
         for (let i = 0; i < elements.length; i++) {
             consumer(elements[i]);
         }
-    };
-};
+    }
+}
 
 class Visibility {
 
@@ -57,27 +57,27 @@ class Visibility {
 
     showPreview() {
         this.#toggle(Constants.VisibilityOptions.revealPreview);
-    };
+    }
 
     showSettings() {
         this.#toggle(Constants.VisibilityOptions.revealSettings)
-    };
+    }
 
     showImages() {
         this.#toggle(Constants.VisibilityOptions.revealImages)
-    };
+    }
 
     showEditor() {
         this.#toggle(Constants.VisibilityOptions.revealEditor);
-    };
+    }
 
     isSettingsPageVisible() {
         return this.#isVisible(Constants.Ids.Fragments.Settings.root);
-    };
+    }
 
     isImagesPageVisible() {
         return this.#isVisible(Constants.Ids.Fragments.Images.root);
-    };
+    }
 
     #isVisible(elementId) {
         const element = this.#utils.getElement(elementId);
@@ -110,5 +110,5 @@ class Visibility {
         } else if (revealOption === Constants.VisibilityOptions.revealImages) {
             fragmentImages.style.display = Constants.Display.block;
         }
-    };
-};
+    }
+}

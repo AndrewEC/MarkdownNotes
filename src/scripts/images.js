@@ -13,7 +13,7 @@ class Images {
     #registerButtonClickEvents() {
         this.#utils.getElement(Constants.Ids.Fragments.Images.buttonEmbed)
             .onclick = this.#onEmbedImageClicked.bind(this);
-    };
+    }
 
     #onStatePropertyChanged(propertyName) {
         if (propertyName === Constants.StateProperties.images
@@ -21,7 +21,7 @@ class Images {
 
             this.#updateImageList();
         }
-    };
+    }
 
     #onEmbedImageClicked() {
         const imageNameInput = this.#utils.getElement(Constants.Ids.Fragments.Images.imageName);
@@ -51,12 +51,12 @@ class Images {
             imageNameInput.value = null;
         }
         reader.readAsDataURL(imageInput.files[0]);
-    };
+    }
 
     #doesNameExist(newImageName) {
         return this.#appState.images.map(image => image.name)
             .indexOf(newImageName) !== -1;
-    };
+    }
 
     #updateImageList() {
         const images = this.#appState.images;
@@ -107,7 +107,7 @@ class Images {
 
             imageTable.append(row);
         }
-    };
+    }
 
     #onUpdateImageNameClicked(currentImageName) {
         let newImageName = prompt('Enter new name for image:');
@@ -127,7 +127,7 @@ class Images {
 
         const index = this.#appState.images.indexOf(image);
         this.#appState.setImage(index, image);
-    };
+    }
 
     #onDeleteImageClicked(imageName) {
         if (!confirm('Are you sure you want to delete this image? This action cannot be undone.')) {
@@ -135,5 +135,5 @@ class Images {
         }
 
         this.#appState.deleteImage(imageName);
-    };
-};
+    }
+}

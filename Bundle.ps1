@@ -91,11 +91,11 @@ function Invoke-Bundle {
         $FileName = Split-Path $SourceFile -Leaf
         $FilePlaceholder = "{{$FileName}}"
         if (-not ($TemplateContents.Contains($FilePlaceholder))) {
-            Write-Host "No placeholder of value $FilePlaceholder found in template file. File $FileName will be skipped."
+            Write-Host "No placeholder of value $FilePlaceholder found in template file. File [$FileName] will be skipped."
             continue
         }
 
-        Write-Host "Bundling contents of source file: $FileName"
+        Write-Host "Bundling contents of source file: [$FileName]"
         $FileContents = Get-MergedContents $SourceFile
         $TemplateContents = $TemplateContents.Replace($FilePlaceholder, $FileContents)
     }

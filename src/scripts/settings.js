@@ -79,11 +79,11 @@ class Settings {
         nextTitle = nextTitle.trim();
 
         this.#appState.title = nextTitle;
-    };
+    }
 
     #resetTitle() {
         this.#utils.getElement(Constants.Ids.Fragments.Settings.currentTitle).innerText = this.#appState.title;
-    };
+    }
 
     #updateOrderTable() {
         if (this.#nextOrder.length === 0) {
@@ -126,7 +126,7 @@ class Settings {
 
             orderTable.appendChild(row);
         }
-    };
+    }
 
     #moveUp(slug) {
         const index = this.#nextOrder.indexOf(slug);
@@ -138,7 +138,7 @@ class Settings {
         this.#nextOrder[index - 1] = this.#nextOrder[index];
         this.#nextOrder[index] = temp;
         this.#updateOrderTable();
-    };
+    }
 
     #moveDown(slug) {
         const index = this.#nextOrder.indexOf(slug);
@@ -150,16 +150,16 @@ class Settings {
         this.#nextOrder[index + 1] = this.#nextOrder[index];
         this.#nextOrder[index] = temp;
         this.#updateOrderTable();
-    };
+    }
 
     #resetOrder() {
         this.#nextOrder = this.#appState.order.slice();
         this.#updateOrderTable()
-    };
+    }
 
     #saveReorder() {
         this.#appState.order = this.#nextOrder.slice();
-    };
+    }
 
     #importData() {
         let newState = this.#utils.getElement(Constants.Ids.Fragments.Settings.dataArea).value;
@@ -182,7 +182,7 @@ class Settings {
         this.#appState.hasUnsavedChanges = true;
         this.#utils.getElement(Constants.Ids.stateContainer).innerText = newState;
         this.#appState.hydrate(newState);
-    };
+    }
 
     #displayData() {
         this.#utils.getElement(Constants.Ids.Fragments.Settings.dataArea).value

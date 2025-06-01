@@ -28,7 +28,7 @@ class Navigation {
                 callback: () => thisRef.#utils.updateQuery(Constants.LocationHashes.images)
             }
         ]);
-    };
+    }
 
     #onStatePropertyChanged(propertyName) {
         switch (propertyName) {
@@ -49,7 +49,7 @@ class Navigation {
                 this.#updateNavList();
                 break;
         }
-    };
+    }
 
     createNewPage() {
         let newPageTitle = prompt('New Page Title:');
@@ -80,21 +80,21 @@ class Navigation {
     #showSettings() {
         this.#visibility.showSettings();
         document.title = this.#appState.title;
-    };
+    }
 
     #showImages() {
         this.#visibility.showImages();
         document.title = this.#appState.title;
-    };
+    }
 
     #showEditor() {
         this.#visibility.showEditor();
-    };
+    }
 
     #rehydrate() {
         this.#updateNavList();
         this.#updateTitle(this.#appState.title);
-    };
+    }
 
     #updateNavList() {
         const navContainer = this.#utils.getElement(Constants.Ids.Fragments.Navigation.listContainer);
@@ -107,7 +107,7 @@ class Navigation {
 
         navContainer.innerHTML = '';
         navContainer.appendChild(list);
-    };
+    }
 
     #buildNavList(pages) {
         const list = document.createElement('ul');
@@ -127,13 +127,13 @@ class Navigation {
         }
 
         return list;
-    };
+    }
 
     #getImmediateChildren(parent) {
         return this.#appState.order
             .map(slug => this.#appState.pages.find(page => page.slug === slug))
             .filter(page => page.parent === parent.slug);
-    };
+    }
 
     #buildLink(page) {
         let prefix = '';
@@ -147,7 +147,7 @@ class Navigation {
         const thisRef = this;
         link.onclick = () => thisRef.#utils.updateQuery(page.title);
         return link;
-    };
+    }
 
     #updateTitle() {
         let prefix = '';
@@ -162,7 +162,7 @@ class Navigation {
         const pageTitle = this.#appState.currentPage.title;
         const nextTitle = `${notebookTitle} | ${pageTitle}`;
         document.title = nextTitle
-    };
+    }
 
     #navigateTo(pageTitle) {
         pageTitle = decodeURIComponent(pageTitle);
@@ -172,7 +172,7 @@ class Navigation {
             return;
         }
         this.#appState.currentPage = nextPage;
-    };
+    }
 
     listenForUrlChange() {
         const thisRef = this;
@@ -208,4 +208,4 @@ class Navigation {
             }
         }, 100);
     }
-};
+}
