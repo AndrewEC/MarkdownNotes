@@ -24,7 +24,7 @@ class Persistence {
         const stateContainer = this.#utils.getElement(Constants.Ids.stateContainer);
         stateContainer.innerText = JSON.stringify(this.#appState.getSerializableState());
 
-        // Prepend the DOCTYPE since it's not part of the outerHTML property.
+        // Prepend the DOCTYPE declaration since it's not part of the outerHTML property.
         const documentString = `<!DOCTYPE html>${document.documentElement.outerHTML}`;
         const blob = new Blob([documentString], { type: 'text' });
 

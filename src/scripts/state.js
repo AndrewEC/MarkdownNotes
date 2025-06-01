@@ -1,5 +1,5 @@
 const Constants = {
-    currentVersion: '0.0.1',
+    currentVersion: '0.0.2',
     Ids: {
         rootContainer: 'root-container',
         Fragments: {
@@ -27,7 +27,8 @@ const Constants = {
                 dataArea: 'fragment-settings-data-area',
                 buttonDataImport: 'fragment-settings-button-data-import',
                 versionNumberText: 'fragment-settings-version-number',
-                buttonCopyData: 'fragment-settings-button-data-copy'
+                buttonCopyData: 'fragment-settings-button-data-copy',
+                buttonRevealData: 'fragment-settings-button-reveal-data'
             },
             Navigation: {
                 root: 'fragment-navigation',

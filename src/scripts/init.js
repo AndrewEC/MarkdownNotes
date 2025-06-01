@@ -1,7 +1,7 @@
 window.onload = () => {
 
     const appState = new AppState();
-    const utils = new Utils();
+    const utils = new Utils(appState);
     const visibility = new Visibility(utils);
 
     const editor = new Editor(appState, visibility, utils);
@@ -9,9 +9,7 @@ window.onload = () => {
     new Images(appState, utils);
     const navigation = new Navigation(appState, utils, visibility);
     const preview = new Preview(appState, utils, visibility);
-    new Settings(appState, utils, persistence);
-
-    utils.state = appState;
+    const settings = new Settings(appState, utils, persistence);
 
     persistence.rehydrateState();
 
@@ -22,6 +20,7 @@ window.onload = () => {
                 if (editor.isShowingEditor()) {
                     return;
                 }
+                settings.hideDataArea();
                 persistence.save();
             }
         }
@@ -51,6 +50,7 @@ window.onload = () => {
                 if (editor.isShowingEditor()) {
                     editor.updatePage();
                 } else {
+                    settings.hideDataArea();
                     persistence.save();
                 }
                 e.preventDefault();

@@ -242,7 +242,7 @@ td, th {
         <script type="text/javascript">
             (function() {
                 const Constants = {
-    currentVersion: '0.0.1',
+    currentVersion: '0.0.2',
     Ids: {
         rootContainer: 'root-container',
         Fragments: {
@@ -270,7 +270,8 @@ td, th {
                 dataArea: 'fragment-settings-data-area',
                 buttonDataImport: 'fragment-settings-button-data-import',
                 versionNumberText: 'fragment-settings-version-number',
-                buttonCopyData: 'fragment-settings-button-data-copy'
+                buttonCopyData: 'fragment-settings-button-data-copy',
+                buttonRevealData: 'fragment-settings-button-reveal-data'
             },
             Navigation: {
                 root: 'fragment-navigation',
@@ -362,11 +363,11 @@ class AppState {
         for (let i = 0; i < this.#onChangeCallbacks.length; i++) {
             this.#onChangeCallbacks[i](propertyName);
         }
-    };
+    }
 
     addPropertyChangedListener(callback) {
         this.#onChangeCallbacks.push(callback);
-    };
+    }
 
     hydrate(nextState) {
         this.#serializableState = nextState;
@@ -374,7 +375,7 @@ class AppState {
         this.#currentPage = this.getFirstPage();
 
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.state);
-    };
+    }
 
     set hasUnsavedChanges(hasUnsavedChanges) {
         this.#hasUnsavedChanges = hasUnsavedChanges;
@@ -391,24 +392,24 @@ class AppState {
         this.hasUnsavedChanges = true;
 
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.title);
-    };
+    }
 
     get title() {
         return this.#serializableState.title;
-    };
+    }
 
     set currentPage(nextPage) {
         this.#currentPage = nextPage;
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.currentPage);
-    };
+    }
 
     get currentPage() {
         return this.#currentPage;
-    };
+    }
 
     get pages() {
         return this.#serializableState.pages;
-    };
+    }
 
     set pages(nextPages) {
         this.#serializableState.pages = nextPages;
@@ -427,32 +428,32 @@ class AppState {
 
     get order() {
         return this.#serializableState.order;
-    };
+    }
 
     set order(nextOrder) {
         this.#serializableState.order = nextOrder;
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.order);
 
         this.hasUnsavedChanges = true;
-    };
+    }
 
     addImage(image) {
         this.#serializableState.images.push(image);
         this.hasUnsavedChanges = true;
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.images)
-    };
+    }
 
     deleteImage(imageName) {
         this.#serializableState.images = this.#serializableState.images.filter(image => image.name !== imageName);
         this.hasUnsavedChanges = true;
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.images);
-    };
+    }
 
     setImage(index, image) {
         this.#serializableState.images[index] = image;
         this.hasUnsavedChanges = true;
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.images);
-    };
+    }
 
     addPage(page) {
         this.#serializableState.pages.push(page);
@@ -462,7 +463,7 @@ class AppState {
 
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.pages);
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.order);
-    };
+    }
 
     setPage(title, page) {
         const index = this.#serializableState.pages.findIndex(page => page.title === title);
@@ -473,11 +474,11 @@ class AppState {
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.pages);
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.order);
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.currentPage);
-    };
+    }
 
     doesPageTitleExist(pageTitle) {
         return this.#serializableState.pages.find(page => page.title === pageTitle) !== undefined;
-    };
+    }
 
     addAutoSaveChange(pageSlug, content) {
         const existingSave = this.getAutoSaveChange(pageSlug);
@@ -492,7 +493,7 @@ class AppState {
         });
 
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.autoSavedChanges);
-    };
+    }
 
     removeAutoSaveChange(pageSlug) {
         const existingSave = this.getAutoSaveChange(pageSlug);
@@ -503,47 +504,51 @@ class AppState {
         this.#autoSavedChanges = this.#autoSavedChanges.filter(change => change.slug !== pageSlug);
 
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.autoSavedChanges);
-    };
+    }
 
     getAutoSaveChange(pageSlug) {
         return this.#autoSavedChanges.find(change => change.slug === pageSlug);        
-    };
+    }
 
     getFirstPage() {
         const firstPageSlug = this.#serializableState.order[0];
         return this.getPage(firstPageSlug);
-    };
+    }
 
     getPage(slug) {
         return this.#serializableState.pages.find(page => page.slug === slug)
-    };
+    }
 
     getSerializableState() {
         return this.#serializableState;
-    };
+    }
 
     hasAnyUnsavedChange() {
         return this.#hasUnsavedChanges || this.#autoSavedChanges.length > 0;
     }
-};
+}
                 class Utils {
 
-    state = null;
+    #state = null;
+
+    constructor(state) {
+        this.#state = state;
+    }
 
     getElement(id) {
         const element = document.getElementById(id);
         if (!element) {
-            throw new Error(`Could not find element on page with ID of ${id}`);
+            throw new Error(`Could not find element on page with ID of: [${id}]`);
         }
         return element;
-    };
+    }
 
     registerButtonClicks(definitions) {
         for (let i = 0; i < definitions.length; i++) {
             const definition = definitions[i];
             this.getElement(definition.id).onclick = () => definition.callback();
         }
-    };
+    }
 
     resize() {
         const height = `${window.innerHeight - 10}px`;
@@ -555,25 +560,25 @@ class AppState {
             Constants.Ids.Fragments.Settings.root,
             Constants.Ids.Fragments.Images.root
         ], (element) => element.style.height = height);
-    };
+    }
 
     beforeUnload() {
-        if (this.state.hasAnyUnsavedChange()) {
+        if (this.#state.hasAnyUnsavedChange()) {
             return 'You have unsaved changes. Are you sure you want to leave?';
         }
-    };
+    }
 
     updateQuery(pageTitle) {
         history.pushState(null, '', `?page=${encodeURIComponent(pageTitle)}`);
-    };
+    }
 
     #getElementsAndApply(ids, consumer) {
         const elements = ids.map(id => this.getElement(id));
         for (let i = 0; i < elements.length; i++) {
             consumer(elements[i]);
         }
-    };
-};
+    }
+}
 
 class Visibility {
 
@@ -585,27 +590,27 @@ class Visibility {
 
     showPreview() {
         this.#toggle(Constants.VisibilityOptions.revealPreview);
-    };
+    }
 
     showSettings() {
         this.#toggle(Constants.VisibilityOptions.revealSettings)
-    };
+    }
 
     showImages() {
         this.#toggle(Constants.VisibilityOptions.revealImages)
-    };
+    }
 
     showEditor() {
         this.#toggle(Constants.VisibilityOptions.revealEditor);
-    };
+    }
 
     isSettingsPageVisible() {
         return this.#isVisible(Constants.Ids.Fragments.Settings.root);
-    };
+    }
 
     isImagesPageVisible() {
         return this.#isVisible(Constants.Ids.Fragments.Images.root);
-    };
+    }
 
     #isVisible(elementId) {
         const element = this.#utils.getElement(elementId);
@@ -638,8 +643,8 @@ class Visibility {
         } else if (revealOption === Constants.VisibilityOptions.revealImages) {
             fragmentImages.style.display = Constants.Display.block;
         }
-    };
-};
+    }
+}
                 class Persistence {
 
     #appState = null;
@@ -666,7 +671,7 @@ class Visibility {
         const stateContainer = this.#utils.getElement(Constants.Ids.stateContainer);
         stateContainer.innerText = JSON.stringify(this.#appState.getSerializableState());
 
-        // Prepend the DOCTYPE since it's not part of the outerHTML property.
+        // Prepend the DOCTYPE declaration since it's not part of the outerHTML property.
         const documentString = `<!DOCTYPE html>${document.documentElement.outerHTML}`;
         const blob = new Blob([documentString], { type: 'text' });
 
@@ -676,7 +681,7 @@ class Visibility {
         link.download = `${this.#appState.title}.html`;
         link.click();
         URL.revokeObjectURL(objectUrl);
-    };
+    }
 
     rehydrateState() {
         let nextState = null;
@@ -690,7 +695,7 @@ class Visibility {
         this.validateState(nextState);
 
         this.#appState.hydrate(nextState);
-    };
+    }
 
     #getVersion(state) {
         if (!state || !state.version || typeof state.version !== 'string') {
@@ -698,7 +703,7 @@ class Visibility {
             return Constants.Versions.Current;
         }
         return state.version;
-    };
+    }
 
     validateState(state) {
         try {
@@ -713,7 +718,7 @@ class Visibility {
             alert(error);
             return false
         }
-    };
+    }
 
     #validateStateV1(state) {
         if (!state) {
@@ -771,28 +776,28 @@ class Visibility {
                 throw new Error(`Invalid order value. Order at index [${i}] does match the slug of any known page.`);
             }
         }
-    };
+    }
 
     #areAllUnique(values){
         return [...new Set(values)].length === values.length;
-    };
+    }
 
     #isString(value) {
         return typeof value === 'string'
-    };
+    }
 
     #isNonEmptyString(value) {
         return this.#isString(value) && value.trim() !== ''
-    };
+    }
     
     #isArray(value){
         return value && Array.isArray(value)
-    };
+    }
 
     #isNonEmptyArray(value) {
         return this.#isArray(value) && value.length > 0
-    };
-};
+    }
+}
                 class Navigation {
 
     #appState = null;
@@ -823,7 +828,7 @@ class Visibility {
                 callback: () => thisRef.#utils.updateQuery(Constants.LocationHashes.images)
             }
         ]);
-    };
+    }
 
     #onStatePropertyChanged(propertyName) {
         switch (propertyName) {
@@ -844,7 +849,7 @@ class Visibility {
                 this.#updateNavList();
                 break;
         }
-    };
+    }
 
     createNewPage() {
         let newPageTitle = prompt('New Page Title:');
@@ -875,21 +880,21 @@ class Visibility {
     #showSettings() {
         this.#visibility.showSettings();
         document.title = this.#appState.title;
-    };
+    }
 
     #showImages() {
         this.#visibility.showImages();
         document.title = this.#appState.title;
-    };
+    }
 
     #showEditor() {
         this.#visibility.showEditor();
-    };
+    }
 
     #rehydrate() {
         this.#updateNavList();
         this.#updateTitle(this.#appState.title);
-    };
+    }
 
     #updateNavList() {
         const navContainer = this.#utils.getElement(Constants.Ids.Fragments.Navigation.listContainer);
@@ -902,7 +907,7 @@ class Visibility {
 
         navContainer.innerHTML = '';
         navContainer.appendChild(list);
-    };
+    }
 
     #buildNavList(pages) {
         const list = document.createElement('ul');
@@ -922,13 +927,13 @@ class Visibility {
         }
 
         return list;
-    };
+    }
 
     #getImmediateChildren(parent) {
         return this.#appState.order
             .map(slug => this.#appState.pages.find(page => page.slug === slug))
             .filter(page => page.parent === parent.slug);
-    };
+    }
 
     #buildLink(page) {
         let prefix = '';
@@ -942,7 +947,7 @@ class Visibility {
         const thisRef = this;
         link.onclick = () => thisRef.#utils.updateQuery(page.title);
         return link;
-    };
+    }
 
     #updateTitle() {
         let prefix = '';
@@ -957,7 +962,7 @@ class Visibility {
         const pageTitle = this.#appState.currentPage.title;
         const nextTitle = `${notebookTitle} | ${pageTitle}`;
         document.title = nextTitle
-    };
+    }
 
     #navigateTo(pageTitle) {
         pageTitle = decodeURIComponent(pageTitle);
@@ -967,7 +972,7 @@ class Visibility {
             return;
         }
         this.#appState.currentPage = nextPage;
-    };
+    }
 
     listenForUrlChange() {
         const thisRef = this;
@@ -1003,7 +1008,7 @@ class Visibility {
             }
         }, 100);
     }
-};
+}
                 class Editor {
 
     #instance = null;
@@ -1060,7 +1065,7 @@ class Visibility {
                 callback: this.#cancelEdit.bind(this)
             }
         ]);
-    };
+    }
 
     #cancelEdit() {
         this.#appState.removeAutoSaveChange(this.#appState.currentPage.slug);
@@ -1074,26 +1079,26 @@ class Visibility {
         if (editorContainer.length > 0) {
             editorContainer[0].remove();
         }
-    };
+    }
 
     getEditorValue() {
         if (!this.#isInitialized()) {
             return null;
         }
         return this.#instance.value();
-    };
+    }
 
     #getTitleValue() {
         return this.#utils.getElement(Constants.Ids.Fragments.Editor.inputTitle).value.trim();
-    };
+    }
 
     #setTitleValue(value) {
         this.#utils.getElement(Constants.Ids.Fragments.Editor.inputTitle).value = value;
-    };
+    }
 
     #isInitialized() {
         return this.#instance && this.#instance !== null;
-    };
+    }
 
     isShowingEditor() {
         return this.#utils.getElement(Constants.Ids.Fragments.Editor.root).style.display.toLowerCase()
@@ -1104,7 +1109,7 @@ class Visibility {
         return this.#appState.pages
             .find(page => page.title === title && page.slug !== currentPageSlug)
                 !== undefined;
-    };
+    }
     
     editPage() {
         const page = this.#appState.currentPage;
@@ -1141,20 +1146,20 @@ class Visibility {
                 this.#instance.value(unsavedChanges.contents);
             }
         }
-    };
+    }
 
     // Checks to see if the "first" page is a parent of the
     // "second" page.
     #isParentOf(first, second) {
-        let nextPage = second.parent;
-        while (nextPage) {
-            if (nextPage === first.slug) {
+        let secondParentSlug = second.parent;
+        while (secondParentSlug) {
+            if (secondParentSlug === first.slug) {
                 return true;
             }
-            nextPage = nextPage.parent;
+            secondParentSlug = secondParentSlug.parent;
         }
         return false;
-    };
+    }
 
     #populateParentPageSelect(page) {
         // Populates a dropdown that allows the user to select
@@ -1183,7 +1188,7 @@ class Visibility {
             }
             select.appendChild(option);
         }
-    };
+    }
 
     #getSelectedParent() {
         return this.#utils.getElement(Constants.Ids.Fragments.Editor.selectParent).value;
@@ -1213,7 +1218,7 @@ class Visibility {
         this.#appState.setPage(currentPageTitle, currentPage);
         this.#utils.updateQuery(currentPage.title);
     }
-};
+}
                 class Preview {
 
     #appState = null;
@@ -1235,7 +1240,7 @@ class Visibility {
                 callback: this.#deletePage.bind(this)
             }
         ]);
-    };
+    }
 
     #onAppStateChanged(propertyName) {
         if (propertyName === Constants.StateProperties.state
@@ -1243,7 +1248,7 @@ class Visibility {
 
             this.#previewPage();
         }
-    };
+    }
 
     #previewPage() {
         const page = this.#appState.currentPage;
@@ -1254,7 +1259,7 @@ class Visibility {
         viewContainer.innerHTML = marked.parse(page.contents);
         this.#addEmbededImages(viewContainer);
         this.#addPageLinks(viewContainer);
-    };
+    }
 
     previewPreviousPage() {
         const order = this.#appState.order;
@@ -1265,7 +1270,7 @@ class Visibility {
 
         const nextPage = this.#appState.getPage(order[currentIndex - 1]);
         this.#utils.updateQuery(nextPage.title);
-    };
+    }
 
     previewNextPage() {
         const order = this.#appState.order;
@@ -1276,7 +1281,7 @@ class Visibility {
 
         const nextPage = this.#appState.getPage(order[currentIndex + 1]);
         this.#utils.updateQuery(nextPage.title);
-    };
+    }
 
     #addEmbededImages(viewContainer) {
         const images = viewContainer.getElementsByTagName('img');
@@ -1297,10 +1302,12 @@ class Visibility {
                 imageElement.setAttribute('alt', `[Image Error: image with name not found: ${desiredImageName}]`);
                 imageElement.classList.add(Constants.lookupErrorClass);
                 continue;
+            } else {
+                imageElement.setAttribute('src', image.data);
+                imageElement.setAttribute('style', 'max-width: 100%;');
             }
-            imageElement.setAttribute('src', image.data);
         }
-    };
+    }
 
     #addPageLinks(viewContainer) {
         const links = viewContainer.getElementsByTagName('a');
@@ -1330,7 +1337,7 @@ class Visibility {
                 linkElement.classList.add(Constants.lookupErrorClass);
             }
         }
-    };
+    }
 
     #deletePage() {
         const pageToDelete = this.#appState.currentPage;
@@ -1360,7 +1367,7 @@ class Visibility {
         
         this.#utils.updateQuery(this.#appState.getFirstPage().title);
     }
-};
+}
                 class Settings {
 
     #appState = null;
@@ -1397,6 +1404,10 @@ class Visibility {
             {
                 id: Constants.Ids.Fragments.Settings.buttonCopyData,
                 callback: this.#copyData.bind(this)
+            },
+            {
+                id: Constants.Ids.Fragments.Settings.buttonRevealData,
+                callback: this.#showDataArea.bind(this)
             }
         ])
     };
@@ -1426,7 +1437,8 @@ class Visibility {
     };
 
     #displayVersion() {
-        this.#utils.getElement(Constants.Ids.Fragments.Settings.versionNumberText).innerText = Constants.currentVersion
+        this.#utils.getElement(Constants.Ids.Fragments.Settings.versionNumberText)
+            .innerText = Constants.currentVersion;
     }
 
     #copyData() {
@@ -1442,11 +1454,13 @@ class Visibility {
         nextTitle = nextTitle.trim();
 
         this.#appState.title = nextTitle;
-    };
+
+        alert('Notebook title has been updated.');
+    }
 
     #resetTitle() {
         this.#utils.getElement(Constants.Ids.Fragments.Settings.currentTitle).innerText = this.#appState.title;
-    };
+    }
 
     #updateOrderTable() {
         if (this.#nextOrder.length === 0) {
@@ -1489,7 +1503,7 @@ class Visibility {
 
             orderTable.appendChild(row);
         }
-    };
+    }
 
     #moveUp(slug) {
         const index = this.#nextOrder.indexOf(slug);
@@ -1501,7 +1515,7 @@ class Visibility {
         this.#nextOrder[index - 1] = this.#nextOrder[index];
         this.#nextOrder[index] = temp;
         this.#updateOrderTable();
-    };
+    }
 
     #moveDown(slug) {
         const index = this.#nextOrder.indexOf(slug);
@@ -1513,16 +1527,17 @@ class Visibility {
         this.#nextOrder[index + 1] = this.#nextOrder[index];
         this.#nextOrder[index] = temp;
         this.#updateOrderTable();
-    };
+    }
 
     #resetOrder() {
         this.#nextOrder = this.#appState.order.slice();
         this.#updateOrderTable()
-    };
+    }
 
     #saveReorder() {
         this.#appState.order = this.#nextOrder.slice();
-    };
+        alert('Page order has been updated.');
+    }
 
     #importData() {
         let newState = this.#utils.getElement(Constants.Ids.Fragments.Settings.dataArea).value;
@@ -1545,11 +1560,49 @@ class Visibility {
         this.#appState.hasUnsavedChanges = true;
         this.#utils.getElement(Constants.Ids.stateContainer).innerText = newState;
         this.#appState.hydrate(newState);
-    };
+    }
 
     #displayData() {
+        if (!this.#isDataAreaVisible()) {
+            return;
+        }
+
         this.#utils.getElement(Constants.Ids.Fragments.Settings.dataArea).value
             = JSON.stringify(this.#appState.getSerializableState());
+    }
+
+    #isDataAreaVisible() {
+        const dataArea = this.#utils.getElement(Constants.Ids.Fragments.Settings.dataArea);
+        return dataArea.style.display !== Constants.Display.none;
+    }
+
+    #showDataArea() {
+        if (this.#isDataAreaVisible()) {
+            return;
+        }
+
+        this.#utils.getElement(Constants.Ids.Fragments.Settings.dataArea)
+            .style.display = Constants.Display.block;
+        
+        this.#utils.getElement(Constants.Ids.Fragments.Settings.buttonRevealData)
+            .style.display = Constants.Display.none;
+        
+        this.#displayData();
+    }
+
+    hideDataArea() {
+        if (!this.#isDataAreaVisible()) {
+            return;
+        }
+
+        const dataArea = this.#utils.getElement(Constants.Ids.Fragments.Settings.dataArea);
+        dataArea.style.display = Constants.Display.none;
+        dataArea.value = '';
+        
+        this.#utils.getElement(Constants.Ids.Fragments.Settings.buttonRevealData)
+            .style.display = Constants.Display.block;
+        
+        this.#displayData();
     }
 };
                 class Images {
@@ -1567,7 +1620,7 @@ class Visibility {
     #registerButtonClickEvents() {
         this.#utils.getElement(Constants.Ids.Fragments.Images.buttonEmbed)
             .onclick = this.#onEmbedImageClicked.bind(this);
-    };
+    }
 
     #onStatePropertyChanged(propertyName) {
         if (propertyName === Constants.StateProperties.images
@@ -1575,7 +1628,7 @@ class Visibility {
 
             this.#updateImageList();
         }
-    };
+    }
 
     #onEmbedImageClicked() {
         const imageNameInput = this.#utils.getElement(Constants.Ids.Fragments.Images.imageName);
@@ -1605,12 +1658,12 @@ class Visibility {
             imageNameInput.value = null;
         }
         reader.readAsDataURL(imageInput.files[0]);
-    };
+    }
 
     #doesNameExist(newImageName) {
         return this.#appState.images.map(image => image.name)
             .indexOf(newImageName) !== -1;
-    };
+    }
 
     #updateImageList() {
         const images = this.#appState.images;
@@ -1661,7 +1714,7 @@ class Visibility {
 
             imageTable.append(row);
         }
-    };
+    }
 
     #onUpdateImageNameClicked(currentImageName) {
         let newImageName = prompt('Enter new name for image:');
@@ -1681,7 +1734,7 @@ class Visibility {
 
         const index = this.#appState.images.indexOf(image);
         this.#appState.setImage(index, image);
-    };
+    }
 
     #onDeleteImageClicked(imageName) {
         if (!confirm('Are you sure you want to delete this image? This action cannot be undone.')) {
@@ -1689,12 +1742,12 @@ class Visibility {
         }
 
         this.#appState.deleteImage(imageName);
-    };
-};
+    }
+}
                 window.onload = () => {
 
     const appState = new AppState();
-    const utils = new Utils();
+    const utils = new Utils(appState);
     const visibility = new Visibility(utils);
 
     const editor = new Editor(appState, visibility, utils);
@@ -1702,9 +1755,7 @@ class Visibility {
     new Images(appState, utils);
     const navigation = new Navigation(appState, utils, visibility);
     const preview = new Preview(appState, utils, visibility);
-    new Settings(appState, utils, persistence);
-
-    utils.state = appState;
+    const settings = new Settings(appState, utils, persistence);
 
     persistence.rehydrateState();
 
@@ -1715,6 +1766,7 @@ class Visibility {
                 if (editor.isShowingEditor()) {
                     return;
                 }
+                settings.hideDataArea();
                 persistence.save();
             }
         }
@@ -1744,6 +1796,7 @@ class Visibility {
                 if (editor.isShowingEditor()) {
                     editor.updatePage();
                 } else {
+                    settings.hideDataArea();
                     persistence.save();
                 }
                 e.preventDefault();
@@ -1910,7 +1963,11 @@ class Visibility {
 
     <br />
 
-    <textarea id="fragment-settings-data-area"></textarea>
+    <a href="javascript:void(0);"
+        id="fragment-settings-button-reveal-data"
+        class="standard-button-link standard-button-link-fixed">Reveal Data</a>
+
+    <textarea id="fragment-settings-data-area" style="display: none;"></textarea>
 </div>
                 <div id="fragment-images">
     <h1>Images</h1>

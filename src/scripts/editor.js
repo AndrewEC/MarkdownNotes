@@ -140,12 +140,12 @@ class Editor {
     // Checks to see if the "first" page is a parent of the
     // "second" page.
     #isParentOf(first, second) {
-        let nextPage = second.parent;
-        while (nextPage) {
-            if (nextPage === first.slug) {
+        let secondParentSlug = second.parent;
+        while (secondParentSlug) {
+            if (secondParentSlug === first.slug) {
                 return true;
             }
-            nextPage = nextPage.parent;
+            secondParentSlug = secondParentSlug.parent;
         }
         return false;
     }

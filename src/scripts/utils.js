@@ -1,11 +1,15 @@
 class Utils {
 
-    state = null;
+    #state = null;
+
+    constructor(state) {
+        this.#state = state;
+    }
 
     getElement(id) {
         const element = document.getElementById(id);
         if (!element) {
-            throw new Error(`Could not find element on page with ID of ${id}`);
+            throw new Error(`Could not find element on page with ID of: [${id}]`);
         }
         return element;
     }
@@ -30,7 +34,7 @@ class Utils {
     }
 
     beforeUnload() {
-        if (this.state.hasAnyUnsavedChange()) {
+        if (this.#state.hasAnyUnsavedChange()) {
             return 'You have unsaved changes. Are you sure you want to leave?';
         }
     }

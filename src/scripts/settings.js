@@ -34,6 +34,10 @@ class Settings {
             {
                 id: Constants.Ids.Fragments.Settings.buttonCopyData,
                 callback: this.#copyData.bind(this)
+            },
+            {
+                id: Constants.Ids.Fragments.Settings.buttonRevealData,
+                callback: this.#showDataArea.bind(this)
             }
         ])
     };
@@ -63,7 +67,8 @@ class Settings {
     };
 
     #displayVersion() {
-        this.#utils.getElement(Constants.Ids.Fragments.Settings.versionNumberText).innerText = Constants.currentVersion
+        this.#utils.getElement(Constants.Ids.Fragments.Settings.versionNumberText)
+            .innerText = Constants.currentVersion;
     }
 
     #copyData() {
@@ -79,6 +84,8 @@ class Settings {
         nextTitle = nextTitle.trim();
 
         this.#appState.title = nextTitle;
+
+        alert('Notebook title has been updated.');
     }
 
     #resetTitle() {
@@ -159,6 +166,7 @@ class Settings {
 
     #saveReorder() {
         this.#appState.order = this.#nextOrder.slice();
+        alert('Page order has been updated.');
     }
 
     #importData() {
@@ -185,7 +193,45 @@ class Settings {
     }
 
     #displayData() {
+        if (!this.#isDataAreaVisible()) {
+            return;
+        }
+
         this.#utils.getElement(Constants.Ids.Fragments.Settings.dataArea).value
             = JSON.stringify(this.#appState.getSerializableState());
+    }
+
+    #isDataAreaVisible() {
+        const dataArea = this.#utils.getElement(Constants.Ids.Fragments.Settings.dataArea);
+        return dataArea.style.display !== Constants.Display.none;
+    }
+
+    #showDataArea() {
+        if (this.#isDataAreaVisible()) {
+            return;
+        }
+
+        this.#utils.getElement(Constants.Ids.Fragments.Settings.dataArea)
+            .style.display = Constants.Display.block;
+        
+        this.#utils.getElement(Constants.Ids.Fragments.Settings.buttonRevealData)
+            .style.display = Constants.Display.none;
+        
+        this.#displayData();
+    }
+
+    hideDataArea() {
+        if (!this.#isDataAreaVisible()) {
+            return;
+        }
+
+        const dataArea = this.#utils.getElement(Constants.Ids.Fragments.Settings.dataArea);
+        dataArea.style.display = Constants.Display.none;
+        dataArea.value = '';
+        
+        this.#utils.getElement(Constants.Ids.Fragments.Settings.buttonRevealData)
+            .style.display = Constants.Display.block;
+        
+        this.#displayData();
     }
 };
