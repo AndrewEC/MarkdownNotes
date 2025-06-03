@@ -72,7 +72,7 @@ class Settings {
     }
 
     #copyData() {
-        const data = this.#utils.getElement(Constants.Ids.Fragments.Settings.dataArea).value;
+        const data = JSON.stringify(this.#appState.getSerializableState());
         navigator.clipboard.writeText(data).then((_) => alert('Data copied to clipboard.'));
     }
 
@@ -89,7 +89,8 @@ class Settings {
     }
 
     #resetTitle() {
-        this.#utils.getElement(Constants.Ids.Fragments.Settings.currentTitle).innerText = this.#appState.title;
+        this.#utils.getElement(Constants.Ids.Fragments.Settings.currentTitle)
+            .innerText = this.#appState.title;
     }
 
     #updateOrderTable() {

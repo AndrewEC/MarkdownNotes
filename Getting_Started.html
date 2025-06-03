@@ -120,7 +120,7 @@ td, th {
 }
 
 #root-content-container{
-    width: 80%;
+    width: 77%;
     background-color: #eee;
 }
 /* ===== ===== Root Styles ===== ===== */
@@ -166,7 +166,7 @@ td, th {
 }
 
 #root-nav-container {
-    width: 20%;
+    width: 23%;
     background-color: #ddd;
 }
 
@@ -176,6 +176,9 @@ td, th {
 
 #fragment-navigation-page-list-container > ul {
     margin-top: 5px;
+}
+
+#fragment-navigation-page-list-container ul {
     padding-left: 20px;
 }
 
@@ -1440,7 +1443,7 @@ class Visibility {
     }
 
     #copyData() {
-        const data = this.#utils.getElement(Constants.Ids.Fragments.Settings.dataArea).value;
+        const data = JSON.stringify(this.#appState.getSerializableState());
         navigator.clipboard.writeText(data).then((_) => alert('Data copied to clipboard.'));
     }
 
@@ -1457,7 +1460,8 @@ class Visibility {
     }
 
     #resetTitle() {
-        this.#utils.getElement(Constants.Ids.Fragments.Settings.currentTitle).innerText = this.#appState.title;
+        this.#utils.getElement(Constants.Ids.Fragments.Settings.currentTitle)
+            .innerText = this.#appState.title;
     }
 
     #updateOrderTable() {
@@ -1890,7 +1894,7 @@ class Visibility {
     </label>
     <label>
         Parent:
-        <select id="fragment-editor-select-parent" class="standard-button"><option value="none">None</option><option value="41fb5605-37b6-4bfa-b2e7-a507d77faca6">Welcome to MarkdownNotes</option><option value="6fdf5c81-d7b6-48b5-97ca-ff77f3117928" selected="">How-To</option><option value="eadd53f9-071c-4afb-bd92-fbb03dfff266">Shortcuts</option><option value="67de353b-d5bb-4b79-ba7b-bf3472c75e97">Autosave</option><option value="c4f5b5ee-15ae-47e0-900c-f16db50048be">Markdown Cheat Sheet</option><option value="6b7c0445-5573-48d9-b05c-5a6dfbafa46a">Linking Pages</option><option value="ab6bc760-bc7d-44b2-8d09-c73fbed256f8">Embedding Images</option></select>
+        <select id="fragment-editor-select-parent" class="standard-button"></select>
     </label>
     <br>
 
