@@ -139,6 +139,7 @@ td, th {
 #fragment-preview {
     box-sizing: border-box;
     overflow-y: scroll;
+    padding-bottom: 50px;
 }
 
 #fragment-preview-view-container {
@@ -163,6 +164,7 @@ td, th {
 #fragment-navigation {
     box-sizing: border-box;
     overflow-y: scroll;
+    padding-bottom: 50px;
 }
 
 #root-nav-container {
@@ -1843,12 +1845,12 @@ class Visibility {
 };
             })();
         </script>
-    <title>MarkdownNotes - Getting Started | Welcome to MarkdownNotes</title></head>
+    <title>MarkdownNotes - Getting Started | Updating</title></head>
 
     <body>
         <div id="root-container">
             <div id="root-nav-container" class="root-container">
-                <div id="fragment-navigation" style="height: 549px;">
+                <div id="fragment-navigation" style="height: 693px;">
     <h2 id="fragment-navigation-title" class="navigation-title">MarkdownNotes - Getting Started</h2>
 
     <hr class="navigation-rule">
@@ -1870,19 +1872,30 @@ class Visibility {
 </div>
             </div>
             <div id="root-content-container" class="root-container">
-                <div id="fragment-preview" style="display: block; height: 549px;">
+                <div id="fragment-preview" style="display: block; height: 693px;">
     <a id="fragment-preview-button-edit" class="standard-button-link standard-button-link-fixed" href="javascript:void(0);">Edit</a>
 
     <a id="fragment-preview-button-delete" class="standard-button-link standard-button-link-fixed" href="javascript:void(0);">Delete</a>
 
-    <div id="fragment-preview-view-container"><h1>Welcome to MarkdownNotes!!!</h1>
-<p>MarkdownNotes is a single, self-contained, HTML file that provides functionality to edit and view Markdown formatted text in a Notebook esque format.</p>
-<p>To help get you started there a few <a href="javascript:void(0);">How-To</a> pages available that explain some of the specifics of this program.</p>
-<p>Additionally, there is a <a href="javascript:void(0);">Markdown Cheat Sheet</a> page that provides a summary of the common markdown notations that are supported by MarkdownNotes.</p>
-<p>You can navigate to these pages by clicking the link in the previous sentence or clicking one of the links in the left-hand nav.</p>
+    <div id="fragment-preview-view-container"><h1>Updating</h1>
+<p>MarkdownNotes doesn't provide an automated update process.</p>
+<p>However, it does provide a simple copy/paste facility to accomplish the task of updating your notebook.</p>
+<p>Whenever a new version of MarkdownNotes is released simply:</p>
+<ol>
+<li>Download the new version of MarkdownNotes.</li>
+<li>Open up the new version and your existing Notebook.</li>
+<li>In your existing Notebook click the <strong>Settings</strong> button from the left-hand nav and scroll down to the bottom of the page.</li>
+<li>Under the <strong>Data Import/Export</strong> heading click the <strong>Reveal Data</strong> button and in the text area displayed you can find a JSON representation of the data in your Notebook.</li>
+<li>Copy the data from the text area.</li>
+<li>Go to the Settings page in the new version of MarkdownNotes you just downloaded.</li>
+<li>Paste the JSON data into the text area (overwriting anything that is already there).</li>
+<li>Click <strong>Import</strong>.</li>
+<li>Click <strong>Save</strong> and save the file to a location of your choosing.</li>
+<li>You should now have a new version of Markdown notes with all your previous Notebook data intact.</li>
+</ol>
 </div>
 </div>
-                <div id="fragment-editor" style="display: none; height: 549px;">
+                <div id="fragment-editor" style="display: none; height: 693px;">
     <a href="javascript:void(0);" id="fragment-editor-button-update" class="standard-button-link standard-button-link-fixed">Update Page</a>
 
     <a href="javascript:void(0);" id="fragment-editor-button-cancel" class="standard-button-link standard-button-link-fixed">Cancel</a>
@@ -1902,7 +1915,7 @@ class Visibility {
         <textarea id="fragment-editor-area" style="display: none;"></textarea>
     </div>
 </div>
-                <div id="fragment-settings" style="display: none; height: 549px;">
+                <div id="fragment-settings" style="display: none; height: 693px;">
     <h1>Settings</h1>
     <p>Version: <span id="fragment-settings-version-number">0.0.2</span></p>
 
@@ -1942,7 +1955,7 @@ class Visibility {
 
     <textarea id="fragment-settings-data-area" style="display: none;"></textarea>
 </div>
-                <div id="fragment-images" style="display: none; height: 549px;">
+                <div id="fragment-images" style="display: none; height: 693px;">
     <h1>Images</h1>
     <label>
         Image Name: 

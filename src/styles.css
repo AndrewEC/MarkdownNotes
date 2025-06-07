@@ -97,6 +97,7 @@ td, th {
 #fragment-preview {
     box-sizing: border-box;
     overflow-y: scroll;
+    padding-bottom: 50px;
 }
 
 #fragment-preview-view-container {
@@ -121,6 +122,7 @@ td, th {
 #fragment-navigation {
     box-sizing: border-box;
     overflow-y: scroll;
+    padding-bottom: 50px;
 }
 
 #root-nav-container {
