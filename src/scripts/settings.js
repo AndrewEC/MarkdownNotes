@@ -68,7 +68,7 @@ class Settings {
 
     #displayVersion() {
         this.#utils.getElement(Constants.Ids.Fragments.Settings.versionNumberText)
-            .innerText = Constants.currentVersion;
+            .innerText = Constants.Versions.App;
     }
 
     #copyData() {

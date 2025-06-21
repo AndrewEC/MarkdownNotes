@@ -245,7 +245,6 @@ td, th {
         <script type="text/javascript">
             (function() {
                 const Constants = {
-    currentVersion: '0.0.2',
     Ids: {
         rootContainer: 'root-container',
         Fragments: {
@@ -335,8 +334,11 @@ td, th {
         period: 190
     },
     Versions: {
-        Current: '1',
-        v1: '1'
+        Save: {
+            Current: '1',
+            v1: '1'
+        },
+        App: '0.0.3'
     }
 };
 
@@ -513,6 +515,10 @@ class AppState {
         return this.#autoSavedChanges.find(change => change.slug === pageSlug);        
     }
 
+    doesPageHaveUnsavedChange(pageSlug) {
+        return this.getAutoSaveChange(pageSlug) !== undefined;
+    }
+
     getFirstPage() {
         const firstPageSlug = this.#serializableState.order[0];
         return this.getPage(firstPageSlug);
@@ -582,8 +588,7 @@ class AppState {
         }
     }
 }
-
-class Visibility {
+                class Visibility {
 
     #utils = null;
 
@@ -702,8 +707,7 @@ class Visibility {
 
     #getVersion(state) {
         if (!state || !state.version || typeof state.version !== 'string') {
-            state.version = Constants.Versions.Current;
-            return Constants.Versions.Current;
+            state.version = Constants.Versions.Save.Current;
         }
         return state.version;
     }
@@ -711,7 +715,7 @@ class Visibility {
     validateState(state) {
         try {
             const version = this.#getVersion(state);
-            if (version === Constants.Versions.v1) {
+            if (version === Constants.Versions.Save.v1) {
                 this.#validateStateV1(state);
             } else {
                 throw new Error(`Data contains an invalid version of: ${version}`);
@@ -882,12 +886,12 @@ class Visibility {
 
     #showSettings() {
         this.#visibility.showSettings();
-        document.title = this.#appState.title;
+        document.title = `${this.#appState.title} | Settings`;
     }
 
     #showImages() {
         this.#visibility.showImages();
-        document.title = this.#appState.title;
+        document.title = `${this.#appState.title} | Images`;
     }
 
     #showEditor() {
@@ -940,7 +944,7 @@ class Visibility {
 
     #buildLink(page) {
         let prefix = '';
-        if (this.#appState.getAutoSaveChange(page.slug)) {
+        if (this.#appState.doesPageHaveUnsavedChange(page.slug)) {
             prefix = '* ';
         }
 
@@ -1014,7 +1018,7 @@ class Visibility {
 }
                 class Editor {
 
-    #instance = null;
+    #easyMdeInstance = null;
 
     #appState = null;
     #visibility = null;
@@ -1030,6 +1034,10 @@ class Visibility {
     }
 
     #startPageEditListener() {
+        // Periodically check if a page is being edited and if there are
+        // changes that have been made to the page that have not yet
+        // been saved.
+
         const thisRef = this;
         setInterval(() => {
             if (thisRef.#isInitialized() && thisRef.isShowingEditor()) {
@@ -1042,7 +1050,7 @@ class Visibility {
                 thisRef.#lastAutosaveCheckTime = currentTime;
 
                 const savedContent = thisRef.#appState.currentPage.contents;
-                const currentContent = thisRef.#instance.value();
+                const currentContent = thisRef.#easyMdeInstance.value();
                 if (savedContent === currentContent) {
                     return;
                 }
@@ -1076,7 +1084,7 @@ class Visibility {
     }
 
     removeEditor() {
-        this.#instance = null;
+        this.#easyMdeInstance = null;
 
         const editorContainer = document.getElementsByClassName('EasyMDEContainer');
         if (editorContainer.length > 0) {
@@ -1088,7 +1096,7 @@ class Visibility {
         if (!this.#isInitialized()) {
             return null;
         }
-        return this.#instance.value();
+        return this.#easyMdeInstance.value();
     }
 
     #getTitleValue() {
@@ -1100,7 +1108,7 @@ class Visibility {
     }
 
     #isInitialized() {
-        return this.#instance && this.#instance !== null;
+        return this.#easyMdeInstance && this.#easyMdeInstance !== null;
     }
 
     isShowingEditor() {
@@ -1123,7 +1131,7 @@ class Visibility {
         this.#populateParentPageSelect(page);
 
         if (!this.#isInitialized()) {
-            this.#instance = new EasyMDE({
+            this.#easyMdeInstance = new EasyMDE({
                 element: this.#utils.getElement(Constants.Ids.Fragments.Editor.area),
                 autoDownloadFontAwesome: false,
                 spellChecker: false
@@ -1139,14 +1147,14 @@ class Visibility {
         }, 0);
 
         this.#setTitleValue(page.title);
-        this.#instance.value(page.contents);
+        this.#easyMdeInstance.value(page.contents);
 
         const unsavedChanges = this.#appState.getAutoSaveChange(page.slug);
         if (unsavedChanges) {
             if (!confirm('You have unsaved changes for this page. Pickup where you leftoff?')) {
                 this.#appState.removeAutoSaveChange(page.slug);
             } else {
-                this.#instance.value(unsavedChanges.contents);
+                this.#easyMdeInstance.value(unsavedChanges.contents);
             }
         }
     }
@@ -1167,6 +1175,7 @@ class Visibility {
     #populateParentPageSelect(page) {
         // Populates a dropdown that allows the user to select
         // a page to be a parent of this page.
+        // The input "page" argument can be null if the user is creating a new page.
 
         const select = this.#utils.getElement(Constants.Ids.Fragments.Editor.selectParent);
         select.innerHTML = '';
@@ -1199,7 +1208,6 @@ class Visibility {
 
     updatePage() {
         const currentPage = this.#appState.currentPage;
-        const currentPageTitle = currentPage.title;
         
         this.#appState.removeAutoSaveChange(this.#appState.currentPage.slug);
 
@@ -1208,7 +1216,7 @@ class Visibility {
             return alert('A page with this title already exists. Ensure that all page titles are unique.');
         }
 
-        currentPage.contents = this.#instance.value();
+        currentPage.contents = this.#easyMdeInstance.value();
         currentPage.title = nextPageTitle;
 
         const parent = this.#getSelectedParent();
@@ -1218,7 +1226,7 @@ class Visibility {
             currentPage.parent = null;
         }
 
-        this.#appState.setPage(currentPageTitle, currentPage);
+        this.#appState.setPage(currentPage.title, currentPage);
         this.#utils.updateQuery(currentPage.title);
     }
 }
@@ -1287,6 +1295,10 @@ class Visibility {
     }
 
     #addEmbededImages(viewContainer) {
+        // Find all img tags within the HTML of the container, check if the source (src)
+        // of the image starts with image/, then attempt to replace the src
+        // with the base64 encoded data of the actual image.
+
         const images = viewContainer.getElementsByTagName('img');
         if (images.length === 0) {
             return;
@@ -1313,6 +1325,10 @@ class Visibility {
     }
 
     #addPageLinks(viewContainer) {
+        // Find all links within the HTML of the container, check if the href of the link
+        // starts with page/ then attempt to update the link to call a javascript
+        // function to navigate the user to the desired page.
+
         const links = viewContainer.getElementsByTagName('a');
         if (links.length === 0) {
             return;
@@ -1441,7 +1457,7 @@ class Visibility {
 
     #displayVersion() {
         this.#utils.getElement(Constants.Ids.Fragments.Settings.versionNumberText)
-            .innerText = Constants.currentVersion;
+            .innerText = Constants.Versions.App;
     }
 
     #copyData() {
@@ -1845,7 +1861,7 @@ class Visibility {
 };
             })();
         </script>
-    <title>MarkdownNotes - Getting Started | Updating</title></head>
+    <title>MarkdownNotes - Getting Started | Welcome to MarkdownNotes</title></head>
 
     <body>
         <div id="root-container">
@@ -1872,27 +1888,16 @@ class Visibility {
 </div>
             </div>
             <div id="root-content-container" class="root-container">
-                <div id="fragment-preview" style="display: block; height: 693px;">
+                <div id="fragment-preview" style="display: none; height: 693px;">
     <a id="fragment-preview-button-edit" class="standard-button-link standard-button-link-fixed" href="javascript:void(0);">Edit</a>
 
     <a id="fragment-preview-button-delete" class="standard-button-link standard-button-link-fixed" href="javascript:void(0);">Delete</a>
 
-    <div id="fragment-preview-view-container"><h1>Updating</h1>
-<p>MarkdownNotes doesn't provide an automated update process.</p>
-<p>However, it does provide a simple copy/paste facility to accomplish the task of updating your notebook.</p>
-<p>Whenever a new version of MarkdownNotes is released simply:</p>
-<ol>
-<li>Download the new version of MarkdownNotes.</li>
-<li>Open up the new version and your existing Notebook.</li>
-<li>In your existing Notebook click the <strong>Settings</strong> button from the left-hand nav and scroll down to the bottom of the page.</li>
-<li>Under the <strong>Data Import/Export</strong> heading click the <strong>Reveal Data</strong> button and in the text area displayed you can find a JSON representation of the data in your Notebook.</li>
-<li>Copy the data from the text area.</li>
-<li>Go to the Settings page in the new version of MarkdownNotes you just downloaded.</li>
-<li>Paste the JSON data into the text area (overwriting anything that is already there).</li>
-<li>Click <strong>Import</strong>.</li>
-<li>Click <strong>Save</strong> and save the file to a location of your choosing.</li>
-<li>You should now have a new version of Markdown notes with all your previous Notebook data intact.</li>
-</ol>
+    <div id="fragment-preview-view-container"><h1>Welcome to MarkdownNotes!!!</h1>
+<p>MarkdownNotes is a single, self-contained, HTML file that provides functionality to edit and view Markdown formatted text in a Notebook esque format.</p>
+<p>To help get you started there a few <a href="javascript:void(0);">How-To</a> pages available that explain some of the specifics of this program.</p>
+<p>Additionally, there is a <a href="javascript:void(0);">Markdown Cheat Sheet</a> page that provides a summary of the common markdown notations that are supported by MarkdownNotes.</p>
+<p>You can navigate to these pages by clicking the link in the previous sentence or clicking one of the links in the left-hand nav.</p>
 </div>
 </div>
                 <div id="fragment-editor" style="display: none; height: 693px;">
@@ -1915,9 +1920,9 @@ class Visibility {
         <textarea id="fragment-editor-area" style="display: none;"></textarea>
     </div>
 </div>
-                <div id="fragment-settings" style="display: none; height: 693px;">
+                <div id="fragment-settings" style="display: block; height: 693px;">
     <h1>Settings</h1>
-    <p>Version: <span id="fragment-settings-version-number">0.0.2</span></p>
+    <p>Version: <span id="fragment-settings-version-number">0.0.3</span></p>
 
     <hr>
 

@@ -52,8 +52,7 @@ class Persistence {
 
     #getVersion(state) {
         if (!state || !state.version || typeof state.version !== 'string') {
-            state.version = Constants.Versions.Current;
-            return Constants.Versions.Current;
+            state.version = Constants.Versions.Save.Current;
         }
         return state.version;
     }
@@ -61,7 +60,7 @@ class Persistence {
     validateState(state) {
         try {
             const version = this.#getVersion(state);
-            if (version === Constants.Versions.v1) {
+            if (version === Constants.Versions.Save.v1) {
                 this.#validateStateV1(state);
             } else {
                 throw new Error(`Data contains an invalid version of: ${version}`);

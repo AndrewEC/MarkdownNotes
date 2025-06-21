@@ -79,12 +79,12 @@ class Navigation {
 
     #showSettings() {
         this.#visibility.showSettings();
-        document.title = this.#appState.title;
+        document.title = `${this.#appState.title} | Settings`;
     }
 
     #showImages() {
         this.#visibility.showImages();
-        document.title = this.#appState.title;
+        document.title = `${this.#appState.title} | Images`;
     }
 
     #showEditor() {
@@ -137,7 +137,7 @@ class Navigation {
 
     #buildLink(page) {
         let prefix = '';
-        if (this.#appState.getAutoSaveChange(page.slug)) {
+        if (this.#appState.doesPageHaveUnsavedChange(page.slug)) {
             prefix = '* ';
         }
 

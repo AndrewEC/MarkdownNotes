@@ -1,6 +1,6 @@
 class Editor {
 
-    #instance = null;
+    #easyMdeInstance = null;
 
     #appState = null;
     #visibility = null;
@@ -16,6 +16,10 @@ class Editor {
     }
 
     #startPageEditListener() {
+        // Periodically check if a page is being edited and if there are
+        // changes that have been made to the page that have not yet
+        // been saved.
+
         const thisRef = this;
         setInterval(() => {
             if (thisRef.#isInitialized() && thisRef.isShowingEditor()) {
@@ -28,7 +32,7 @@ class Editor {
                 thisRef.#lastAutosaveCheckTime = currentTime;
 
                 const savedContent = thisRef.#appState.currentPage.contents;
-                const currentContent = thisRef.#instance.value();
+                const currentContent = thisRef.#easyMdeInstance.value();
                 if (savedContent === currentContent) {
                     return;
                 }
@@ -62,7 +66,7 @@ class Editor {
     }
 
     removeEditor() {
-        this.#instance = null;
+        this.#easyMdeInstance = null;
 
         const editorContainer = document.getElementsByClassName('EasyMDEContainer');
         if (editorContainer.length > 0) {
@@ -74,7 +78,7 @@ class Editor {
         if (!this.#isInitialized()) {
             return null;
         }
-        return this.#instance.value();
+        return this.#easyMdeInstance.value();
     }
 
     #getTitleValue() {
@@ -86,7 +90,7 @@ class Editor {
     }
 
     #isInitialized() {
-        return this.#instance && this.#instance !== null;
+        return this.#easyMdeInstance && this.#easyMdeInstance !== null;
     }
 
     isShowingEditor() {
@@ -109,7 +113,7 @@ class Editor {
         this.#populateParentPageSelect(page);
 
         if (!this.#isInitialized()) {
-            this.#instance = new EasyMDE({
+            this.#easyMdeInstance = new EasyMDE({
                 element: this.#utils.getElement(Constants.Ids.Fragments.Editor.area),
                 autoDownloadFontAwesome: false,
                 spellChecker: false
@@ -125,14 +129,14 @@ class Editor {
         }, 0);
 
         this.#setTitleValue(page.title);
-        this.#instance.value(page.contents);
+        this.#easyMdeInstance.value(page.contents);
 
         const unsavedChanges = this.#appState.getAutoSaveChange(page.slug);
         if (unsavedChanges) {
             if (!confirm('You have unsaved changes for this page. Pickup where you leftoff?')) {
                 this.#appState.removeAutoSaveChange(page.slug);
             } else {
-                this.#instance.value(unsavedChanges.contents);
+                this.#easyMdeInstance.value(unsavedChanges.contents);
             }
         }
     }
@@ -153,6 +157,7 @@ class Editor {
     #populateParentPageSelect(page) {
         // Populates a dropdown that allows the user to select
         // a page to be a parent of this page.
+        // The input "page" argument can be null if the user is creating a new page.
 
         const select = this.#utils.getElement(Constants.Ids.Fragments.Editor.selectParent);
         select.innerHTML = '';
@@ -185,7 +190,6 @@ class Editor {
 
     updatePage() {
         const currentPage = this.#appState.currentPage;
-        const currentPageTitle = currentPage.title;
         
         this.#appState.removeAutoSaveChange(this.#appState.currentPage.slug);
 
@@ -194,7 +198,7 @@ class Editor {
             return alert('A page with this title already exists. Ensure that all page titles are unique.');
         }
 
-        currentPage.contents = this.#instance.value();
+        currentPage.contents = this.#easyMdeInstance.value();
         currentPage.title = nextPageTitle;
 
         const parent = this.#getSelectedParent();
@@ -204,7 +208,7 @@ class Editor {
             currentPage.parent = null;
         }
 
-        this.#appState.setPage(currentPageTitle, currentPage);
+        this.#appState.setPage(currentPage.title, currentPage);
         this.#utils.updateQuery(currentPage.title);
     }
 }

@@ -19,20 +19,19 @@ This script will combine all the source files into a single html file and write 
 ---
 
 ### Architecture
-
 This project attempts to stay relatively simple. It does not require any special build tools (except for the `Bundle.ps1` script), node/npm, and only a few external dependencies (dependencies are listed at the bottom of this readme).
 
 #### Fragments
 The app's source is broken down into fragments. A fragment will consist of a partial .html file and a single .js file. These files are ultimately combined into the resulting bundle file.
 
-The partial .html files are located in `src/fragments` and the .js files are located in `src/scripts`. Generally there should be a single .html file and a single .js file per fragment with matching names.
+The partial .html files are located in `src/markup` and the .js files are located in `src/scripts`. Generally there should be a single .html file and a single .js file per fragment with matching names.
 
 The .html files contain the markup for the fragment. The .js files contain any state specific to the fragment, handle updating the fragment upon certain state changes, and provide callbacks for things like button click events.
 
 #### State Management
 The global, serializable, properties of the app are located in the `State` class in the `state.js` file. A singleton instance of this class is shared among all the fragments.
 
-Fragments can make updates to the state via the property getters and setters and also receive updates whenever the state changes. Fragment can register a callback method using `State.addPropertyChangedListener`. The callback method will receive a single string parameter representing the name of the property that changed within the global state.
+Fragments can make updates to the state via the property getters and setters and also receive updates whenever the state changes. Fragments can register a callback via `State.addPropertyChangedListener`. The callback will be invoked whenever certain properties of the global state are changed and said callback will be provided a single parameter which is the name of the property that changed.
 
 Fragments should not talk to eachother directly. Rather, they should push updates to the global state and other fragments should listen for state changes and update accordingly.
 

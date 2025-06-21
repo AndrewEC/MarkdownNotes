@@ -1,5 +1,4 @@
 const Constants = {
-    currentVersion: '0.0.2',
     Ids: {
         rootContainer: 'root-container',
         Fragments: {
@@ -89,8 +88,11 @@ const Constants = {
         period: 190
     },
     Versions: {
-        Current: '1',
-        v1: '1'
+        Save: {
+            Current: '1',
+            v1: '1'
+        },
+        App: '0.0.3'
     }
 };
 
@@ -265,6 +267,10 @@ class AppState {
 
     getAutoSaveChange(pageSlug) {
         return this.#autoSavedChanges.find(change => change.slug === pageSlug);        
+    }
+
+    doesPageHaveUnsavedChange(pageSlug) {
+        return this.getAutoSaveChange(pageSlug) !== undefined;
     }
 
     getFirstPage() {
