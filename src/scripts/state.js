@@ -36,7 +36,9 @@ const Constants = {
                 buttonSave: 'fragment-navigation-save',
                 buttonNewPage: 'fragment-navigation-new-page',
                 buttonSettings: 'fragment-navigation-settings',
-                buttonImages: 'fragment-navigation-images'
+                buttonImages: 'fragment-navigation-images',
+                inputSearch: 'fragment-navigation-input-search',
+                buttonSearch: 'fragment-navigation-button-search'
             },
             Images: {
                 root: 'fragment-images',
@@ -44,13 +46,18 @@ const Constants = {
                 imageInput: 'fragment-images-image-input',
                 imageName: 'fragment-images-name',
                 imageTable: 'fragment-images-display-table'
+            },
+            Search: {
+                root: 'fragment-search',
+                resultsContainer: 'fragment-search-results-container'
             }
         },
         stateContainer: 'root-state-container'
     },
     LocationHashes: {
         settings: '__settings__',
-        images: '__images__'
+        images: '__images__',
+        search: '__search__'
     },
     StateProperties: {
         state: '__state__',
@@ -68,7 +75,8 @@ const Constants = {
         revealEditor: 'revealEditor',
         revealPreview: 'revealPreview',
         revealSettings: 'revealSettings',
-        revealImages: 'revealImages'
+        revealImages: 'revealImages',
+        revealSearch: 'revealSearch'
     },
     Display: {
         none: 'none',
@@ -92,7 +100,7 @@ const Constants = {
             Current: '1',
             v1: '1'
         },
-        App: '0.0.3'
+        App: '0.0.4'
     }
 };
 

@@ -22,6 +22,10 @@ class Visibility {
         this.#toggle(Constants.VisibilityOptions.revealEditor);
     }
 
+    showSearch() {
+        this.#toggle(Constants.VisibilityOptions.revealSearch);
+    }
+
     isSettingsPageVisible() {
         return this.#isVisible(Constants.Ids.Fragments.Settings.root);
     }
@@ -40,6 +44,7 @@ class Visibility {
         const fragmentPreview = this.#utils.getElement(Constants.Ids.Fragments.Preview.root);
         const fragmentSettings = this.#utils.getElement(Constants.Ids.Fragments.Settings.root);
         const fragmentImages = this.#utils.getElement(Constants.Ids.Fragments.Images.root);
+        const fragmentSearch = this.#utils.getElement(Constants.Ids.Fragments.Search.root);
 
         if (revealOption === Constants.VisibilityOptions.revealEditor) {
             this.#utils.getElement(Constants.Ids.Fragments.Navigation.buttonSave).disabled = true;
@@ -51,6 +56,7 @@ class Visibility {
         fragmentPreview.style.display = Constants.Display.none;
         fragmentSettings.style.display = Constants.Display.none;
         fragmentImages.style.display = Constants.Display.none;
+        fragmentSearch.style.display = Constants.Display.none;
 
         if (revealOption === Constants.VisibilityOptions.revealEditor) {
             fragmentEditor.style.display = Constants.Display.block;
@@ -60,6 +66,8 @@ class Visibility {
             fragmentSettings.style.display = Constants.Display.block;
         } else if (revealOption === Constants.VisibilityOptions.revealImages) {
             fragmentImages.style.display = Constants.Display.block;
+        } else if (revealOption === Constants.VisibilityOptions.revealSearch) {
+            fragmentSearch.style.display = Constants.Display.block;
         }
     }
 }

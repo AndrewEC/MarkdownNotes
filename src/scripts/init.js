@@ -6,10 +6,12 @@ window.onload = () => {
 
     const editor = new Editor(appState, visibility, utils);
     const persistence = new Persistence(appState, editor, utils);
-    new Images(appState, utils);
     const navigation = new Navigation(appState, utils, visibility);
     const preview = new Preview(appState, utils, visibility);
     const settings = new Settings(appState, utils, persistence);
+
+    new Images(appState, utils);
+    new Search(appState, utils);
 
     persistence.rehydrateState();
 

@@ -199,3 +199,15 @@ td, th {
     min-height: 200px;
 }
 /* ===== ===== Settings Fragment Styles ===== ===== */
+
+/* ===== ===== Search Fragment Styles ===== ===== */
+#fragment-search {
+    display: none;
+    box-sizing: border-box;
+    overflow-y: scroll;
+}
+
+#fragment-search-results-container .search-highlight {
+    background-color: #cfc;
+}
+/* ===== ===== Search Fragment Styles ===== ===== */

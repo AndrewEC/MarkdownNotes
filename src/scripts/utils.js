@@ -29,7 +29,8 @@ class Utils {
             Constants.Ids.Fragments.Preview.root,
             Constants.Ids.Fragments.Editor.root,
             Constants.Ids.Fragments.Settings.root,
-            Constants.Ids.Fragments.Images.root
+            Constants.Ids.Fragments.Images.root,
+            Constants.Ids.Fragments.Search.root
         ], (element) => element.style.height = height);
     }
 
@@ -39,8 +40,19 @@ class Utils {
         }
     }
 
-    updateQuery(pageTitle) {
-        history.pushState(null, '', `?page=${encodeURIComponent(pageTitle)}`);
+    updateQuery(pageTitle, additionalProperties) {
+        if (!additionalProperties) {
+            history.pushState(null, '', `?page=${encodeURIComponent(pageTitle)}`);
+        } else {
+            let queryString = '?';
+
+            queryString += `page=${encodeURIComponent(pageTitle)}`;
+            for (const key in additionalProperties) {
+                queryString += `&${key}=${encodeURIComponent(additionalProperties[key])}`;
+            }
+
+            history.pushState(null, '', queryString);
+        }
     }
 
     #getElementsAndApply(ids, consumer) {

@@ -26,6 +26,10 @@ class Navigation {
             {
                 id: Constants.Ids.Fragments.Navigation.buttonImages,
                 callback: () => thisRef.#utils.updateQuery(Constants.LocationHashes.images)
+            },
+            {
+                id: Constants.Ids.Fragments.Navigation.buttonSearch,
+                callback: () => thisRef.#performSearch()
             }
         ]);
     }
@@ -49,6 +53,19 @@ class Navigation {
                 this.#updateNavList();
                 break;
         }
+    }
+
+    #performSearch() {
+        const searchQuery = this.#utils.getElement(Constants.Ids.Fragments.Navigation.inputSearch).value;
+        if (searchQuery === '') {
+            return;
+        }
+        this.#utils.updateQuery(
+            Constants.LocationHashes.search,
+            {
+                'query': searchQuery
+            }
+        );
     }
 
     createNewPage() {
@@ -85,6 +102,11 @@ class Navigation {
     #showImages() {
         this.#visibility.showImages();
         document.title = `${this.#appState.title} | Images`;
+    }
+
+    #showSearch() {
+        this.#visibility.showSearch();
+        document.title = `${this.#appState.title} | Search Results`;
     }
 
     #showEditor() {
@@ -201,6 +223,9 @@ class Navigation {
                     break;
                 case Constants.LocationHashes.editor:
                     thisRef.#showEditor();
+                    break;
+                case Constants.LocationHashes.search:
+                    thisRef.#showSearch();
                     break;
                 default:
                     thisRef.#navigateTo(pageTitle);
