@@ -159,6 +159,18 @@ td, th {
 .navigation-rule {
     width: 90%;
     color: #2CB83C;
+    background-color: #2CB83C;
+}
+
+.navigation-input {
+    margin: 0 auto;
+    width: 80%;
+    display: block;
+    box-sizing: border-box;
+    border-radius: 0;
+    border: 0;
+    padding: 5px;
+    outline: none;
 }
 /* ===== ===== Navigation Fragment Styles ===== ===== */
 

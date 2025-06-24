@@ -38,7 +38,8 @@ const Constants = {
                 buttonSettings: 'fragment-navigation-settings',
                 buttonImages: 'fragment-navigation-images',
                 inputSearch: 'fragment-navigation-input-search',
-                buttonSearch: 'fragment-navigation-button-search'
+                buttonSearch: 'fragment-navigation-button-search',
+                formSearch: 'fragment-navigation-form-search'
             },
             Images: {
                 root: 'fragment-images',
@@ -100,7 +101,7 @@ const Constants = {
             Current: '1',
             v1: '1'
         },
-        App: '0.0.4'
+        App: '0.0.5'
     }
 };
 

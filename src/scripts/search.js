@@ -1,5 +1,8 @@
 class Search {
 
+    #highlightSpanStart = '<span class="search-highlight">';
+    #highlightSpanEnd = '</span>';
+
     #appState = null;
     #utils = null;
     #visible = false;
@@ -95,16 +98,24 @@ class Search {
 
     #highlightResult(pageContents, index, query) {
         return pageContents.slice(0, index)
-            + '<span class="search-highlight">'
+            + this.#highlightSpanStart
             + pageContents.slice(index, index + query.length)
-            + '</span>'
+            + this.#highlightSpanEnd
             + pageContents.slice(index + query.length, pageContents.length);
     }
 
     #extractHighlightedSection(pageContents, index, query) {
-        const start = Math.max(0, index - 100);
-        const end = Math.min(pageContents.length, index + query.length + 100);
-        return pageContents.slice(start, end);
+        const start = Math.max(0, index - 50 - this.#highlightSpanStart.length);
+        const end = Math.min(pageContents.length, index + query.length + 50 + this.#highlightSpanEnd.length);
+
+        let surroundingContent = pageContents.slice(start, end);
+        if (start > 0) {
+            surroundingContent = '...' + surroundingContent;
+        }
+        if (end < pageContents.length - 1) {
+            surroundingContent = surroundingContent + '...';
+        }
+        return surroundingContent;
     }
 
     #findOccurrences(query) {

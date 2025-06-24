@@ -10,6 +10,13 @@ class Navigation {
         this.#visibility = visibility;
         this.#appState.addPropertyChangedListener(this.#onStatePropertyChanged.bind(this));
         this.#registerButtonClickEvents();
+        this.#utils.getElement(Constants.Ids.Fragments.Navigation.formSearch)
+            .onsubmit = this.#searchFormSubmit.bind(this);
+    }
+
+    #searchFormSubmit() {
+        this.#performSearch();
+        return false;
     }
 
     #registerButtonClickEvents() {
