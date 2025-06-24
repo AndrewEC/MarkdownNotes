@@ -203,6 +203,18 @@ td, th {
 .navigation-rule {
     width: 90%;
     color: #2CB83C;
+    background-color: #2CB83C;
+}
+
+.navigation-input {
+    margin: 0 auto;
+    width: 80%;
+    display: block;
+    box-sizing: border-box;
+    border-radius: 0;
+    border: 0;
+    padding: 5px;
+    outline: none;
 }
 /* ===== ===== Navigation Fragment Styles ===== ===== */
 
@@ -298,7 +310,8 @@ td, th {
                 buttonSettings: 'fragment-navigation-settings',
                 buttonImages: 'fragment-navigation-images',
                 inputSearch: 'fragment-navigation-input-search',
-                buttonSearch: 'fragment-navigation-button-search'
+                buttonSearch: 'fragment-navigation-button-search',
+                formSearch: 'fragment-navigation-form-search'
             },
             Images: {
                 root: 'fragment-images',
@@ -360,7 +373,7 @@ td, th {
             Current: '1',
             v1: '1'
         },
-        App: '0.0.4'
+        App: '0.0.5'
     }
 };
 
@@ -859,6 +872,13 @@ class AppState {
         this.#visibility = visibility;
         this.#appState.addPropertyChangedListener(this.#onStatePropertyChanged.bind(this));
         this.#registerButtonClickEvents();
+        this.#utils.getElement(Constants.Ids.Fragments.Navigation.formSearch)
+            .onsubmit = this.#searchFormSubmit.bind(this);
+    }
+
+    #searchFormSubmit() {
+        this.#performSearch();
+        return false;
     }
 
     #registerButtonClickEvents() {
@@ -1833,6 +1853,9 @@ class AppState {
 }
                 class Search {
 
+    #highlightSpanStart = '<span class="search-highlight">';
+    #highlightSpanEnd = '</span>';
+
     #appState = null;
     #utils = null;
     #visible = false;
@@ -1928,16 +1951,24 @@ class AppState {
 
     #highlightResult(pageContents, index, query) {
         return pageContents.slice(0, index)
-            + '<span class="search-highlight">'
+            + this.#highlightSpanStart
             + pageContents.slice(index, index + query.length)
-            + '</span>'
+            + this.#highlightSpanEnd
             + pageContents.slice(index + query.length, pageContents.length);
     }
 
     #extractHighlightedSection(pageContents, index, query) {
-        const start = Math.max(0, index - 100);
-        const end = Math.min(pageContents.length, index + query.length + 100);
-        return pageContents.slice(start, end);
+        const start = Math.max(0, index - 50 - this.#highlightSpanStart.length);
+        const end = Math.min(pageContents.length, index + query.length + 50 + this.#highlightSpanEnd.length);
+
+        let surroundingContent = pageContents.slice(start, end);
+        if (start > 0) {
+            surroundingContent = '...' + surroundingContent;
+        }
+        if (end < pageContents.length - 1) {
+            surroundingContent = surroundingContent + '...';
+        }
+        return surroundingContent;
     }
 
     #findOccurrences(query) {
@@ -2094,13 +2125,23 @@ class AppState {
         
         <hr class="navigation-rule" />
 
-        <input type="text" id="fragment-navigation-input-search"
-            class="navigation-button standard-button-link"
-            placeholder="Search..."/>
+        <form id="fragment-navigation-form-search">
+            <input type="text"
+                name="query"
+                id="fragment-navigation-input-search"
+                class="navigation-input"
+                placeholder="Search..."/>
+            
+            <input name="page" value="__search__" style="display: none;"/>
 
-        <a id="fragment-navigation-button-search"
-            class="navigation-button standard-button-link"
-            href="javascript:void(0);">Search</a>
+            <a id="fragment-navigation-button-search"
+                class="navigation-button standard-button-link"
+                href="javascript:void(0);">Search</a>
+            
+
+            
+            <input type="submit" value="" style="display: none;"/>
+        </form>
     </div>
 
     <hr class="navigation-rule"/>
