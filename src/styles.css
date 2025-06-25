@@ -98,6 +98,7 @@ td, th {
     box-sizing: border-box;
     overflow-y: scroll;
     padding-bottom: 50px;
+    overflow-wrap: break-word;
 }
 
 #fragment-preview-view-container {
@@ -112,7 +113,7 @@ td, th {
     margin-bottom: 7px;
 }
 
-#fragment-preview-view-container td, th {
+#fragment-preview-view-container td, #fragment-preview-view-container th {
     padding: 5px;
 }
 /* ===== ===== Preview Fragment Styles ===== ===== */

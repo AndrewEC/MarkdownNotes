@@ -101,7 +101,7 @@ const Constants = {
             Current: '1',
             v1: '1'
         },
-        App: '0.0.5'
+        App: '0.0.6'
     }
 };
 
