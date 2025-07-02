@@ -45,7 +45,7 @@ const Constants = {
                 root: 'fragment-images',
                 buttonEmbed: 'fragment-images-button-embed',
                 imageInput: 'fragment-images-image-input',
-                imageName: 'fragment-images-name',
+                imageName: 'fragment-images-input-name',
                 imageTable: 'fragment-images-display-table'
             },
             Search: {
@@ -60,6 +60,12 @@ const Constants = {
         images: '__images__',
         search: '__search__'
     },
+    reservedPageTitles: [
+        '__settings__',
+        '__images__',
+        '__search__',
+        'none'
+    ],
     StateProperties: {
         state: '__state__',
         title: 'title',
@@ -101,7 +107,7 @@ const Constants = {
             Current: '1',
             v1: '1'
         },
-        App: '0.0.6'
+        App: '0.0.7'
     }
 };
 

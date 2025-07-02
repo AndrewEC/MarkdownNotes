@@ -87,7 +87,9 @@ class Navigation {
         }
 
         if (this.#appState.doesPageTitleExist(newPageTitle)) {
-            return alert('A page with that name already exists. Page names must be unique.');
+            return alert('A page with that title already exists. Page titles must be unique.');
+        } else if (Constants.reservedPageTitles.includes(newPageTitle)) {
+            return alert('The page title provided is a reserved value and cannot be used.')
         }
 
         const newPage = {
@@ -126,19 +128,20 @@ class Navigation {
     }
 
     #updateNavList() {
+        // The nav list is the list of pages that appears on the bottom left-hand side of the page.
         const navContainer = this.#utils.getElement(Constants.Ids.Fragments.Navigation.listContainer);
 
         const pagesWithoutParents = this.#appState.order
             .map(slug => this.#appState.pages.find(page => page.slug === slug))
             .filter(page => page.parent === null);
 
-        const list = this.#buildNavList(pagesWithoutParents);
+        const list = this.#buildNavListUlElement(pagesWithoutParents);
 
         navContainer.innerHTML = '';
         navContainer.appendChild(list);
     }
 
-    #buildNavList(pages) {
+    #buildNavListUlElement(pages) {
         const list = document.createElement('ul');
 
         for (let i = 0; i < pages.length; i++) {
@@ -149,7 +152,7 @@ class Navigation {
 
             const children = this.#getImmediateChildren(page);
             if (children.length > 0) {
-                item.appendChild(this.#buildNavList(children));
+                item.appendChild(this.#buildNavListUlElement(children));
             }
 
             list.append(item);
@@ -159,6 +162,7 @@ class Navigation {
     }
 
     #getImmediateChildren(parent) {
+        // Gets the pages that are direct children of the input parent page.
         return this.#appState.order
             .map(slug => this.#appState.pages.find(page => page.slug === slug))
             .filter(page => page.parent === parent.slug);
@@ -178,6 +182,13 @@ class Navigation {
         return link;
     }
 
+    /**
+     * Updates the title element that is located near the top left-hand side of
+     * the to the current notebook title registered in the global app state.
+     * 
+     * The title in this instance is not the title of a particular page but
+     * rather the title of the entire notebook.
+     */
     #updateTitle() {
         let prefix = '';
         if (this.#appState.hasAnyUnsavedChange()) {

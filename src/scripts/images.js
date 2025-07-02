@@ -19,7 +19,7 @@ class Images {
         if (propertyName === Constants.StateProperties.images
             || propertyName === Constants.StateProperties.state) {
 
-            this.#updateImageList();
+            this.#updateImageTable();
         }
     }
 
@@ -58,7 +58,7 @@ class Images {
             .indexOf(newImageName) !== -1;
     }
 
-    #updateImageList() {
+    #updateImageTable() {
         const images = this.#appState.images;
 
         const imageTable = this.#utils.getElement(Constants.Ids.Fragments.Images.imageTable);
@@ -69,20 +69,20 @@ class Images {
 
         imageTable.innerHTML = '<tr><td>Image</td><td>Name</td><td>Rename</td><td>Delete</td></tr>';
 
-        const sortedImages = images.sort((first, second) => first.name.localeCompare(second.name));
-        for (let i = 0; i < sortedImages.length; i++) {
+        const imagesByName = images.sort((first, second) => first.name.localeCompare(second.name));
+        for (let i = 0; i < imagesByName.length; i++) {
             const row = document.createElement('tr');
 
             const imagecell = document.createElement('td');
             const image = document.createElement('img');
-            image.setAttribute('src', sortedImages[i].data);
+            image.setAttribute('src', imagesByName[i].data);
             image.style.maxWidth = '300px';
             image.style.maxHeight = '300px';
             imagecell.appendChild(image);
             row.appendChild(imagecell);
 
             const imageNameCell = document.createElement('td');
-            imageNameCell.innerText = sortedImages[i].name;
+            imageNameCell.innerText = imagesByName[i].name;
             row.appendChild(imageNameCell);
 
             const updateNameButtonCell = document.createElement('td');
@@ -91,7 +91,7 @@ class Images {
             updateNameButton.classList.add('standard-button-link');
             updateNameButton.classList.add('standard-table-button-link');
             updateNameButton.innerText = 'Update Name';
-            updateNameButton.onclick = () => this.#onUpdateImageNameClicked(sortedImages[i].name);
+            updateNameButton.onclick = () => this.#onUpdateImageNameClicked(imagesByName[i].name);
             updateNameButtonCell.appendChild(updateNameButton);
             row.append(updateNameButtonCell);
 
@@ -101,7 +101,7 @@ class Images {
             deleteButton.classList.add('standard-button-link');
             deleteButton.classList.add('standard-table-button-link');
             deleteButton.innerText = 'Delete';
-            deleteButton.onclick = () => this.#onDeleteImageClicked(sortedImages[i].name);
+            deleteButton.onclick = () => this.#onDeleteImageClicked(imagesByName[i].name);
             deleteButtonCell.appendChild(deleteButton);
             row.append(deleteButtonCell);
 

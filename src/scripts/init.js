@@ -1,5 +1,6 @@
 window.onload = () => {
 
+    // Initialize the fragments.
     const appState = new AppState();
     const utils = new Utils(appState);
     const visibility = new Visibility(utils);
@@ -13,6 +14,7 @@ window.onload = () => {
     new Images(appState, utils);
     new Search(appState, utils);
 
+    // Load the app state.
     persistence.rehydrateState();
 
     utils.registerButtonClicks([
@@ -28,6 +30,7 @@ window.onload = () => {
         }
     ]);
 
+    // Global keyboard shortcuts.
     window.onkeydown = (e) => {
         switch (e.keyCode) {
             case Constants.KeyCodes.escape:
@@ -90,6 +93,7 @@ window.onload = () => {
         }
     };
 
+    // Misc. event listeners.
     utils.resize();
     window.onresize = () => utils.resize();
     window.onbeforeunload = () => utils.beforeUnload();

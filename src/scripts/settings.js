@@ -25,7 +25,7 @@ class Settings {
             },
             {
                 id: Constants.Ids.Fragments.Settings.buttonUpdateTitle,
-                callback: this.#updateSettingsTitle.bind(this)
+                callback: this.#updateNotebookTitle.bind(this)
             },
             {
                 id: Constants.Ids.Fragments.Settings.buttonDataImport,
@@ -33,7 +33,7 @@ class Settings {
             },
             {
                 id: Constants.Ids.Fragments.Settings.buttonCopyData,
-                callback: this.#copyData.bind(this)
+                callback: this.#copyStateJsonToClipboard.bind(this)
             },
             {
                 id: Constants.Ids.Fragments.Settings.buttonRevealData,
@@ -63,20 +63,20 @@ class Settings {
         this.#resetOrder();
         this.#resetTitle();
         this.#displayData();
-        this.#displayVersion();
+        this.#displayCurrentAppVersion();
     };
 
-    #displayVersion() {
+    #displayCurrentAppVersion() {
         this.#utils.getElement(Constants.Ids.Fragments.Settings.versionNumberText)
             .innerText = Constants.Versions.App;
     }
 
-    #copyData() {
+    #copyStateJsonToClipboard() {
         const data = JSON.stringify(this.#appState.getSerializableState());
         navigator.clipboard.writeText(data).then((_) => alert('Data copied to clipboard.'));
     }
 
-    #updateSettingsTitle() {
+    #updateNotebookTitle() {
         let nextTitle = prompt('New Notebook title:');
         if (nextTitle === null) {
             return;
@@ -93,7 +93,11 @@ class Settings {
             .innerText = this.#appState.title;
     }
 
-    #updateOrderTable() {
+    /**
+     * Generates the table HTMLElement to display the list of pages
+     * within the Notebook in the order the user has defined.
+     */
+    #updatePageOrderTable() {
         if (this.#nextOrder.length === 0) {
             this.#nextOrder = this.#appState.order.slice()
         }
@@ -118,7 +122,7 @@ class Settings {
             upButton.classList.add('standard-button-link');
             upButton.classList.add('standard-table-button-link');
             upButton.innerText = 'Move Up';
-            upButton.onclick = () => this.#moveUp(page.slug);
+            upButton.onclick = () => this.#movePageUp(page.slug);
             upButtonCell.appendChild(upButton);
             row.appendChild(upButtonCell);
 
@@ -128,7 +132,7 @@ class Settings {
             downButton.classList.add('standard-button-link');
             downButton.classList.add('standard-table-button-link');
             downButton.innerText = 'Move Down';
-            downButton.onclick = () => this.#moveDown(page.slug);
+            downButton.onclick = () => this.#movePageDown(page.slug);
             downButtonCell.appendChild(downButton);
             row.appendChild(downButtonCell);
 
@@ -136,7 +140,7 @@ class Settings {
         }
     }
 
-    #moveUp(slug) {
+    #movePageUp(slug) {
         const index = this.#nextOrder.indexOf(slug);
         if (index === 0) {
             return;
@@ -145,10 +149,10 @@ class Settings {
         const temp = this.#nextOrder[index - 1];
         this.#nextOrder[index - 1] = this.#nextOrder[index];
         this.#nextOrder[index] = temp;
-        this.#updateOrderTable();
+        this.#updatePageOrderTable();
     }
 
-    #moveDown(slug) {
+    #movePageDown(slug) {
         const index = this.#nextOrder.indexOf(slug);
         if (index >= this.#nextOrder.length - 1) {
             return;
@@ -157,12 +161,12 @@ class Settings {
         const temp = this.#nextOrder[index + 1];
         this.#nextOrder[index + 1] = this.#nextOrder[index];
         this.#nextOrder[index] = temp;
-        this.#updateOrderTable();
+        this.#updatePageOrderTable();
     }
 
     #resetOrder() {
         this.#nextOrder = this.#appState.order.slice();
-        this.#updateOrderTable()
+        this.#updatePageOrderTable()
     }
 
     #saveReorder() {
@@ -170,6 +174,10 @@ class Settings {
         alert('Page order has been updated.');
     }
 
+    /**
+     * Attempts to take the JSON data entered into the text area and replace the
+     * current global app state with the new JSON data.
+     */
     #importData() {
         let newState = this.#utils.getElement(Constants.Ids.Fragments.Settings.dataArea).value;
         try {

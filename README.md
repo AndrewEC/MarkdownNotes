@@ -12,21 +12,23 @@ This project is heavily inspired by [FeatherWiki](https://codeberg.org/Alamantus
 
 ### Updating
 
-To update MarkdownNotes simply make a change to any of the source files provided then run the `Bundle.ps1` script.
+To update MarkdownNotes simply make a change to any of the source files provided then run the `Build.ps1` script.
 
 This script will combine all the source files into a single html file and write it to `./build/MarkdownNotes.html`
+
+Optionally you can add the `-Open` switch to the `Build.ps1` script invocation to open the generated HTML file when the build process is complete.
 
 ---
 
 ### Architecture
-This project attempts to stay relatively simple. It does not require any special build tools (except for the `Bundle.ps1` script), node/npm, and only a few external dependencies (dependencies are listed at the bottom of this readme).
+This project attempts to stay relatively simple. It does not require any special build tools (except for the `Build.ps1` script), node/npm, and only a few external dependencies (dependencies are listed at the bottom of this readme).
 
 #### Fragments
 The app's source is broken down into fragments. A fragment will consist of a partial .html file and a single .js file. These files are ultimately combined into the resulting bundle file.
 
-The partial .html files are located in `src/markup` and the .js files are located in `src/scripts`. Generally there should be a single .html file and a single .js file per fragment with matching names.
+The partial .html files are located in `src/markup` and contain the markup specific to the fragment.
 
-The .html files contain the markup for the fragment. The .js files contain any state specific to the fragment, handle updating the fragment upon certain state changes, and provide callbacks for things like button click events.
+The .js files are located in `src/scripts` and contain logic for managing fragment specific state, responding to global state updates, handle button click events, and pushing changes to the global state.
 
 #### State Management
 The global, serializable, properties of the app are located in the `State` class in the `state.js` file. A singleton instance of this class is shared among all the fragments.
@@ -46,8 +48,8 @@ The dependencies are embedded directly into the resulting bundle file. A loose c
 ---
 
 ### Versions
-There are two versions within the app. One is the app's version and the other is the save data version. These two versions don't necessarily correlate with eacother. The save version is only incremented whenever the schema of the serializable data changes.
+There are two versions within the app. One is the app's version and the other is the save data version. These two versions don't necessarily correlate with each other. The save version is only incremented whenever the schema of the serializable data changes.
 
 This version is used by the app to determine how to "upgrade" the save data from an older version to a newer version and to properly validate the state properties.
 
-The app version version works like most other versioning systems and the current version of the app can be found in the `Settings` page of MarkdownNotes.
+The app version version works like most other versioning systems (Major.Minor.Patch) and the current version of the app can be found in the `Settings` page of MarkdownNotes.

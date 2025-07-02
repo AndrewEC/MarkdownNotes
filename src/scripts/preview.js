@@ -62,10 +62,15 @@ class Preview {
         this.#utils.updateQuery(nextPage.title);
     }
 
+    /**
+     * Find all img tags within the HTML of the container, check if the source
+     * (src) of the image starts with image/, then attempt to replace the src
+     * with the base64 encoded data of the actual image.
+     * 
+     * @param {HTMLElement} viewContainer The html element containing the link elements
+     *  to be updated.
+     */
     #addEmbededImages(viewContainer) {
-        // Find all img tags within the HTML of the container, check if the source (src)
-        // of the image starts with image/, then attempt to replace the src
-        // with the base64 encoded data of the actual image.
 
         const images = viewContainer.getElementsByTagName('img');
         if (images.length === 0) {
@@ -92,11 +97,15 @@ class Preview {
         }
     }
 
+    /**
+     * Find all links within the HTML of the container, check if the href of the link
+     * starts with "page/"" then attempt to update the link to call a javascript
+     * function to navigate the user to the desired page.
+     * 
+     * @param {HTMLElement} viewContainer The html element containing the link elements
+     *  to be updated.
+     */
     #addPageLinks(viewContainer) {
-        // Find all links within the HTML of the container, check if the href of the link
-        // starts with page/ then attempt to update the link to call a javascript
-        // function to navigate the user to the desired page.
-
         const links = viewContainer.getElementsByTagName('a');
         if (links.length === 0) {
             return;

@@ -13,12 +13,6 @@ class Persistence {
     save() {
         this.#appState.hasUnsavedChanges = false;
 
-        // The EasyMDE editor generates a few elements on the page.
-        // These elements need to be removed so they are not included
-        // in the resulting html file. This is to prevent an issue
-        // where re-initializing the editor on a subsequent load of the page
-        // can cause duplicate elements to be appended causing the file size
-        // to expand infinitely.
         this.#editor.removeEditor();
 
         const stateContainer = this.#utils.getElement(Constants.Ids.stateContainer);
@@ -89,6 +83,8 @@ class Persistence {
                 throw new Error(`Invalid pages value. Page at index [${i}] has an empty or non-string title property.`);
             } else if (!this.#isString(page.contents)) {
                 throw new Error(`Invalid pages value. Page at index [${i}] has an empty or non-string contents property.`);
+            } else if (this.#isReservedPageTitle(page.title)) {
+                throw new Error(`Invalid pages value. Page at index [${i}] has a title that is reserved and can't be used.`);
             }
         }
         if (!this.#areAllUnique(state.pages.map(page => page.title))) {
@@ -128,6 +124,10 @@ class Persistence {
                 throw new Error(`Invalid order value. Order at index [${i}] does match the slug of any known page.`);
             }
         }
+    }
+
+    #isReservedPageTitle(pageTitle) {
+        return Constants.reservedPageTitles.includes(pageTitle);
     }
 
     #areAllUnique(values){

@@ -318,7 +318,7 @@ td, th {
                 root: 'fragment-images',
                 buttonEmbed: 'fragment-images-button-embed',
                 imageInput: 'fragment-images-image-input',
-                imageName: 'fragment-images-name',
+                imageName: 'fragment-images-input-name',
                 imageTable: 'fragment-images-display-table'
             },
             Search: {
@@ -333,6 +333,12 @@ td, th {
         images: '__images__',
         search: '__search__'
     },
+    reservedPageTitles: [
+        '__settings__',
+        '__images__',
+        '__search__',
+        'none'
+    ],
     StateProperties: {
         state: '__state__',
         title: 'title',
@@ -374,7 +380,7 @@ td, th {
             Current: '1',
             v1: '1'
         },
-        App: '0.0.6'
+        App: '0.0.7'
     }
 };
 
@@ -724,12 +730,6 @@ class AppState {
     save() {
         this.#appState.hasUnsavedChanges = false;
 
-        // The EasyMDE editor generates a few elements on the page.
-        // These elements need to be removed so they are not included
-        // in the resulting html file. This is to prevent an issue
-        // where re-initializing the editor on a subsequent load of the page
-        // can cause duplicate elements to be appended causing the file size
-        // to expand infinitely.
         this.#editor.removeEditor();
 
         const stateContainer = this.#utils.getElement(Constants.Ids.stateContainer);
@@ -800,6 +800,8 @@ class AppState {
                 throw new Error(`Invalid pages value. Page at index [${i}] has an empty or non-string title property.`);
             } else if (!this.#isString(page.contents)) {
                 throw new Error(`Invalid pages value. Page at index [${i}] has an empty or non-string contents property.`);
+            } else if (this.#isReservedPageTitle(page.title)) {
+                throw new Error(`Invalid pages value. Page at index [${i}] has a title that is reserved and can't be used.`);
             }
         }
         if (!this.#areAllUnique(state.pages.map(page => page.title))) {
@@ -839,6 +841,10 @@ class AppState {
                 throw new Error(`Invalid order value. Order at index [${i}] does match the slug of any known page.`);
             }
         }
+    }
+
+    #isReservedPageTitle(pageTitle) {
+        return Constants.reservedPageTitles.includes(pageTitle);
     }
 
     #areAllUnique(values){
@@ -950,7 +956,9 @@ class AppState {
         }
 
         if (this.#appState.doesPageTitleExist(newPageTitle)) {
-            return alert('A page with that name already exists. Page names must be unique.');
+            return alert('A page with that title already exists. Page titles must be unique.');
+        } else if (Constants.reservedPageTitles.includes(newPageTitle)) {
+            return alert('The page title provided is a reserved value and cannot be used.')
         }
 
         const newPage = {
@@ -989,19 +997,20 @@ class AppState {
     }
 
     #updateNavList() {
+        // The nav list is the list of pages that appears on the bottom left-hand side of the page.
         const navContainer = this.#utils.getElement(Constants.Ids.Fragments.Navigation.listContainer);
 
         const pagesWithoutParents = this.#appState.order
             .map(slug => this.#appState.pages.find(page => page.slug === slug))
             .filter(page => page.parent === null);
 
-        const list = this.#buildNavList(pagesWithoutParents);
+        const list = this.#buildNavListUlElement(pagesWithoutParents);
 
         navContainer.innerHTML = '';
         navContainer.appendChild(list);
     }
 
-    #buildNavList(pages) {
+    #buildNavListUlElement(pages) {
         const list = document.createElement('ul');
 
         for (let i = 0; i < pages.length; i++) {
@@ -1012,7 +1021,7 @@ class AppState {
 
             const children = this.#getImmediateChildren(page);
             if (children.length > 0) {
-                item.appendChild(this.#buildNavList(children));
+                item.appendChild(this.#buildNavListUlElement(children));
             }
 
             list.append(item);
@@ -1022,6 +1031,7 @@ class AppState {
     }
 
     #getImmediateChildren(parent) {
+        // Gets the pages that are direct children of the input parent page.
         return this.#appState.order
             .map(slug => this.#appState.pages.find(page => page.slug === slug))
             .filter(page => page.parent === parent.slug);
@@ -1042,6 +1052,10 @@ class AppState {
     }
 
     #updateTitle() {
+        // The title is the heading that appears at the very top left-hand
+        // side of the page. This is the title of the entire notebook and not just
+        // the title of a single page.
+
         let prefix = '';
         if (this.#appState.hasAnyUnsavedChange()) {
             prefix = '* ';
@@ -1121,10 +1135,17 @@ class AppState {
         this.#startPageEditListener();
     }
 
+    /**
+     * Periodically check if a page is being edited and if there are
+     * changes that have been made to the page that have not yet
+     * been saved.
+     * 
+     * This will trigger an "auto save". This doesn't actually save the
+     * changes to file but stores the state of the page in a temporary array.
+     * This way the user can continue editing the page from where they left
+     * off if they navigate away from the page without saving their changes.
+     */
     #startPageEditListener() {
-        // Periodically check if a page is being edited and if there are
-        // changes that have been made to the page that have not yet
-        // been saved.
 
         const thisRef = this;
         setInterval(() => {
@@ -1171,6 +1192,12 @@ class AppState {
         this.#visibility.showPreview();
     }
 
+    /**
+     * Removes the element generated by EasyMDE. This is needed to allow the
+     * page to remove these elements before saving to prevent an issue where saving
+     * and loading the page repeatedly will cause EasyMDE to create copies of the
+     * elements causing the page size to expand infinitely.
+     */
     removeEditor() {
         this.#easyMdeInstance = null;
 
@@ -1218,6 +1245,7 @@ class AppState {
         this.#visibility.showEditor();
         this.#populateParentPageSelect(page);
 
+        // Initialize the EasyMDE editor if it has not yet been initialized.
         if (!this.#isInitialized()) {
             this.#easyMdeInstance = new EasyMDE({
                 element: this.#utils.getElement(Constants.Ids.Fragments.Editor.area),
@@ -1247,8 +1275,11 @@ class AppState {
         }
     }
 
-    // Checks to see if the "first" page is a parent of the
-    // "second" page.
+    /**
+     * Checks to see if the first page is a parent of the second page.
+     * 
+     * @returns True if the first page is a parent of the second page otherwise false.
+     */
     #isParentOf(first, second) {
         let secondParentSlug = second.parent;
         while (secondParentSlug) {
@@ -1260,11 +1291,13 @@ class AppState {
         return false;
     }
 
+    /**
+     * Populates a dropdown that allows the user to select which page should
+     * be a parent of the page being currently edited.
+     * 
+     * @param {object} page The page currently being edited.
+     */
     #populateParentPageSelect(page) {
-        // Populates a dropdown that allows the user to select
-        // a page to be a parent of this page.
-        // The input "page" argument can be null if the user is creating a new page.
-
         const select = this.#utils.getElement(Constants.Ids.Fragments.Editor.selectParent);
         select.innerHTML = '';
 
@@ -1294,6 +1327,10 @@ class AppState {
         return this.#utils.getElement(Constants.Ids.Fragments.Editor.selectParent).value;
     }
 
+    /**
+     * Saves the content of the page being currently edited back to the global
+     * app state. This doesn't yet save the changes to file.
+     */
     updatePage() {
         const currentPage = this.#appState.currentPage;
         
@@ -1382,10 +1419,15 @@ class AppState {
         this.#utils.updateQuery(nextPage.title);
     }
 
+    /**
+     * Find all img tags within the HTML of the container, check if the source
+     * (src) of the image starts with image/, then attempt to replace the src
+     * with the base64 encoded data of the actual image.
+     * 
+     * @param {HTMLElement} viewContainer The html element containing the link elements
+     *  to be updated.
+     */
     #addEmbededImages(viewContainer) {
-        // Find all img tags within the HTML of the container, check if the source (src)
-        // of the image starts with image/, then attempt to replace the src
-        // with the base64 encoded data of the actual image.
 
         const images = viewContainer.getElementsByTagName('img');
         if (images.length === 0) {
@@ -1412,11 +1454,15 @@ class AppState {
         }
     }
 
+    /**
+     * Find all links within the HTML of the container, check if the href of the link
+     * starts with "page/"" then attempt to update the link to call a javascript
+     * function to navigate the user to the desired page.
+     * 
+     * @param {HTMLElement} viewContainer The html element containing the link elements
+     *  to be updated.
+     */
     #addPageLinks(viewContainer) {
-        // Find all links within the HTML of the container, check if the href of the link
-        // starts with page/ then attempt to update the link to call a javascript
-        // function to navigate the user to the desired page.
-
         const links = viewContainer.getElementsByTagName('a');
         if (links.length === 0) {
             return;
@@ -1502,7 +1548,7 @@ class AppState {
             },
             {
                 id: Constants.Ids.Fragments.Settings.buttonUpdateTitle,
-                callback: this.#updateSettingsTitle.bind(this)
+                callback: this.#updateNotebookTitle.bind(this)
             },
             {
                 id: Constants.Ids.Fragments.Settings.buttonDataImport,
@@ -1510,7 +1556,7 @@ class AppState {
             },
             {
                 id: Constants.Ids.Fragments.Settings.buttonCopyData,
-                callback: this.#copyData.bind(this)
+                callback: this.#copyStateJsonToClipboard.bind(this)
             },
             {
                 id: Constants.Ids.Fragments.Settings.buttonRevealData,
@@ -1540,20 +1586,20 @@ class AppState {
         this.#resetOrder();
         this.#resetTitle();
         this.#displayData();
-        this.#displayVersion();
+        this.#displayCurrentAppVersion();
     };
 
-    #displayVersion() {
+    #displayCurrentAppVersion() {
         this.#utils.getElement(Constants.Ids.Fragments.Settings.versionNumberText)
             .innerText = Constants.Versions.App;
     }
 
-    #copyData() {
+    #copyStateJsonToClipboard() {
         const data = JSON.stringify(this.#appState.getSerializableState());
         navigator.clipboard.writeText(data).then((_) => alert('Data copied to clipboard.'));
     }
 
-    #updateSettingsTitle() {
+    #updateNotebookTitle() {
         let nextTitle = prompt('New Notebook title:');
         if (nextTitle === null) {
             return;
@@ -1570,7 +1616,11 @@ class AppState {
             .innerText = this.#appState.title;
     }
 
-    #updateOrderTable() {
+    /**
+     * Generates the table HTMLElement to display the list of pages
+     * within the Notebook in the order the user has defined.
+     */
+    #updatePageOrderTable() {
         if (this.#nextOrder.length === 0) {
             this.#nextOrder = this.#appState.order.slice()
         }
@@ -1595,7 +1645,7 @@ class AppState {
             upButton.classList.add('standard-button-link');
             upButton.classList.add('standard-table-button-link');
             upButton.innerText = 'Move Up';
-            upButton.onclick = () => this.#moveUp(page.slug);
+            upButton.onclick = () => this.#movePageUp(page.slug);
             upButtonCell.appendChild(upButton);
             row.appendChild(upButtonCell);
 
@@ -1605,7 +1655,7 @@ class AppState {
             downButton.classList.add('standard-button-link');
             downButton.classList.add('standard-table-button-link');
             downButton.innerText = 'Move Down';
-            downButton.onclick = () => this.#moveDown(page.slug);
+            downButton.onclick = () => this.#movePageDown(page.slug);
             downButtonCell.appendChild(downButton);
             row.appendChild(downButtonCell);
 
@@ -1613,7 +1663,7 @@ class AppState {
         }
     }
 
-    #moveUp(slug) {
+    #movePageUp(slug) {
         const index = this.#nextOrder.indexOf(slug);
         if (index === 0) {
             return;
@@ -1622,10 +1672,10 @@ class AppState {
         const temp = this.#nextOrder[index - 1];
         this.#nextOrder[index - 1] = this.#nextOrder[index];
         this.#nextOrder[index] = temp;
-        this.#updateOrderTable();
+        this.#updatePageOrderTable();
     }
 
-    #moveDown(slug) {
+    #movePageDown(slug) {
         const index = this.#nextOrder.indexOf(slug);
         if (index >= this.#nextOrder.length - 1) {
             return;
@@ -1634,12 +1684,12 @@ class AppState {
         const temp = this.#nextOrder[index + 1];
         this.#nextOrder[index + 1] = this.#nextOrder[index];
         this.#nextOrder[index] = temp;
-        this.#updateOrderTable();
+        this.#updatePageOrderTable();
     }
 
     #resetOrder() {
         this.#nextOrder = this.#appState.order.slice();
-        this.#updateOrderTable()
+        this.#updatePageOrderTable()
     }
 
     #saveReorder() {
@@ -1647,6 +1697,10 @@ class AppState {
         alert('Page order has been updated.');
     }
 
+    /**
+     * Attempts to take the JSON data entered into the text area and replace the
+     * current global app state with the new JSON data.
+     */
     #importData() {
         let newState = this.#utils.getElement(Constants.Ids.Fragments.Settings.dataArea).value;
         try {
@@ -1734,7 +1788,7 @@ class AppState {
         if (propertyName === Constants.StateProperties.images
             || propertyName === Constants.StateProperties.state) {
 
-            this.#updateImageList();
+            this.#updateImageTable();
         }
     }
 
@@ -1773,7 +1827,7 @@ class AppState {
             .indexOf(newImageName) !== -1;
     }
 
-    #updateImageList() {
+    #updateImageTable() {
         const images = this.#appState.images;
 
         const imageTable = this.#utils.getElement(Constants.Ids.Fragments.Images.imageTable);
@@ -1784,20 +1838,20 @@ class AppState {
 
         imageTable.innerHTML = '<tr><td>Image</td><td>Name</td><td>Rename</td><td>Delete</td></tr>';
 
-        const sortedImages = images.sort((first, second) => first.name.localeCompare(second.name));
-        for (let i = 0; i < sortedImages.length; i++) {
+        const imagesByName = images.sort((first, second) => first.name.localeCompare(second.name));
+        for (let i = 0; i < imagesByName.length; i++) {
             const row = document.createElement('tr');
 
             const imagecell = document.createElement('td');
             const image = document.createElement('img');
-            image.setAttribute('src', sortedImages[i].data);
+            image.setAttribute('src', imagesByName[i].data);
             image.style.maxWidth = '300px';
             image.style.maxHeight = '300px';
             imagecell.appendChild(image);
             row.appendChild(imagecell);
 
             const imageNameCell = document.createElement('td');
-            imageNameCell.innerText = sortedImages[i].name;
+            imageNameCell.innerText = imagesByName[i].name;
             row.appendChild(imageNameCell);
 
             const updateNameButtonCell = document.createElement('td');
@@ -1806,7 +1860,7 @@ class AppState {
             updateNameButton.classList.add('standard-button-link');
             updateNameButton.classList.add('standard-table-button-link');
             updateNameButton.innerText = 'Update Name';
-            updateNameButton.onclick = () => this.#onUpdateImageNameClicked(sortedImages[i].name);
+            updateNameButton.onclick = () => this.#onUpdateImageNameClicked(imagesByName[i].name);
             updateNameButtonCell.appendChild(updateNameButton);
             row.append(updateNameButtonCell);
 
@@ -1816,7 +1870,7 @@ class AppState {
             deleteButton.classList.add('standard-button-link');
             deleteButton.classList.add('standard-table-button-link');
             deleteButton.innerText = 'Delete';
-            deleteButton.onclick = () => this.#onDeleteImageClicked(sortedImages[i].name);
+            deleteButton.onclick = () => this.#onDeleteImageClicked(imagesByName[i].name);
             deleteButtonCell.appendChild(deleteButton);
             row.append(deleteButtonCell);
 
@@ -1866,10 +1920,10 @@ class AppState {
         this.#appState = appState;
         this.#utils = utils;
         this.#listenForVisibilityChanges();
-        this.#listenForSearchChanges();
+        this.#listenForUrlChanges();
     }
 
-    #listenForSearchChanges() {
+    #listenForUrlChanges() {
         const thisRef = this;
         setInterval(() => {
             if (!thisRef.#visible) {
@@ -1886,6 +1940,13 @@ class AppState {
         }, 100);
     }
 
+    /**
+     * Checks to see if the visibility of the main search results area element changes.
+     * 
+     * Upon the element being hidden all previous search results will be cleared.
+     * 
+     * Upon the element being shown a search will be executed.
+     */
     #listenForVisibilityChanges() {
         const observer = new MutationObserver((mutations) => {
             for (let mutation of mutations) {
@@ -1922,15 +1983,32 @@ class AppState {
 
         for (const pageSlug in results) {
             const page = this.#appState.pages.find((page) => page.slug === pageSlug)
-            const resultSection = this.#buildResultSection(page, results[pageSlug], query);
-            resultContainer.appendChild(resultSection);
+            const resultSectionElement = this.#buildElementForResultsForPage(page, results[pageSlug], query);
+            resultContainer.appendChild(resultSectionElement);
         }
     }
 
-    #buildResultSection(page, indexes, query) {
+    /**
+     * Creates a single div to display the instances where the input "query"
+     * was found within the contents of the input "page".
+     * 
+     * This div will consist of a link element to navigate the user to the page,
+     * and one paragraph element to show each instance where the "query" was
+     * found within the "page" contents.
+     * 
+     * @param {object} page 
+     * @param {array} indexes 
+     * @param {string} query 
+     * @returns A div HTMLElement.
+     */
+    #buildElementForResultsForPage(page, indexes, query) {
+        // All elements to be created will be contained within this div.
         const container = document.createElement('div');
+
         container.appendChild(document.createElement('hr'));
 
+        // Create a link that, onclick, will trigger a function to update
+        // the page query element to navigate the user to the selected page.
         const pageLink = document.createElement('a');
         pageLink.innerText = page.title;
         pageLink.setAttribute('href', 'javascript:void(0);');
@@ -1940,6 +2018,9 @@ class AppState {
         };
         container.appendChild(pageLink);
 
+        // Iterate through all the matches and create a paragraph that contains
+        // a snippet of the text from the page's markdown content that matches
+        // the user's query.
         for (const index of indexes) {
             const paragraph = document.createElement('p');
             const highlightedResult = this.#highlightResult(page.contents, index, query);
@@ -1950,6 +2031,17 @@ class AppState {
         return container
     }
 
+    /**
+     * Surrounds part of the "pageContents" with a span element
+     * so the "query" value, as it appears within the "pageContents", can be
+     * highlighted and displayed to the user.
+     * 
+     * @param {string} pageContents The markdown contents of the page.
+     * @param {int} index The numerical index representing where the input
+     *  query value can be found in the input pageContents.
+     * @param {string} query The value the user searched for.
+     * @returns The pageContents now containing the inserted span element.
+     */
     #highlightResult(pageContents, index, query) {
         return pageContents.slice(0, index)
             + this.#highlightSpanStart
@@ -1972,6 +2064,17 @@ class AppState {
         return surroundingContent;
     }
 
+    /**
+     * Iterates through all the pages within the global app state
+     * to find pages whose contents contains at least one instance of
+     * the user's search "query".
+     * 
+     * @param {string} query The value the user is searching for.
+     * @returns An object with the keys representing the slug of the page
+     *  and the value representing the indexes of the matches. If no matches
+     *  are found within a page the page slug will not be found in the list
+     *  keys in the resulting object.
+     */
     #findOccurrences(query) {
         const results = {};
 
@@ -1985,6 +2088,15 @@ class AppState {
         return results;
     }
 
+    /**
+     * Finds the indexes of all the instances of the input "searchQuery"
+     * within the "page.contents".
+     * 
+     * @param {object} page The page from which the page contents will be pulled.
+     * @param {string} searchQuery The user's search term to locate within the page contents.
+     * @returns An array of numbers representing the indexes within the page content
+     *  that matches the input searchQuery.
+     */
     #findAllOccurrencesOnPage(page, searchQuery) {
         const indexes = [];
         for (let i = 0; i < page.contents.length; i++) {
@@ -2000,6 +2112,7 @@ class AppState {
 }
                 window.onload = () => {
 
+    // Initialize the fragments.
     const appState = new AppState();
     const utils = new Utils(appState);
     const visibility = new Visibility(utils);
@@ -2013,6 +2126,7 @@ class AppState {
     new Images(appState, utils);
     new Search(appState, utils);
 
+    // Load the app state.
     persistence.rehydrateState();
 
     utils.registerButtonClicks([
@@ -2028,6 +2142,7 @@ class AppState {
         }
     ]);
 
+    // Global keyboard shortcuts.
     window.onkeydown = (e) => {
         switch (e.keyCode) {
             case Constants.KeyCodes.escape:
@@ -2090,6 +2205,7 @@ class AppState {
         }
     };
 
+    // Misc. event listeners.
     utils.resize();
     window.onresize = () => utils.resize();
     window.onbeforeunload = () => utils.beforeUnload();
@@ -2128,18 +2244,13 @@ class AppState {
 
         <form id="fragment-navigation-form-search">
             <input type="text"
-                name="query"
                 id="fragment-navigation-input-search"
                 class="navigation-input"
                 placeholder="Search..."/>
-            
-            <input name="page" value="__search__" style="display: none;"/>
 
             <a id="fragment-navigation-button-search"
                 class="navigation-button standard-button-link"
                 href="javascript:void(0);">Search</a>
-            
-
             
             <input type="submit" value="" style="display: none;"/>
         </form>
@@ -2153,6 +2264,7 @@ class AppState {
             </div>
             <div id="root-content-container" class="root-container">
                 <div id="fragment-preview">
+
     <a id="fragment-preview-button-edit"
         class="standard-button-link standard-button-link-fixed"
         href="javascript:void(0);">Edit</a>
@@ -2162,8 +2274,10 @@ class AppState {
      href="javascript:void(0);">Delete</a>
 
     <div id="fragment-preview-view-container"></div>
+
 </div>
                 <div id="fragment-editor">
+
     <a href="javascript:void(0);"
         id="fragment-editor-button-update"
         class="standard-button-link standard-button-link-fixed">Update Page</a>
@@ -2247,9 +2361,10 @@ class AppState {
 </div>
                 <div id="fragment-images">
     <h1>Images</h1>
+
     <label>
         Image Name: 
-        <input type="text" id="fragment-images-name"/>
+        <input type="text" id="fragment-images-input-name"/>
     </label>
     <input type="file" id="fragment-images-image-input"/>
     <a href="javascript:void(0);"
