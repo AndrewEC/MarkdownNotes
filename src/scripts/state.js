@@ -36,10 +36,7 @@ const Constants = {
                 buttonSave: 'fragment-navigation-save',
                 buttonNewPage: 'fragment-navigation-new-page',
                 buttonSettings: 'fragment-navigation-settings',
-                buttonImages: 'fragment-navigation-images',
-                inputSearch: 'fragment-navigation-input-search',
-                buttonSearch: 'fragment-navigation-button-search',
-                formSearch: 'fragment-navigation-form-search'
+                buttonImages: 'fragment-navigation-images'
             },
             Images: {
                 root: 'fragment-images',
@@ -51,6 +48,12 @@ const Constants = {
             Search: {
                 root: 'fragment-search',
                 resultsContainer: 'fragment-search-results-container'
+            },
+            Finder: {
+                root: 'fragment-finder',
+                inputTitle: 'fragment-finder-input-title',
+                resultContainer: 'fragment-finder-result-container',
+                formInput: 'fragment-finder-form-input'
             }
         },
         stateContainer: 'root-state-container'
@@ -95,19 +98,21 @@ const Constants = {
     },
     KeyCodes: {
         e: 69,
+        g: 71,
         n: 78,
         q: 81,
         s: 83,
-        escape: 27,
         comma: 188,
-        period: 190
+        escape: 27,
+        period: 190,
+        tab: 9
     },
     Versions: {
         Save: {
             Current: '1',
             v1: '1'
         },
-        App: '0.0.7'
+        App: '0.0.8'
     }
 };
 

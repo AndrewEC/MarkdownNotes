@@ -10,6 +10,7 @@ window.onload = () => {
     const navigation = new Navigation(appState, utils, visibility);
     const preview = new Preview(appState, utils, visibility);
     const settings = new Settings(appState, utils, persistence);
+    const finder = new Finder(appState, utils);
 
     new Images(appState, utils);
     new Search(appState, utils);
@@ -17,11 +18,13 @@ window.onload = () => {
     // Load the app state.
     persistence.rehydrateState();
 
+    // Register the button that allows the user to save the
+    // current notebook to file.
     utils.registerButtonClicks([
         {
             id: Constants.Ids.Fragments.Navigation.buttonSave,
             callback: () => {
-                if (editor.isShowingEditor()) {
+                if (editor.isShowingEditor() || finder.isVisible()) {
                     return;
                 }
                 settings.hideDataArea();
@@ -38,6 +41,17 @@ window.onload = () => {
                     visibility.showPreview();
                     e.preventDefault();
                     return;
+                } else if (finder.isVisible()) {
+                    finder.hide();
+                    e.preventDefault();
+                    return;
+                }
+                break;
+            
+            case Constants.KeyCodes.tab:
+                if (finder.isVisible()) {
+                    finder.onTabPressed(e);
+                    return;
                 }
                 break;
         }
@@ -48,7 +62,7 @@ window.onload = () => {
 
         const isPreviewingPage = () => !editor.isShowingEditor()
             && !visibility.isImagesPageVisible()
-            && !visibility.isSettingsPageVisible()
+            && !visibility.isSettingsPageVisible();
 
         switch (e.keyCode) {
             case Constants.KeyCodes.s:
@@ -64,12 +78,6 @@ window.onload = () => {
                 e.preventDefault();
                 if (!editor.isShowingEditor()) {
                     navigation.createNewPage();
-                }
-                break;
-            case Constants.KeyCodes.escape:
-                if (editor.isShowingEditor()) {
-                    visibility.showPreview();
-                    e.preventDefault();
                 }
                 break;
             case Constants.KeyCodes.e:
@@ -90,12 +98,23 @@ window.onload = () => {
                 }
                 e.preventDefault();
                 break;
+            case Constants.KeyCodes.g:
+                if (!editor.isShowingEditor()) {
+                    finder.present();
+                    finder.resize();
+                }
+                e.preventDefault();
+                break;
         }
     };
 
     // Misc. event listeners.
     utils.resize();
-    window.onresize = () => utils.resize();
+    finder.resize();
+    window.onresize = () => {
+        utils.resize();
+        finder.resize();
+    };
     window.onbeforeunload = () => utils.beforeUnload();
     navigation.listenForUrlChange();
 };

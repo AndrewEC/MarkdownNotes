@@ -224,3 +224,50 @@ td, th {
     background-color: #cfc;
 }
 /* ===== ===== Search Fragment Styles ===== ===== */
+
+/* ===== ===== Finder Fragment Styles ===== ===== */
+#fragment-finder {
+    position: absolute;
+    display: none;
+    width: 100%;
+    height: 100%;
+    z-index: 100;
+    left: 0;
+    top: 0;
+    background-color: rgba(200, 200, 200, 0.45);
+}
+
+#fragment-finder-input-title {
+    position: absolute;
+    z-index: 101;
+    outline: none;
+    border: 0;
+    padding: 10px;
+}
+
+#fragment-finder-result-container {
+    position: absolute;
+    overflow-y: scroll;
+    overflow-wrap: break-word;
+    z-index: 101;
+    background-color: #eee;
+    max-height: 400px;
+}
+
+#fragment-finder-result-container ul {
+    padding: 0;
+    margin: 0;
+}
+
+#fragment-finder-result-container a {
+    padding: 5px;
+    margin: 0;
+    display: inline-block;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+#fragment-finder-result-container a:focus {
+    background-color: #ddd;
+}
+/* ===== ===== Finder Fragment Styles ===== ===== */

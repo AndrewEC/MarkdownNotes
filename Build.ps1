@@ -74,6 +74,48 @@ function Get-MergedContents {
     return $Lines | Join-String -Separator "`r`n"
 }
 
+function Get-IndexOfAll {
+    [OutputType([int])]
+    param (
+        [string]$String,
+        [string]$SearchString
+    )
+    
+    $Indexes = @()
+
+    $Index = $String.IndexOf($SearchString)    
+    while ($Index -ne -1) {
+        $Indexes += $Index
+        $Index = $String.IndexOf($SearchString, $Index + 1)
+    }
+    
+    return ,$Indexes
+}
+
+function Get-Placeholders {
+    [OutputType([string])]
+    param(
+        [string]$TemplateContents
+    )
+
+    $PlaceholderLength = 2
+    $PlaceholderStartIndexes = Get-IndexOfAll $TemplateContents "{{"
+    $PlaceholderEndIndexes = Get-IndexOfAll $TemplateContents "}}"
+
+    if ($PlaceholderStartIndexes.Length -ne $PlaceholderEndIndexes.Length) {
+        throw "Invalid template file. All {{ tokens must have an associated }} token."
+    }
+
+    $Placeholders = @()
+    for ($i = 0; $i -lt $PlaceholderStartIndexes.Length; $i++) {
+        $Placeholders += $TemplateContents.Substring(
+            $PlaceholderStartIndexes[$i],
+            $PlaceholderEndIndexes[$i] - $PlaceholderStartIndexes[$i] + $PlaceholderLength
+        )
+    }
+    return ,$Placeholders
+}
+
 function Invoke-Bundle {
     [OutputType([string])]
     param()
@@ -85,19 +127,32 @@ function Invoke-Bundle {
     Write-Host "Using bundle directory: [$BundleDir]."
 
     $TemplateContents = Get-TemplateContent $SourceDir
+    $TemplatePlaceholders = Get-Placeholders $TemplateContents
+    $UsedTemplatePlaceholders = @()
     $SourceFiles = Get-SourceFiles $SourceDir
 
     foreach ($SourceFile in $SourceFiles) {
         $FileName = Split-Path $SourceFile -Leaf
         $FilePlaceholder = "{{$FileName}}"
         if (-not ($TemplateContents.Contains($FilePlaceholder))) {
-            Write-Host "No placeholder of value $FilePlaceholder found in template file. File [$FileName] will be skipped."
+            Write-Host "No placeholder of value [$FilePlaceholder] found in template file. File [$FileName] will be skipped."
             continue
         }
+        $UsedTemplatePlaceholders += $FilePlaceholder
 
         Write-Host "Bundling contents of source file: [$FileName]"
         $FileContents = Get-MergedContents $SourceFile
         $TemplateContents = $TemplateContents.Replace($FilePlaceholder, $FileContents)
+    }
+
+    if ($UsedTemplatePlaceholders.Length -ne $TemplatePlaceholders.Length) {
+        Write-Host "Warning: The following placeholders exist in the template but were not used:"
+        foreach ($Placeholder in $TemplatePlaceholders) {
+            if ($UsedTemplatePlaceholders -contains $Placeholder) {
+                continue
+            }
+            Write-Host "    $Placeholder"
+        }
     }
 
     $BundlePath = Join-Path $BundleDir "MarkdownNotes.html"
@@ -112,4 +167,3 @@ $BundlePath = Invoke-Bundle
 if ($Open) {
     Invoke-Item $BundlePath
 }
-

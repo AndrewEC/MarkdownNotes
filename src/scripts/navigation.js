@@ -10,13 +10,6 @@ class Navigation {
         this.#visibility = visibility;
         this.#appState.addPropertyChangedListener(this.#onStatePropertyChanged.bind(this));
         this.#registerButtonClickEvents();
-        this.#utils.getElement(Constants.Ids.Fragments.Navigation.formSearch)
-            .onsubmit = this.#searchFormSubmit.bind(this);
-    }
-
-    #searchFormSubmit() {
-        this.#performSearch();
-        return false;
     }
 
     #registerButtonClickEvents() {
@@ -33,10 +26,6 @@ class Navigation {
             {
                 id: Constants.Ids.Fragments.Navigation.buttonImages,
                 callback: () => thisRef.#utils.updateQuery(Constants.LocationHashes.images)
-            },
-            {
-                id: Constants.Ids.Fragments.Navigation.buttonSearch,
-                callback: () => thisRef.#performSearch()
             }
         ]);
     }
@@ -60,19 +49,6 @@ class Navigation {
                 this.#updateNavList();
                 break;
         }
-    }
-
-    #performSearch() {
-        const searchQuery = this.#utils.getElement(Constants.Ids.Fragments.Navigation.inputSearch).value;
-        if (searchQuery === '') {
-            return;
-        }
-        this.#utils.updateQuery(
-            Constants.LocationHashes.search,
-            {
-                'query': searchQuery
-            }
-        );
     }
 
     createNewPage() {
