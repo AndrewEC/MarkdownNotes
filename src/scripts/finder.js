@@ -1,14 +1,16 @@
 class Finder {
 
-    #visible = false;
     #appState = null;
     #utils = null;
     #results = [];
     #selectedIndex = -1;
+    #logger = new Logger('Finder');
 
     constructor(appState, utils) {
         this.#appState = appState;
         this.#utils = utils;
+
+        this.#appState.addPropertyChangedListener(this.#onPropertyChanged.bind(this));
 
         this.#utils.getElement(Constants.Ids.Fragments.Finder.inputTitle)
             .oninput = this.#onInputChange.bind(this);
@@ -16,13 +18,42 @@ class Finder {
             .onsubmit = this.#onFormSubmit.bind(this);
     }
 
-    onTabPressed(e) {
-        if (!this.#visible) {
-            return;
+    #onPropertyChanged(propertyName) {
+        if (propertyName === Constants.StateProperties.isFinding) {
+            if (this.#appState.isFinding) {
+                this.#present();
+            } else {
+                this.#hide();
+            }
+        }
+    }
+
+    onKeyPressed(e) {
+        if (e.keyCode === Constants.KeyCodes.escape) {
+            if (this.#appState.isFinding) {
+                this.#logger.log('Escape pressed. Hiding finder.');
+                this.#appState.isFinding = false;
+                return true;
+            }
+        } else if (e.keyCode === Constants.KeyCodes.tab) {
+            if (this.#appState.isFinding) {
+                this.#onTabPressed(e);
+                return false;
+            }
+        } else if (e.keyCode === Constants.KeyCodes.g && e.ctrlKey) {
+            if (!this.#appState.isFinding) {
+                this.#logger.log('Control + G pressed. Showing finder.');
+                this.#appState.isFinding = true;
+                return true;
+            }
         }
 
+        return false;
+    }
+
+    #onTabPressed(e) {
         if (e.shiftKey) {
-            // Navigate to the previous available result in the search results.
+            this.#logger.log(`Shift + Tab pressed. Navigating to previous result from current index [${this.#selectedIndex}].`);
             if (this.#selectedIndex === -1) {
                 e.preventDefault();
                 this.#selectedIndex = this.#results.length - 1;
@@ -33,7 +64,7 @@ class Finder {
                 this.#selectedIndex--;
             }
         } else {
-            // Navigate to the next available result in the search results.
+            this.#logger.log(`Shift + Tab pressed. Navigating to next result from current index [${this.#selectedIndex}].`);
             if (this.#selectedIndex === this.#results.length - 1) {
                 e.preventDefault();
                 this.#selectedIndex = -1
@@ -45,31 +76,27 @@ class Finder {
     }
 
     #onFormSubmit() {
-        const pageTitle = this.#utils.getElement(Constants.Ids.Fragments.Finder.inputTitle).value;
-        this.hide();
+        const searchTerm = this.#utils.getElement(Constants.Ids.Fragments.Finder.inputTitle).value;
+        this.#logger.log(`Finder form submitted. Searching for term: [${searchTerm}].`);
+        this.#appState.isFinding = false;
         this.#utils.updateQuery(
             Constants.LocationHashes.search,
             {
-                'query': pageTitle
+                'query': searchTerm
             }
         );
         return false;
     }
 
-    isVisible() {
-        return this.#visible;
-    }
-
-    present() {
-        this.#visible = true;
+    #present() {
         this.#utils.getElement(Constants.Ids.Fragments.Finder.root).style.display
             = Constants.Display.block;
         this.#resetResults();
         this.#utils.getElement(Constants.Ids.Fragments.Finder.inputTitle).focus();
+        this.resize();
     }
 
-    hide() {
-        this.#visible = false;
+    #hide() {
         this.#utils.getElement(Constants.Ids.Fragments.Finder.root).style.display
             = Constants.Display.none;
         this.#resetResults();
@@ -108,7 +135,8 @@ class Finder {
             link.innerText = result.title;
             const thisRef = this;
             link.onclick = () => {
-                thisRef.hide();
+                thisRef.#logger.log(`User selected result link with title: [${result.title}].`);
+                thisRef.#appState.isFinding = false;
                 thisRef.#utils.updateQuery(result.title);
             };
 
@@ -120,7 +148,7 @@ class Finder {
     }
 
     resize() {
-        if (!this.#visible) {
+        if (!this.#appState.isFinding) {
             return;
         }
 

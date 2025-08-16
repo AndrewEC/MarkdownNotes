@@ -338,11 +338,11 @@ td, th {
             },
             Settings: {
                 root: 'fragment-settings',
-                buttonSaveOrder: 'fragment-settings-save-order',
-                buttonResetOrder: 'fragment-settings-reset-order',
+                buttonSaveOrder: 'fragment-settings-button-save-order',
+                buttonResetOrder: 'fragment-settings-button-reset-order',
                 buttonUpdateTitle: 'fragment-settings-button-title-update',
                 currentTitle: 'fragment-settings-current-title',
-                orderTable: 'fragment-settings-order-table',
+                orderTable: 'fragment-settings-table-order',
                 dataArea: 'fragment-settings-data-area',
                 buttonDataImport: 'fragment-settings-button-data-import',
                 versionNumberText: 'fragment-settings-version-number',
@@ -353,10 +353,11 @@ td, th {
                 root: 'fragment-navigation',
                 listContainer: 'fragment-navigation-page-list-container',
                 title: 'fragment-navigation-title',
-                buttonSave: 'fragment-navigation-save',
-                buttonNewPage: 'fragment-navigation-new-page',
-                buttonSettings: 'fragment-navigation-settings',
-                buttonImages: 'fragment-navigation-images'
+                buttonSave: 'fragment-navigation-button-save',
+                buttonNewPage: 'fragment-navigation-button-new-page',
+                buttonSettings: 'fragment-navigation-button-settings',
+                buttonImages: 'fragment-navigation-button-images',
+                buttonSearch: 'fragment-navigation-button-search'
             },
             Images: {
                 root: 'fragment-images',
@@ -397,7 +398,9 @@ td, th {
         order: 'order',
         images: 'images',
         autoSavedChanges: 'autoSavedChanges',
-        hasUnsavedChanges: 'hasUnsavedChanges'
+        hasUnsavedChanges: 'hasUnsavedChanges',
+        isEditing: 'isEditing',
+        isFinding: 'isFinding'
     },
     noParentOption: 'none',
     lookupErrorClass: 'lookup-error',
@@ -432,11 +435,42 @@ td, th {
             Current: '1',
             v1: '1'
         },
-        App: '0.0.8'
+        App: '0.1.0'
     }
 };
+                const LOGGER_ENABLED = false;
 
-const defaultSlug = crypto.randomUUID();
+class Logger {
+
+    #name = '';
+
+    constructor(name) {
+        this.#name = name;
+    }
+
+    log(message) {
+        if (!LOGGER_ENABLED) {
+            return;
+        }
+
+        console.log(this.#formLogMessage(message));
+    }
+
+    error(message) {
+        if (!LOGGER_ENABLED) {
+            return;
+        }
+
+        console.error(this.#formLogMessage(message));
+    }
+
+    #formLogMessage(message) {
+        const dateString = new Date().toLocaleString();
+        return `[${this.#name}][${dateString}] => [${message}]`;
+    }
+
+}
+                const defaultSlug = crypto.randomUUID();
 class AppState {
     #serializableState = {
         pages: [
@@ -453,12 +487,16 @@ class AppState {
         version: '1'
     };
 
+    #logger = new Logger('AppState');
     #hasUnsavedChanges = false;
     #currentPage = this.#serializableState.pages[0];
     #onChangeCallbacks = [];
     #autoSavedChanges = [];
+    #isEditing = false;
+    #isFinding = false;
 
     #invokePropertyChangedCallbacks(propertyName) {
+        this.#logger.log(`Invoking property change callbacks for updated property [${propertyName}].`);
         for (let i = 0; i < this.#onChangeCallbacks.length; i++) {
             this.#onChangeCallbacks[i](propertyName);
         }
@@ -534,6 +572,34 @@ class AppState {
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.order);
 
         this.hasUnsavedChanges = true;
+    }
+
+    get isEditing() {
+        return this.#isEditing;
+    }
+
+    set isEditing(isEditing) {
+        if (this.#isEditing === isEditing) {
+            this.#logger.log('isEditing setter invoked but no change in value found.');
+            return;
+        }
+
+        this.#isEditing = isEditing;
+        this.#invokePropertyChangedCallbacks(Constants.StateProperties.isEditing);
+    }
+
+    get isFinding() {
+        return this.#isFinding;
+    }
+
+    set isFinding(isFinding) {
+        if (this.#isFinding === isFinding) {
+            this.#logger.log('isFinding setter invoked but no change in value found.');
+            return;
+        }
+
+        this.#isFinding = isFinding;
+        this.#invokePropertyChangedCallbacks(Constants.StateProperties.isFinding);
     }
 
     addImage(image) {
@@ -614,12 +680,16 @@ class AppState {
     }
 
     getFirstPage() {
-        const firstPageSlug = this.#serializableState.order[0];
+        const firstPageSlug = this.order[0];
         return this.getPage(firstPageSlug);
     }
 
+    getPagesInOrder() {
+        return this.order.map(slug => this.getPage(slug));
+    }
+
     getPage(slug) {
-        return this.#serializableState.pages.find(page => page.slug === slug)
+        return this.pages.find(page => page.slug === slug)
     }
 
     getSerializableState() {
@@ -688,18 +758,38 @@ class AppState {
     }
 
     #getElementsAndApply(ids, consumer) {
-        const elements = ids.map(id => this.getElement(id));
-        for (let i = 0; i < elements.length; i++) {
-            consumer(elements[i]);
-        }
+        ids.map(id => this.getElement(id)).forEach(element => consumer(element));
     }
 }
                 class Visibility {
 
     #utils = null;
+    #visibilityMappings = null;
 
     constructor(utils) {
         this.#utils = utils;
+
+        this.#visibilityMappings = new Map();
+        this.#visibilityMappings.set(
+            Constants.VisibilityOptions.revealEditor,
+            Constants.Ids.Fragments.Editor.root
+        );
+        this.#visibilityMappings.set(
+            Constants.VisibilityOptions.revealPreview,
+            Constants.Ids.Fragments.Preview.root
+        );
+        this.#visibilityMappings.set(
+            Constants.VisibilityOptions.revealSettings,
+            Constants.Ids.Fragments.Settings.root
+        );
+        this.#visibilityMappings.set(
+            Constants.VisibilityOptions.revealImages,
+            Constants.Ids.Fragments.Images.root
+        );
+        this.#visibilityMappings.set(
+            Constants.VisibilityOptions.revealSearch,
+            Constants.Ids.Fragments.Search.root
+        );
     }
 
     showPreview() {
@@ -736,11 +826,9 @@ class AppState {
     }
 
     #toggle(revealOption) {
-        const fragmentEditor = this.#utils.getElement(Constants.Ids.Fragments.Editor.root);
-        const fragmentPreview = this.#utils.getElement(Constants.Ids.Fragments.Preview.root);
-        const fragmentSettings = this.#utils.getElement(Constants.Ids.Fragments.Settings.root);
-        const fragmentImages = this.#utils.getElement(Constants.Ids.Fragments.Images.root);
-        const fragmentSearch = this.#utils.getElement(Constants.Ids.Fragments.Search.root);
+        [...this.#visibilityMappings.values()]
+            .map(id => this.#utils.getElement(id))
+            .forEach(element => element.style.display = Constants.Display.none);
 
         if (revealOption === Constants.VisibilityOptions.revealEditor) {
             this.#utils.getElement(Constants.Ids.Fragments.Navigation.buttonSave).disabled = true;
@@ -748,41 +836,24 @@ class AppState {
             this.#utils.getElement(Constants.Ids.Fragments.Navigation.buttonSave).disabled = false;
         }
 
-        fragmentEditor.style.display = Constants.Display.none;
-        fragmentPreview.style.display = Constants.Display.none;
-        fragmentSettings.style.display = Constants.Display.none;
-        fragmentImages.style.display = Constants.Display.none;
-        fragmentSearch.style.display = Constants.Display.none;
-
-        if (revealOption === Constants.VisibilityOptions.revealEditor) {
-            fragmentEditor.style.display = Constants.Display.block;
-        } else if (revealOption === Constants.VisibilityOptions.revealPreview) {
-            fragmentPreview.style.display = Constants.Display.block;
-        } else if (revealOption === Constants.VisibilityOptions.revealSettings) {
-            fragmentSettings.style.display = Constants.Display.block;
-        } else if (revealOption === Constants.VisibilityOptions.revealImages) {
-            fragmentImages.style.display = Constants.Display.block;
-        } else if (revealOption === Constants.VisibilityOptions.revealSearch) {
-            fragmentSearch.style.display = Constants.Display.block;
-        }
+        const idOfElementToReveal = this.#visibilityMappings.get(revealOption);
+        this.#utils.getElement(idOfElementToReveal).style.display = Constants.Display.block;
     }
 }
                 class Persistence {
 
+    #logger = new Logger('Persistence');
+
     #appState = null;
     #utils = null;
-    #editor = null;
 
-    constructor(appState, editor, utils) {
+    constructor(appState, utils) {
         this.#appState = appState;
-        this.#editor = editor;
         this.#utils = utils;
     }
 
     save() {
         this.#appState.hasUnsavedChanges = false;
-
-        this.#editor.removeEditor();
 
         const stateContainer = this.#utils.getElement(Constants.Ids.stateContainer);
         stateContainer.innerText = JSON.stringify(this.#appState.getSerializableState());
@@ -800,11 +871,13 @@ class AppState {
     }
 
     rehydrateState() {
+        this.#logger.log('Rehydrating state from state container.');
         let nextState = null;
         try {
             const stateContainer = this.#utils.getElement(Constants.Ids.stateContainer);
             nextState = JSON.parse(stateContainer.innerText);
         } catch (error) {
+            this.#logger.log('Previous state could not be restored. Continuing with default state.');
             alert('Previous save data could not be loaded. It may be corrupt or incompatible with this version of MarkdownNotes.');
         }
 
@@ -823,6 +896,7 @@ class AppState {
     validateState(state) {
         try {
             const version = this.#getVersion(state);
+            this.#logger.log(`Validating state. State version is [${version}].`);
             if (version === Constants.Versions.Save.v1) {
                 this.#validateStateV1(state);
             } else {
@@ -921,6 +995,8 @@ class AppState {
 }
                 class Navigation {
 
+    #logger = new Logger('Navigation');
+
     #appState = null;
     #utils = null;
     #visibility = null;
@@ -929,8 +1005,21 @@ class AppState {
         this.#appState = appState;
         this.#utils = utils;
         this.#visibility = visibility;
+
         this.#appState.addPropertyChangedListener(this.#onStatePropertyChanged.bind(this));
         this.#registerButtonClickEvents();
+        this.#listenForUrlChanges();
+    }
+
+    onKeyPressed(e) {
+        if (e.keyCode === Constants.KeyCodes.n && e.ctrlKey) {
+            if (!this.#appState.isEditing) {
+                this.#createNewPage();
+                return true;
+            }
+        }
+
+        return false;
     }
 
     #registerButtonClickEvents() {
@@ -942,11 +1031,15 @@ class AppState {
             },
             {
                 id: Constants.Ids.Fragments.Navigation.buttonNewPage,
-                callback: this.createNewPage.bind(this)
+                callback: this.#createNewPage.bind(this)
             },
             {
                 id: Constants.Ids.Fragments.Navigation.buttonImages,
                 callback: () => thisRef.#utils.updateQuery(Constants.LocationHashes.images)
+            },
+            {
+                id: Constants.Ids.Fragments.Navigation.buttonSearch,
+                callback: () => thisRef.#appState.isFinding = true
             }
         ]);
     }
@@ -972,7 +1065,7 @@ class AppState {
         }
     }
 
-    createNewPage() {
+    #createNewPage() {
         let newPageTitle = prompt('New Page Title:');
         if (!newPageTitle) {
             return;
@@ -989,10 +1082,13 @@ class AppState {
             return alert('The page title provided is a reserved value and cannot be used.')
         }
 
+        const pageSlug = crypto.randomUUID();
+        this.#logger.log(`Creating new page with title [${newPageTitle}] and slug [${pageSlug}].`);
+
         const newPage = {
             title: newPageTitle,
             contents: '',
-            slug: crypto.randomUUID(),
+            slug: pageSlug,
             parent: null
         };
 
@@ -1001,22 +1097,21 @@ class AppState {
     }
 
     #showSettings() {
+        this.#logger.log('Navigating to settings.');
         this.#visibility.showSettings();
         document.title = `${this.#appState.title} | Settings`;
     }
 
     #showImages() {
+        this.#logger.log('Navigating to images.');
         this.#visibility.showImages();
         document.title = `${this.#appState.title} | Images`;
     }
 
     #showSearch() {
+        this.#logger.log('Navigating to search results.');
         this.#visibility.showSearch();
         document.title = `${this.#appState.title} | Search Results`;
-    }
-
-    #showEditor() {
-        this.#visibility.showEditor();
     }
 
     #rehydrate() {
@@ -1028,8 +1123,7 @@ class AppState {
         // The nav list is the list of pages that appears on the bottom left-hand side of the page.
         const navContainer = this.#utils.getElement(Constants.Ids.Fragments.Navigation.listContainer);
 
-        const pagesWithoutParents = this.#appState.order
-            .map(slug => this.#appState.pages.find(page => page.slug === slug))
+        const pagesWithoutParents = this.#appState.getPagesInOrder()
             .filter(page => page.parent === null);
 
         const list = this.#buildNavListUlElement(pagesWithoutParents);
@@ -1060,8 +1154,7 @@ class AppState {
 
     #getImmediateChildren(parent) {
         // Gets the pages that are direct children of the input parent page.
-        return this.#appState.order
-            .map(slug => this.#appState.pages.find(page => page.slug === slug))
+        return this.#appState.getPagesInOrder()
             .filter(page => page.parent === parent.slug);
     }
 
@@ -1081,7 +1174,7 @@ class AppState {
 
     /**
      * Updates the title element that is located near the top left-hand side of
-     * the to the current notebook title registered in the global app state.
+     * the page to the current notebook title registered in the global app state.
      * 
      * The title in this instance is not the title of a particular page but
      * rather the title of the entire notebook.
@@ -1094,7 +1187,8 @@ class AppState {
 
         const notebookTitle = `${prefix}${this.#appState.title}`;
         
-        this.#utils.getElement(Constants.Ids.Fragments.Navigation.title).innerText = notebookTitle;
+        this.#utils.getElement(Constants.Ids.Fragments.Navigation.title)
+            .innerText = notebookTitle;
         
         const pageTitle = this.#appState.currentPage.title;
         const nextTitle = `${notebookTitle} | ${pageTitle}`;
@@ -1103,15 +1197,17 @@ class AppState {
 
     #navigateTo(pageTitle) {
         pageTitle = decodeURIComponent(pageTitle);
+        this.#logger.log(`Navigating to page with title: [${pageTitle}]`);
         const nextPage = this.#appState.pages.find(page => page.title === pageTitle);
         if (!nextPage) {
+            this.#logger.log(`Page with matching title could not be found. Defaulting to first page.`);
             this.#appState.currentPage = this.#appState.getFirstPage();
             return;
         }
         this.#appState.currentPage = nextPage;
     }
 
-    listenForUrlChange() {
+    #listenForUrlChanges() {
         const thisRef = this;
         let currentUrl = '';
         setInterval(() => {
@@ -1120,6 +1216,7 @@ class AppState {
                 return;
             }
             currentUrl = nextUrl;
+            thisRef.#logger.log(`URL changed to: [${nextUrl}].`);
 
             let pageTitle = '';
             if (window.location.search) {
@@ -1129,15 +1226,14 @@ class AppState {
                 }
             }
 
+            thisRef.#logger.log(`URL contains page title of: [${pageTitle}].`);
+
             switch (pageTitle) {
                 case Constants.LocationHashes.settings:
                     thisRef.#showSettings();
                     break;
                 case Constants.LocationHashes.images:
                     thisRef.#showImages();
-                    break;
-                case Constants.LocationHashes.editor:
-                    thisRef.#showEditor();
                     break;
                 case Constants.LocationHashes.search:
                     thisRef.#showSearch();
@@ -1157,6 +1253,7 @@ class AppState {
     #visibility = null;
     #utils = null;
     #lastAutosaveCheckTime = null;
+    #logger = new Logger('Editor');
 
     constructor(appState, visibility, utils) {
         this.#appState = appState;
@@ -1164,23 +1261,86 @@ class AppState {
         this.#utils = utils;
         this.#registerButtonClickEvents();
         this.#startPageEditListener();
+
+        this.#appState.addPropertyChangedListener(this.#onPropertyChanged.bind(this));
+        this.#watchForVisibilityChanges();
+    }
+
+    #onPropertyChanged(propertyName) {
+        if (propertyName === Constants.StateProperties.isEditing) {
+            if (this.#appState.isEditing) {
+                this.#editPage();
+            } else {
+                this.#removeEditor();
+            }
+        }
+    }
+
+    #watchForVisibilityChanges() {
+        let currentState = null;
+        const observer = new MutationObserver((mutations) => {
+            for (let mutation of mutations) {
+                const nextState = mutation.target.style.display;
+                if (currentState !== nextState) {
+                    currentState = nextState;
+                    const isVisible = mutation.target.style.display === Constants.Display.block;
+                    if (!isVisible) {
+                        this.#logger.log('Editor has become hidden. Setting isEditing to false.');
+                        this.#appState.isEditing = false;
+                    }
+                }
+            }
+        });
+
+        const target = this.#utils.getElement(Constants.Ids.Fragments.Editor.root);
+        currentState = target.style.display;
+        observer.observe(target, { attributes: true, attributeFilter: ['style'] });
+    }
+
+    onKeyPressed(e) {
+        if (e.keyCode === Constants.KeyCodes.e && e.ctrlKey) {
+            if (!this.#appState.isEditing) {
+                this.#logger.log('Control + E pressed. Starting editor.');
+                this.#appState.isEditing = true;
+                return true;
+            }
+        } else if (e.keyCode === Constants.KeyCodes.escape) {
+            if (this.#appState.isEditing) {
+                this.#logger.log('Escape pressed. Cancelling current edits.');
+                this.#cancelEdit();
+                return true;
+            }
+        } else if (e.keyCode === Constants.KeyCodes.s && e.ctrlKey) {
+            if (this.#appState.isEditing) {
+                this.#logger.log('Control + S pressed. Saving current edits.');
+                this.#updatePage();
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
-     * Periodically check if a page is being edited and if there are
+     * Periodically checks if a page is being edited and if there are
      * changes that have been made to the page that have not yet
      * been saved.
      * 
-     * This will trigger an "auto save". This doesn't actually save the
-     * changes to file but stores the state of the page in a temporary array.
-     * This way the user can continue editing the page from where they left
-     * off if they navigate away from the page without saving their changes.
+     * If there are changes this will trigger an "auto save". This doesn't
+     * actually save the changes to file but stores the state of the page
+     * in a temporary array.
+     * 
+     * When the user begins editing the page the Editor fragment will check
+     * to see if the page has any "auto save" changes available and will
+     * optionally restore said changes to allow the user to continue editing
+     * from where they left off.
      */
     #startPageEditListener() {
 
+        this.#logger.log('Starting editor listener.');
         const thisRef = this;
         setInterval(() => {
-            if (thisRef.#isInitialized() && thisRef.isShowingEditor()) {
+            if (this.#easyMdeInstance && thisRef.#appState.isEditing) {
 
                 const currentTime = Date.now();
                 const diff = currentTime - thisRef.#lastAutosaveCheckTime;
@@ -1205,11 +1365,11 @@ class AppState {
         this.#utils.registerButtonClicks([
             {
                 id: Constants.Ids.Fragments.Preview.buttonEdit,
-                callback: this.editPage.bind(this)
+                callback: () => this.#appState.isEditing = true
             },
             {
                 id: Constants.Ids.Fragments.Editor.buttonUpdate,
-                callback: this.updatePage.bind(this)
+                callback: this.#updatePage.bind(this)
             },
             {
                 id: Constants.Ids.Fragments.Editor.buttonCancel,
@@ -1219,30 +1379,30 @@ class AppState {
     }
 
     #cancelEdit() {
-        this.#appState.removeAutoSaveChange(this.#appState.currentPage.slug);
+        const currentPageSlug = this.#appState.currentPage.slug;
+        this.#logger.log(`Cancelling edit of current page: [${currentPageSlug}].`);
+        this.#appState.removeAutoSaveChange(currentPageSlug);
         this.#visibility.showPreview();
+        this.#appState.isEditing = false;
     }
 
     /**
-     * Removes the element generated by EasyMDE. This is needed to allow the
-     * page to remove these elements before saving to prevent an issue where saving
-     * and loading the page repeatedly will cause EasyMDE to create copies of the
-     * elements causing the page size to expand infinitely.
+     * When initializing EasyMDE it automatically injects some elements into the
+     * page. If the page is repeatedly saved and reloaded EasyMDE will effectively
+     * inject duplicate elements causing the page size to grow indefinitely.
+     * 
+     * To prevent said issue this will remove all EasyMDE generated elements from the
+     * page so it can be re-initialized from scratch each time. This should be called
+     * every time the user stops editing a page.
      */
-    removeEditor() {
+    #removeEditor() {
+        this.#logger.log('Removing EasyMDE editor.');
         this.#easyMdeInstance = null;
 
         const editorContainer = document.getElementsByClassName('EasyMDEContainer');
         if (editorContainer.length > 0) {
             editorContainer[0].remove();
         }
-    }
-
-    getEditorValue() {
-        if (!this.#isInitialized()) {
-            return null;
-        }
-        return this.#easyMdeInstance.value();
     }
 
     #getTitleValue() {
@@ -1252,15 +1412,6 @@ class AppState {
     #setTitleValue(value) {
         this.#utils.getElement(Constants.Ids.Fragments.Editor.inputTitle).value = value;
     }
-
-    #isInitialized() {
-        return this.#easyMdeInstance && this.#easyMdeInstance !== null;
-    }
-
-    isShowingEditor() {
-        return this.#utils.getElement(Constants.Ids.Fragments.Editor.root).style.display.toLowerCase()
-            !== Constants.Display.none;
-    }
     
     #doesPageTitleExist(title, currentPageSlug) {
         return this.#appState.pages
@@ -1268,22 +1419,20 @@ class AppState {
                 !== undefined;
     }
     
-    editPage() {
+    #editPage() {
         const page = this.#appState.currentPage;
+        this.#logger.log(`Starting edit of page [${page.slug}].`);
 
         this.#lastAutosaveCheckTime = Date.now();
 
         this.#visibility.showEditor();
         this.#populateParentPageSelect(page);
 
-        // Initialize the EasyMDE editor if it has not yet been initialized.
-        if (!this.#isInitialized()) {
-            this.#easyMdeInstance = new EasyMDE({
-                element: this.#utils.getElement(Constants.Ids.Fragments.Editor.area),
-                autoDownloadFontAwesome: false,
-                spellChecker: false
-            });
-        }
+        this.#easyMdeInstance = new EasyMDE({
+            element: this.#utils.getElement(Constants.Ids.Fragments.Editor.area),
+            autoDownloadFontAwesome: false,
+            spellChecker: false
+        });
 
         // Move page focus to the text area created by EasyMDE.
         setTimeout(function() {
@@ -1298,6 +1447,7 @@ class AppState {
 
         const unsavedChanges = this.#appState.getAutoSaveChange(page.slug);
         if (unsavedChanges) {
+            this.#logger.log('Found unsaved changes for current page.');
             if (!confirm('You have unsaved changes for this page. Pickup where you leftoff?')) {
                 this.#appState.removeAutoSaveChange(page.slug);
             } else {
@@ -1362,8 +1512,9 @@ class AppState {
      * Saves the content of the page being currently edited back to the global
      * app state. This doesn't yet save the changes to file.
      */
-    updatePage() {
+    #updatePage() {
         const currentPage = this.#appState.currentPage;
+        this.#logger.log(`Saving edits of current page [${currentPage.slug}].`);
         
         this.#appState.removeAutoSaveChange(this.#appState.currentPage.slug);
 
@@ -1384,9 +1535,13 @@ class AppState {
 
         this.#appState.setPage(currentPage.title, currentPage);
         this.#utils.updateQuery(currentPage.title);
+
+        this.#appState.isEditing = false;
     }
 }
                 class Preview {
+
+    #logger = new Logger('Preview');
 
     #appState = null;
     #utils = null;
@@ -1396,8 +1551,32 @@ class AppState {
         this.#appState = appState;
         this.#utils = utils;
         this.#visibility = visibility;
+
         this.#appState.addPropertyChangedListener(this.#onAppStateChanged.bind(this));
         this.#registerButtonClickEvents();
+    }
+
+    onKeyPressed(e) {
+        const isPreviewingPage = () => !this.#appState.isEditing
+            && !this.#appState.isFinding
+            && !visibility.isImagesPageVisible()
+            && !visibility.isSettingsPageVisible();
+
+        if (e.keyCode === Constants.KeyCodes.comma && e.ctrlKey) {
+            if (isPreviewingPage) {
+                this.#logger.log('Control + , pressed. Previewing previous page.');
+                this.#previewPreviousPage();
+                return true;
+            }
+        } else if (e.keyCode === Constants.KeyCodes.period && e.ctrlKey) {
+            if (isPreviewingPage) {
+                this.#logger.log('Control + . pressed. Previewing next page.');
+                this.#previewNextPage();
+                return true;
+            }
+        }
+
+        return false;
     }
 
     #registerButtonClickEvents() {
@@ -1419,6 +1598,7 @@ class AppState {
 
     #previewPage() {
         const page = this.#appState.currentPage;
+        this.#logger.log(`Previewing page titled [${page.title}].`);
 
         this.#visibility.showPreview();
 
@@ -1428,7 +1608,7 @@ class AppState {
         this.#addPageLinks(viewContainer);
     }
 
-    previewPreviousPage() {
+    #previewPreviousPage() {
         const order = this.#appState.order;
         const currentIndex = order.findIndex(o => o === this.#appState.currentPage.slug);
         if (currentIndex <= 0) {
@@ -1439,7 +1619,7 @@ class AppState {
         this.#utils.updateQuery(nextPage.title);
     }
 
-    previewNextPage() {
+    #previewNextPage() {
         const order = this.#appState.order;
         const currentIndex = order.findIndex(o => o === this.#appState.currentPage.slug);
         if (currentIndex < 0 || currentIndex >= order.length - 1) {
@@ -1525,6 +1705,7 @@ class AppState {
 
     #deletePage() {
         const pageToDelete = this.#appState.currentPage;
+        this.#logger.log(`Deleting page with title: [${pageToDelete.title}].`);
 
         let pages = this.#appState.pages;
 
@@ -1554,6 +1735,8 @@ class AppState {
 }
                 class Settings {
 
+    #logger = new Logger('Settings');
+
     #appState = null;
     #utils = null;
     #persistence = null;
@@ -1563,8 +1746,22 @@ class AppState {
         this.#appState = appState;
         this.#utils = utils;
         this.#persistence = persistence;
+
         this.#appState.addPropertyChangedListener(this.#onPropertyChanged.bind(this));
         this.#registerButtonClickEvents();
+    }
+
+    onKeyPressed(e) {
+        if (e.keyCode === Constants.KeyCodes.s && e.ctrlKey) {
+            if (!this.#appState.isEditing && !this.#appState.isFinding) {
+                this.#logger.log('Control + S pressed. Saving notebook.');
+                this.#hideDataArea();
+                this.#persistence.save();
+                return true;
+            }
+        }
+
+        return false;
     }
 
     #registerButtonClickEvents() {
@@ -1592,6 +1789,13 @@ class AppState {
             {
                 id: Constants.Ids.Fragments.Settings.buttonRevealData,
                 callback: this.#showDataArea.bind(this)
+            },
+            {
+                id: Constants.Ids.Fragments.Navigation.buttonSave,
+                callback: () => {
+                    this.#hideDataArea();
+                    this.#persistence.save();
+                }
             }
         ])
     };
@@ -1605,7 +1809,6 @@ class AppState {
                 this.#resetTitle();
                 this.#displayData();
                 break;
-            case Constants.StateProperties.pages:
             case Constants.StateProperties.order:
                 this.#resetOrder();
                 this.#displayData();
@@ -1637,6 +1840,8 @@ class AppState {
         }
         nextTitle = nextTitle.trim();
 
+        this.#logger.log(`Updating notebook title to: [${nextTitle}].`);
+
         this.#appState.title = nextTitle;
 
         alert('Notebook title has been updated.');
@@ -1655,6 +1860,8 @@ class AppState {
         if (this.#nextOrder.length === 0) {
             this.#nextOrder = this.#appState.order.slice()
         }
+
+        this.#logger.log(`Updating page order table with [${this.#nextOrder.length}] pages.`);
 
         const headerMarkup = '<tr><td>Page Name</td><td>Up</td><td>Down</td></tr>';
 
@@ -1733,14 +1940,18 @@ class AppState {
      * current global app state with the new JSON data.
      */
     #importData() {
+        this.#logger.log('Importing user entered JSON data.');
+
         let newState = this.#utils.getElement(Constants.Ids.Fragments.Settings.dataArea).value;
         try {
             newState = JSON.parse(newState);
         } catch (error) {
+            this.#logger.error(`Data could not be parsed as JSON. Cause: [${error}].`);
             return alert('The data provided could not be parsed as JSON. Error: ' + error);
         }
 
         if (!this.#persistence.validateState(newState)) {
+            this.#logger.error('User entered state is not valid. Data will not be imported.');
             return;
         }
 
@@ -1783,7 +1994,7 @@ class AppState {
         this.#displayData();
     }
 
-    hideDataArea() {
+    #hideDataArea() {
         if (!this.#isDataAreaVisible()) {
             return;
         }
@@ -1800,12 +2011,14 @@ class AppState {
 };
                 class Images {
 
+    #logger = new Logger('Images');
     #appState = null;
     #utils = null;
 
     constructor(appState, utils) {
         this.#appState = appState;
         this.#utils = utils;
+
         this.#appState.addPropertyChangedListener(this.#onStatePropertyChanged.bind(this));
         this.#registerButtonClickEvents();
     }
@@ -1850,7 +2063,9 @@ class AppState {
             imageInput.value = null;
             imageNameInput.value = null;
         }
-        reader.readAsDataURL(imageInput.files[0]);
+        const file = imageInput.files[0];
+        this.#logger.log(`Embedding image from file: [${file}], with name: [${imageName}].`);
+        reader.readAsDataURL(file);
     }
 
     #doesNameExist(newImageName) {
@@ -1911,7 +2126,7 @@ class AppState {
 
     #onUpdateImageNameClicked(currentImageName) {
         let newImageName = prompt('Enter new name for image:');
-        if (newImageName === null) {
+        if (!newImageName) {
             return;
         }
         newImageName = newImageName.trim();
@@ -1921,6 +2136,8 @@ class AppState {
         } else if (this.#doesNameExist(newImageName)) {
             return alert('Image name cannot be used because another image has that name. All image names must be unique.');
         }
+
+        this.#logger.log(`Updating image name from [${currentImageName}] to [${newImageName}].`);
 
         const image = this.#appState.images.find(image => image.name === currentImageName);
         image.name = newImageName;
@@ -1941,6 +2158,8 @@ class AppState {
 
     #highlightSpanStart = '<span class="search-highlight">';
     #highlightSpanEnd = '</span>';
+
+    #logger = new Logger('Search');
 
     #appState = null;
     #utils = null;
@@ -1965,6 +2184,7 @@ class AppState {
             if (nextQuery === thisRef.#currentQuery) {
                 return;
             }
+            thisRef.#logger.log(`Search detected change in query. Performing search with new query: [${query}].`);
             thisRef.#currentQuery = nextQuery;
 
             this.#performSearch();
@@ -1988,8 +2208,10 @@ class AppState {
                 this.#visible = nextState;
 
                 if (this.#visible) {
+                    this.#logger.log('Search result container become visible. Performing search.');
                     this.#performSearch();
                 } else {
+                    this.#logger.log('Search result container hidden. Removing previous search results.');
                     this.#utils.getElement(Constants.Ids.Fragments.Search.resultsContainer)
                         .innerHTML = '';
                 }
@@ -2003,6 +2225,8 @@ class AppState {
     #performSearch() {
         const query = new URLSearchParams(window.location.search).get('query');
 
+        this.#logger.log(`Performing search with query: [${query}].`);
+
         const resultContainer = this.#utils.getElement(Constants.Ids.Fragments.Search.resultsContainer);
         resultContainer.innerHTML = `<p>Search results for: <strong>${query}</strong></p>`;
 
@@ -2011,6 +2235,8 @@ class AppState {
             resultContainer.innerHTML += '<p>No results found.</p>';
             return;
         }
+
+        this.#logger.log(`Search produced [${results.length}] results.`);
 
         for (const pageSlug in results) {
             const page = this.#appState.pages.find((page) => page.slug === pageSlug)
@@ -2109,7 +2335,7 @@ class AppState {
     #findOccurrences(query) {
         const results = {};
 
-        for (const page of this.#appState.pages) {
+        for (const page of this.#appState.getPagesInOrder()) {
             const indexes = this.#findAllOccurrencesOnPage(page, query);
             if (indexes.length > 0) {
                 results[page.slug] = indexes;
@@ -2143,15 +2369,17 @@ class AppState {
 }
                 class Finder {
 
-    #visible = false;
     #appState = null;
     #utils = null;
     #results = [];
     #selectedIndex = -1;
+    #logger = new Logger('Finder');
 
     constructor(appState, utils) {
         this.#appState = appState;
         this.#utils = utils;
+
+        this.#appState.addPropertyChangedListener(this.#onPropertyChanged.bind(this));
 
         this.#utils.getElement(Constants.Ids.Fragments.Finder.inputTitle)
             .oninput = this.#onInputChange.bind(this);
@@ -2159,13 +2387,42 @@ class AppState {
             .onsubmit = this.#onFormSubmit.bind(this);
     }
 
-    onTabPressed(e) {
-        if (!this.#visible) {
-            return;
+    #onPropertyChanged(propertyName) {
+        if (propertyName === Constants.StateProperties.isFinding) {
+            if (this.#appState.isFinding) {
+                this.#present();
+            } else {
+                this.#hide();
+            }
+        }
+    }
+
+    onKeyPressed(e) {
+        if (e.keyCode === Constants.KeyCodes.escape) {
+            if (this.#appState.isFinding) {
+                this.#logger.log('Escape pressed. Hiding finder.');
+                this.#appState.isFinding = false;
+                return true;
+            }
+        } else if (e.keyCode === Constants.KeyCodes.tab) {
+            if (this.#appState.isFinding) {
+                this.#onTabPressed(e);
+                return false;
+            }
+        } else if (e.keyCode === Constants.KeyCodes.g && e.ctrlKey) {
+            if (!this.#appState.isFinding) {
+                this.#logger.log('Control + G pressed. Showing finder.');
+                this.#appState.isFinding = true;
+                return true;
+            }
         }
 
+        return false;
+    }
+
+    #onTabPressed(e) {
         if (e.shiftKey) {
-            // Navigate to the previous available result in the search results.
+            this.#logger.log(`Shift + Tab pressed. Navigating to previous result from current index [${this.#selectedIndex}].`);
             if (this.#selectedIndex === -1) {
                 e.preventDefault();
                 this.#selectedIndex = this.#results.length - 1;
@@ -2176,7 +2433,7 @@ class AppState {
                 this.#selectedIndex--;
             }
         } else {
-            // Navigate to the next available result in the search results.
+            this.#logger.log(`Shift + Tab pressed. Navigating to next result from current index [${this.#selectedIndex}].`);
             if (this.#selectedIndex === this.#results.length - 1) {
                 e.preventDefault();
                 this.#selectedIndex = -1
@@ -2188,31 +2445,27 @@ class AppState {
     }
 
     #onFormSubmit() {
-        const pageTitle = this.#utils.getElement(Constants.Ids.Fragments.Finder.inputTitle).value;
-        this.hide();
+        const searchTerm = this.#utils.getElement(Constants.Ids.Fragments.Finder.inputTitle).value;
+        this.#logger.log(`Finder form submitted. Searching for term: [${searchTerm}].`);
+        this.#appState.isFinding = false;
         this.#utils.updateQuery(
             Constants.LocationHashes.search,
             {
-                'query': pageTitle
+                'query': searchTerm
             }
         );
         return false;
     }
 
-    isVisible() {
-        return this.#visible;
-    }
-
-    present() {
-        this.#visible = true;
+    #present() {
         this.#utils.getElement(Constants.Ids.Fragments.Finder.root).style.display
             = Constants.Display.block;
         this.#resetResults();
         this.#utils.getElement(Constants.Ids.Fragments.Finder.inputTitle).focus();
+        this.resize();
     }
 
-    hide() {
-        this.#visible = false;
+    #hide() {
         this.#utils.getElement(Constants.Ids.Fragments.Finder.root).style.display
             = Constants.Display.none;
         this.#resetResults();
@@ -2251,7 +2504,8 @@ class AppState {
             link.innerText = result.title;
             const thisRef = this;
             link.onclick = () => {
-                thisRef.hide();
+                thisRef.#logger.log(`User selected result link with title: [${result.title}].`);
+                thisRef.#appState.isFinding = false;
                 thisRef.#utils.updateQuery(result.title);
             };
 
@@ -2263,7 +2517,7 @@ class AppState {
     }
 
     resize() {
-        if (!this.#visible) {
+        if (!this.#appState.isFinding) {
             return;
         }
 
@@ -2301,123 +2555,57 @@ class AppState {
 }
                 window.onload = () => {
 
-    // Initialize the fragments.
     const appState = new AppState();
     const utils = new Utils(appState);
     const visibility = new Visibility(utils);
 
     const editor = new Editor(appState, visibility, utils);
-    const persistence = new Persistence(appState, editor, utils);
+    const persistence = new Persistence(appState, utils);
     const navigation = new Navigation(appState, utils, visibility);
     const preview = new Preview(appState, utils, visibility);
     const settings = new Settings(appState, utils, persistence);
     const finder = new Finder(appState, utils);
-
     new Images(appState, utils);
     new Search(appState, utils);
+
+    const keyboardHandlers = [
+        finder,
+        editor,
+        navigation,
+        settings,
+        preview
+    ];
+
+    const resizeHandlers = [
+        utils,
+        finder
+    ];
 
     // Load the app state.
     persistence.rehydrateState();
 
-    // Register the button that allows the user to save the
-    // current notebook to file.
-    utils.registerButtonClicks([
-        {
-            id: Constants.Ids.Fragments.Navigation.buttonSave,
-            callback: () => {
-                if (editor.isShowingEditor() || finder.isVisible()) {
-                    return;
-                }
-                settings.hideDataArea();
-                persistence.save();
-            }
-        }
-    ]);
-
     // Global keyboard shortcuts.
     window.onkeydown = (e) => {
-        switch (e.keyCode) {
-            case Constants.KeyCodes.escape:
-                if (editor.isShowingEditor()) {
-                    visibility.showPreview();
-                    e.preventDefault();
-                    return;
-                } else if (finder.isVisible()) {
-                    finder.hide();
-                    e.preventDefault();
-                    return;
-                }
-                break;
-            
-            case Constants.KeyCodes.tab:
-                if (finder.isVisible()) {
-                    finder.onTabPressed(e);
-                    return;
-                }
-                break;
-        }
-
-        if (!e.ctrlKey) {
-            return;
-        }
-
-        const isPreviewingPage = () => !editor.isShowingEditor()
-            && !visibility.isImagesPageVisible()
-            && !visibility.isSettingsPageVisible();
-
-        switch (e.keyCode) {
-            case Constants.KeyCodes.s:
-                if (editor.isShowingEditor()) {
-                    editor.updatePage();
-                } else {
-                    settings.hideDataArea();
-                    persistence.save();
-                }
+        for (const fragment of keyboardHandlers) {
+            if (fragment.onKeyPressed(e)) {
                 e.preventDefault();
                 break;
-            case Constants.KeyCodes.n:
-                e.preventDefault();
-                if (!editor.isShowingEditor()) {
-                    navigation.createNewPage();
-                }
-                break;
-            case Constants.KeyCodes.e:
-                e.preventDefault();
-                if (isPreviewingPage()) {
-                    editor.editPage();
-                }
-                break;
-            case Constants.KeyCodes.comma:
-                if (isPreviewingPage()) {
-                    preview.previewPreviousPage();
-                }
-                e.preventDefault();
-                break;
-            case Constants.KeyCodes.period:
-                if (isPreviewingPage()) {
-                    preview.previewNextPage();
-                }
-                e.preventDefault();
-                break;
-            case Constants.KeyCodes.g:
-                if (!editor.isShowingEditor()) {
-                    finder.present();
-                    finder.resize();
-                }
-                e.preventDefault();
-                break;
+            }
         }
     };
 
-    // Misc. event listeners.
-    utils.resize();
-    finder.resize();
+    // Resize handlers.
+    for (const fragment of resizeHandlers) {
+        fragment.resize();
+    }
     window.onresize = () => {
-        utils.resize();
-        finder.resize();
+        for (const fragment of resizeHandlers) {
+            fragment.resize();
+        }
     };
+
+    // Misc. event handlers.
     window.onbeforeunload = () => utils.beforeUnload();
-    navigation.listenForUrlChange();
 };
             })();
         </script>
@@ -2432,21 +2620,25 @@ class AppState {
     <hr class="navigation-rule"/>
 
     <div id="fragment-navigation-button-container">
-        <a id="fragment-navigation-save"
+        <a id="fragment-navigation-button-save"
             class="navigation-button standard-button-link"
             href="javascript:void(0);">Save</a>
 
-        <a id="fragment-navigation-settings"
-            class="navigation-button standard-button-link"
-            href="javascript:void(0);">Settings</a>
-
-        <a id="fragment-navigation-images"
-            class="navigation-button standard-button-link"
-            href="javascript:void(0);">Images</a>
-
-        <a id="fragment-navigation-new-page"
+        <a id="fragment-navigation-button-new-page"
             class="navigation-button standard-button-link"
             href="javascript:void(0);">New Page</a>
+        
+        <a id="fragment-navigation-button-search"
+            class="navigation-button standard-button-link"
+            href="javascript:void(0);">Search</a>
+
+        <a id="fragment-navigation-button-images"
+            class="navigation-button standard-button-link"
+            href="javascript:void(0);">Images</a>
+            
+        <a id="fragment-navigation-button-settings"
+            class="navigation-button standard-button-link"
+            href="javascript:void(0);">Settings</a>
     </div>
 
     <hr class="navigation-rule"/>
@@ -2469,7 +2661,7 @@ class AppState {
     <div id="fragment-preview-view-container"></div>
 
 </div>
-                <div id="fragment-editor">
+                <div id="fragment-editor" style="display: none;">
 
     <a href="javascript:void(0);"
         id="fragment-editor-button-update"
@@ -2509,7 +2701,7 @@ class AppState {
     <hr />
 
     <h3>Page order</h3>
-    <table id="fragment-settings-order-table">
+    <table id="fragment-settings-table-order">
         <tr>
             <td>Page Name</td>
             <td>Up</td>
@@ -2518,11 +2710,11 @@ class AppState {
     </table>
     <br />
     <a href="javascript:void(0);"
-        id="fragment-settings-save-order"
+        id="fragment-settings-button-save-order"
         class="standard-button-link standard-button-link-fixed">Save Order</a>
 
     <a href="javascript:void(0);"
-        id="fragment-settings-reset-order"
+        id="fragment-settings-button-reset-order"
         class="standard-button-link standard-button-link-fixed">Reset Order</a>
 
     <hr />

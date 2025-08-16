@@ -1,5 +1,7 @@
 class Settings {
 
+    #logger = new Logger('Settings');
+
     #appState = null;
     #utils = null;
     #persistence = null;
@@ -9,8 +11,22 @@ class Settings {
         this.#appState = appState;
         this.#utils = utils;
         this.#persistence = persistence;
+
         this.#appState.addPropertyChangedListener(this.#onPropertyChanged.bind(this));
         this.#registerButtonClickEvents();
+    }
+
+    onKeyPressed(e) {
+        if (e.keyCode === Constants.KeyCodes.s && e.ctrlKey) {
+            if (!this.#appState.isEditing && !this.#appState.isFinding) {
+                this.#logger.log('Control + S pressed. Saving notebook.');
+                this.#hideDataArea();
+                this.#persistence.save();
+                return true;
+            }
+        }
+
+        return false;
     }
 
     #registerButtonClickEvents() {
@@ -38,6 +54,13 @@ class Settings {
             {
                 id: Constants.Ids.Fragments.Settings.buttonRevealData,
                 callback: this.#showDataArea.bind(this)
+            },
+            {
+                id: Constants.Ids.Fragments.Navigation.buttonSave,
+                callback: () => {
+                    this.#hideDataArea();
+                    this.#persistence.save();
+                }
             }
         ])
     };
@@ -51,7 +74,6 @@ class Settings {
                 this.#resetTitle();
                 this.#displayData();
                 break;
-            case Constants.StateProperties.pages:
             case Constants.StateProperties.order:
                 this.#resetOrder();
                 this.#displayData();
@@ -83,6 +105,8 @@ class Settings {
         }
         nextTitle = nextTitle.trim();
 
+        this.#logger.log(`Updating notebook title to: [${nextTitle}].`);
+
         this.#appState.title = nextTitle;
 
         alert('Notebook title has been updated.');
@@ -101,6 +125,8 @@ class Settings {
         if (this.#nextOrder.length === 0) {
             this.#nextOrder = this.#appState.order.slice()
         }
+
+        this.#logger.log(`Updating page order table with [${this.#nextOrder.length}] pages.`);
 
         const headerMarkup = '<tr><td>Page Name</td><td>Up</td><td>Down</td></tr>';
 
@@ -179,14 +205,18 @@ class Settings {
      * current global app state with the new JSON data.
      */
     #importData() {
+        this.#logger.log('Importing user entered JSON data.');
+
         let newState = this.#utils.getElement(Constants.Ids.Fragments.Settings.dataArea).value;
         try {
             newState = JSON.parse(newState);
         } catch (error) {
+            this.#logger.error(`Data could not be parsed as JSON. Cause: [${error}].`);
             return alert('The data provided could not be parsed as JSON. Error: ' + error);
         }
 
         if (!this.#persistence.validateState(newState)) {
+            this.#logger.error('User entered state is not valid. Data will not be imported.');
             return;
         }
 
@@ -229,7 +259,7 @@ class Settings {
         this.#displayData();
     }
 
-    hideDataArea() {
+    #hideDataArea() {
         if (!this.#isDataAreaVisible()) {
             return;
         }

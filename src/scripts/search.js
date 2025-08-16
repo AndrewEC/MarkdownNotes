@@ -3,6 +3,8 @@ class Search {
     #highlightSpanStart = '<span class="search-highlight">';
     #highlightSpanEnd = '</span>';
 
+    #logger = new Logger('Search');
+
     #appState = null;
     #utils = null;
     #visible = false;
@@ -26,6 +28,7 @@ class Search {
             if (nextQuery === thisRef.#currentQuery) {
                 return;
             }
+            thisRef.#logger.log(`Search detected change in query. Performing search with new query: [${query}].`);
             thisRef.#currentQuery = nextQuery;
 
             this.#performSearch();
@@ -49,8 +52,10 @@ class Search {
                 this.#visible = nextState;
 
                 if (this.#visible) {
+                    this.#logger.log('Search result container become visible. Performing search.');
                     this.#performSearch();
                 } else {
+                    this.#logger.log('Search result container hidden. Removing previous search results.');
                     this.#utils.getElement(Constants.Ids.Fragments.Search.resultsContainer)
                         .innerHTML = '';
                 }
@@ -64,6 +69,8 @@ class Search {
     #performSearch() {
         const query = new URLSearchParams(window.location.search).get('query');
 
+        this.#logger.log(`Performing search with query: [${query}].`);
+
         const resultContainer = this.#utils.getElement(Constants.Ids.Fragments.Search.resultsContainer);
         resultContainer.innerHTML = `<p>Search results for: <strong>${query}</strong></p>`;
 
@@ -72,6 +79,8 @@ class Search {
             resultContainer.innerHTML += '<p>No results found.</p>';
             return;
         }
+
+        this.#logger.log(`Search produced [${results.length}] results.`);
 
         for (const pageSlug in results) {
             const page = this.#appState.pages.find((page) => page.slug === pageSlug)
@@ -170,7 +179,7 @@ class Search {
     #findOccurrences(query) {
         const results = {};
 
-        for (const page of this.#appState.pages) {
+        for (const page of this.#appState.getPagesInOrder()) {
             const indexes = this.#findAllOccurrencesOnPage(page, query);
             if (indexes.length > 0) {
                 results[page.slug] = indexes;

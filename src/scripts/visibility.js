@@ -1,9 +1,32 @@
 class Visibility {
 
     #utils = null;
+    #visibilityMappings = null;
 
     constructor(utils) {
         this.#utils = utils;
+
+        this.#visibilityMappings = new Map();
+        this.#visibilityMappings.set(
+            Constants.VisibilityOptions.revealEditor,
+            Constants.Ids.Fragments.Editor.root
+        );
+        this.#visibilityMappings.set(
+            Constants.VisibilityOptions.revealPreview,
+            Constants.Ids.Fragments.Preview.root
+        );
+        this.#visibilityMappings.set(
+            Constants.VisibilityOptions.revealSettings,
+            Constants.Ids.Fragments.Settings.root
+        );
+        this.#visibilityMappings.set(
+            Constants.VisibilityOptions.revealImages,
+            Constants.Ids.Fragments.Images.root
+        );
+        this.#visibilityMappings.set(
+            Constants.VisibilityOptions.revealSearch,
+            Constants.Ids.Fragments.Search.root
+        );
     }
 
     showPreview() {
@@ -40,11 +63,9 @@ class Visibility {
     }
 
     #toggle(revealOption) {
-        const fragmentEditor = this.#utils.getElement(Constants.Ids.Fragments.Editor.root);
-        const fragmentPreview = this.#utils.getElement(Constants.Ids.Fragments.Preview.root);
-        const fragmentSettings = this.#utils.getElement(Constants.Ids.Fragments.Settings.root);
-        const fragmentImages = this.#utils.getElement(Constants.Ids.Fragments.Images.root);
-        const fragmentSearch = this.#utils.getElement(Constants.Ids.Fragments.Search.root);
+        [...this.#visibilityMappings.values()]
+            .map(id => this.#utils.getElement(id))
+            .forEach(element => element.style.display = Constants.Display.none);
 
         if (revealOption === Constants.VisibilityOptions.revealEditor) {
             this.#utils.getElement(Constants.Ids.Fragments.Navigation.buttonSave).disabled = true;
@@ -52,22 +73,7 @@ class Visibility {
             this.#utils.getElement(Constants.Ids.Fragments.Navigation.buttonSave).disabled = false;
         }
 
-        fragmentEditor.style.display = Constants.Display.none;
-        fragmentPreview.style.display = Constants.Display.none;
-        fragmentSettings.style.display = Constants.Display.none;
-        fragmentImages.style.display = Constants.Display.none;
-        fragmentSearch.style.display = Constants.Display.none;
-
-        if (revealOption === Constants.VisibilityOptions.revealEditor) {
-            fragmentEditor.style.display = Constants.Display.block;
-        } else if (revealOption === Constants.VisibilityOptions.revealPreview) {
-            fragmentPreview.style.display = Constants.Display.block;
-        } else if (revealOption === Constants.VisibilityOptions.revealSettings) {
-            fragmentSettings.style.display = Constants.Display.block;
-        } else if (revealOption === Constants.VisibilityOptions.revealImages) {
-            fragmentImages.style.display = Constants.Display.block;
-        } else if (revealOption === Constants.VisibilityOptions.revealSearch) {
-            fragmentSearch.style.display = Constants.Display.block;
-        }
+        const idOfElementToReveal = this.#visibilityMappings.get(revealOption);
+        this.#utils.getElement(idOfElementToReveal).style.display = Constants.Display.block;
     }
 }

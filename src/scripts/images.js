@@ -1,11 +1,13 @@
 class Images {
 
+    #logger = new Logger('Images');
     #appState = null;
     #utils = null;
 
     constructor(appState, utils) {
         this.#appState = appState;
         this.#utils = utils;
+
         this.#appState.addPropertyChangedListener(this.#onStatePropertyChanged.bind(this));
         this.#registerButtonClickEvents();
     }
@@ -50,7 +52,9 @@ class Images {
             imageInput.value = null;
             imageNameInput.value = null;
         }
-        reader.readAsDataURL(imageInput.files[0]);
+        const file = imageInput.files[0];
+        this.#logger.log(`Embedding image from file: [${file}], with name: [${imageName}].`);
+        reader.readAsDataURL(file);
     }
 
     #doesNameExist(newImageName) {
@@ -111,7 +115,7 @@ class Images {
 
     #onUpdateImageNameClicked(currentImageName) {
         let newImageName = prompt('Enter new name for image:');
-        if (newImageName === null) {
+        if (!newImageName) {
             return;
         }
         newImageName = newImageName.trim();
@@ -121,6 +125,8 @@ class Images {
         } else if (this.#doesNameExist(newImageName)) {
             return alert('Image name cannot be used because another image has that name. All image names must be unique.');
         }
+
+        this.#logger.log(`Updating image name from [${currentImageName}] to [${newImageName}].`);
 
         const image = this.#appState.images.find(image => image.name === currentImageName);
         image.name = newImageName;

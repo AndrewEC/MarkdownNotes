@@ -56,9 +56,6 @@ class Utils {
     }
 
     #getElementsAndApply(ids, consumer) {
-        const elements = ids.map(id => this.getElement(id));
-        for (let i = 0; i < elements.length; i++) {
-            consumer(elements[i]);
-        }
+        ids.map(id => this.getElement(id)).forEach(element => consumer(element));
     }
 }

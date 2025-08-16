@@ -1,121 +1,3 @@
-const Constants = {
-    Ids: {
-        rootContainer: 'root-container',
-        Fragments: {
-            Preview: {
-                root: 'fragment-preview',
-                viewContainer: 'fragment-preview-view-container',
-                buttonEdit: 'fragment-preview-button-edit',
-                buttonDelete: 'fragment-preview-button-delete'
-            },
-            Editor: {
-                root: 'fragment-editor',
-                inputTitle: 'fragment-editor-input-title',
-                area: 'fragment-editor-area',
-                buttonUpdate: 'fragment-editor-button-update',
-                buttonCancel: 'fragment-editor-button-cancel',
-                selectParent: 'fragment-editor-select-parent'
-            },
-            Settings: {
-                root: 'fragment-settings',
-                buttonSaveOrder: 'fragment-settings-save-order',
-                buttonResetOrder: 'fragment-settings-reset-order',
-                buttonUpdateTitle: 'fragment-settings-button-title-update',
-                currentTitle: 'fragment-settings-current-title',
-                orderTable: 'fragment-settings-order-table',
-                dataArea: 'fragment-settings-data-area',
-                buttonDataImport: 'fragment-settings-button-data-import',
-                versionNumberText: 'fragment-settings-version-number',
-                buttonCopyData: 'fragment-settings-button-data-copy',
-                buttonRevealData: 'fragment-settings-button-reveal-data'
-            },
-            Navigation: {
-                root: 'fragment-navigation',
-                listContainer: 'fragment-navigation-page-list-container',
-                title: 'fragment-navigation-title',
-                buttonSave: 'fragment-navigation-save',
-                buttonNewPage: 'fragment-navigation-new-page',
-                buttonSettings: 'fragment-navigation-settings',
-                buttonImages: 'fragment-navigation-images'
-            },
-            Images: {
-                root: 'fragment-images',
-                buttonEmbed: 'fragment-images-button-embed',
-                imageInput: 'fragment-images-image-input',
-                imageName: 'fragment-images-input-name',
-                imageTable: 'fragment-images-display-table'
-            },
-            Search: {
-                root: 'fragment-search',
-                resultsContainer: 'fragment-search-results-container'
-            },
-            Finder: {
-                root: 'fragment-finder',
-                inputTitle: 'fragment-finder-input-title',
-                resultContainer: 'fragment-finder-result-container',
-                formInput: 'fragment-finder-form-input'
-            }
-        },
-        stateContainer: 'root-state-container'
-    },
-    LocationHashes: {
-        settings: '__settings__',
-        images: '__images__',
-        search: '__search__'
-    },
-    reservedPageTitles: [
-        '__settings__',
-        '__images__',
-        '__search__',
-        'none'
-    ],
-    StateProperties: {
-        state: '__state__',
-        title: 'title',
-        currentPage: 'currentPage',
-        pages: 'pages',
-        order: 'order',
-        images: 'images',
-        autoSavedChanges: 'autoSavedChanges',
-        hasUnsavedChanges: 'hasUnsavedChanges'
-    },
-    noParentOption: 'none',
-    lookupErrorClass: 'lookup-error',
-    VisibilityOptions: {
-        revealEditor: 'revealEditor',
-        revealPreview: 'revealPreview',
-        revealSettings: 'revealSettings',
-        revealImages: 'revealImages',
-        revealSearch: 'revealSearch'
-    },
-    Display: {
-        none: 'none',
-        block: 'block'
-    },
-    Prefixes: {
-        embeddedImageSrc: 'image/',
-        pageLink: 'page/'
-    },
-    KeyCodes: {
-        e: 69,
-        g: 71,
-        n: 78,
-        q: 81,
-        s: 83,
-        comma: 188,
-        escape: 27,
-        period: 190,
-        tab: 9
-    },
-    Versions: {
-        Save: {
-            Current: '1',
-            v1: '1'
-        },
-        App: '0.0.8'
-    }
-};
-
 const defaultSlug = crypto.randomUUID();
 class AppState {
     #serializableState = {
@@ -133,12 +15,16 @@ class AppState {
         version: '1'
     };
 
+    #logger = new Logger('AppState');
     #hasUnsavedChanges = false;
     #currentPage = this.#serializableState.pages[0];
     #onChangeCallbacks = [];
     #autoSavedChanges = [];
+    #isEditing = false;
+    #isFinding = false;
 
     #invokePropertyChangedCallbacks(propertyName) {
+        this.#logger.log(`Invoking property change callbacks for updated property [${propertyName}].`);
         for (let i = 0; i < this.#onChangeCallbacks.length; i++) {
             this.#onChangeCallbacks[i](propertyName);
         }
@@ -214,6 +100,34 @@ class AppState {
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.order);
 
         this.hasUnsavedChanges = true;
+    }
+
+    get isEditing() {
+        return this.#isEditing;
+    }
+
+    set isEditing(isEditing) {
+        if (this.#isEditing === isEditing) {
+            this.#logger.log('isEditing setter invoked but no change in value found.');
+            return;
+        }
+
+        this.#isEditing = isEditing;
+        this.#invokePropertyChangedCallbacks(Constants.StateProperties.isEditing);
+    }
+
+    get isFinding() {
+        return this.#isFinding;
+    }
+
+    set isFinding(isFinding) {
+        if (this.#isFinding === isFinding) {
+            this.#logger.log('isFinding setter invoked but no change in value found.');
+            return;
+        }
+
+        this.#isFinding = isFinding;
+        this.#invokePropertyChangedCallbacks(Constants.StateProperties.isFinding);
     }
 
     addImage(image) {
@@ -294,12 +208,16 @@ class AppState {
     }
 
     getFirstPage() {
-        const firstPageSlug = this.#serializableState.order[0];
+        const firstPageSlug = this.order[0];
         return this.getPage(firstPageSlug);
     }
 
+    getPagesInOrder() {
+        return this.order.map(slug => this.getPage(slug));
+    }
+
     getPage(slug) {
-        return this.#serializableState.pages.find(page => page.slug === slug)
+        return this.pages.find(page => page.slug === slug)
     }
 
     getSerializableState() {

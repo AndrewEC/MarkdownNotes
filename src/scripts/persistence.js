@@ -1,19 +1,17 @@
 class Persistence {
 
+    #logger = new Logger('Persistence');
+
     #appState = null;
     #utils = null;
-    #editor = null;
 
-    constructor(appState, editor, utils) {
+    constructor(appState, utils) {
         this.#appState = appState;
-        this.#editor = editor;
         this.#utils = utils;
     }
 
     save() {
         this.#appState.hasUnsavedChanges = false;
-
-        this.#editor.removeEditor();
 
         const stateContainer = this.#utils.getElement(Constants.Ids.stateContainer);
         stateContainer.innerText = JSON.stringify(this.#appState.getSerializableState());
@@ -31,11 +29,13 @@ class Persistence {
     }
 
     rehydrateState() {
+        this.#logger.log('Rehydrating state from state container.');
         let nextState = null;
         try {
             const stateContainer = this.#utils.getElement(Constants.Ids.stateContainer);
             nextState = JSON.parse(stateContainer.innerText);
         } catch (error) {
+            this.#logger.log('Previous state could not be restored. Continuing with default state.');
             alert('Previous save data could not be loaded. It may be corrupt or incompatible with this version of MarkdownNotes.');
         }
 
@@ -54,6 +54,7 @@ class Persistence {
     validateState(state) {
         try {
             const version = this.#getVersion(state);
+            this.#logger.log(`Validating state. State version is [${version}].`);
             if (version === Constants.Versions.Save.v1) {
                 this.#validateStateV1(state);
             } else {

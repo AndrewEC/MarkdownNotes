@@ -1,5 +1,7 @@
 class Preview {
 
+    #logger = new Logger('Preview');
+
     #appState = null;
     #utils = null;
     #visibility = null;
@@ -8,8 +10,32 @@ class Preview {
         this.#appState = appState;
         this.#utils = utils;
         this.#visibility = visibility;
+
         this.#appState.addPropertyChangedListener(this.#onAppStateChanged.bind(this));
         this.#registerButtonClickEvents();
+    }
+
+    onKeyPressed(e) {
+        const isPreviewingPage = () => !this.#appState.isEditing
+            && !this.#appState.isFinding
+            && !visibility.isImagesPageVisible()
+            && !visibility.isSettingsPageVisible();
+
+        if (e.keyCode === Constants.KeyCodes.comma && e.ctrlKey) {
+            if (isPreviewingPage) {
+                this.#logger.log('Control + , pressed. Previewing previous page.');
+                this.#previewPreviousPage();
+                return true;
+            }
+        } else if (e.keyCode === Constants.KeyCodes.period && e.ctrlKey) {
+            if (isPreviewingPage) {
+                this.#logger.log('Control + . pressed. Previewing next page.');
+                this.#previewNextPage();
+                return true;
+            }
+        }
+
+        return false;
     }
 
     #registerButtonClickEvents() {
@@ -31,6 +57,7 @@ class Preview {
 
     #previewPage() {
         const page = this.#appState.currentPage;
+        this.#logger.log(`Previewing page titled [${page.title}].`);
 
         this.#visibility.showPreview();
 
@@ -40,7 +67,7 @@ class Preview {
         this.#addPageLinks(viewContainer);
     }
 
-    previewPreviousPage() {
+    #previewPreviousPage() {
         const order = this.#appState.order;
         const currentIndex = order.findIndex(o => o === this.#appState.currentPage.slug);
         if (currentIndex <= 0) {
@@ -51,7 +78,7 @@ class Preview {
         this.#utils.updateQuery(nextPage.title);
     }
 
-    previewNextPage() {
+    #previewNextPage() {
         const order = this.#appState.order;
         const currentIndex = order.findIndex(o => o === this.#appState.currentPage.slug);
         if (currentIndex < 0 || currentIndex >= order.length - 1) {
@@ -137,6 +164,7 @@ class Preview {
 
     #deletePage() {
         const pageToDelete = this.#appState.currentPage;
+        this.#logger.log(`Deleting page with title: [${pageToDelete.title}].`);
 
         let pages = this.#appState.pages;
 
