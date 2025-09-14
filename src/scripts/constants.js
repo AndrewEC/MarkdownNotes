@@ -27,7 +27,8 @@ const Constants = {
                 buttonDataImport: 'fragment-settings-button-data-import',
                 versionNumberText: 'fragment-settings-version-number',
                 buttonCopyData: 'fragment-settings-button-data-copy',
-                buttonRevealData: 'fragment-settings-button-reveal-data'
+                buttonRevealData: 'fragment-settings-button-reveal-data',
+                templateOrderTableRow: 'fragment-settings-template-order-row'
             },
             Navigation: {
                 root: 'fragment-navigation',
@@ -44,7 +45,8 @@ const Constants = {
                 buttonEmbed: 'fragment-images-button-embed',
                 imageInput: 'fragment-images-image-input',
                 imageName: 'fragment-images-input-name',
-                imageTable: 'fragment-images-display-table'
+                imageTable: 'fragment-images-display-table',
+                templateTableRow: 'fragment-images-template-table-row'
             },
             Search: {
                 root: 'fragment-search',
@@ -115,6 +117,6 @@ const Constants = {
             Current: '1',
             v1: '1'
         },
-        App: '0.1.0'
+        App: '0.1.1'
     }
 };

@@ -133,34 +133,16 @@ class Settings {
         const orderTable = this.#utils.getElement(Constants.Ids.Fragments.Settings.orderTable);
         orderTable.innerHTML = headerMarkup;
 
+        const rowTemplate = this.#utils.getElement(Constants.Ids.Fragments.Settings.templateOrderTableRow);
+
         for (let i = 0; i < this.#nextOrder.length; i++) {
             const page = this.#appState.getPage(this.#nextOrder[i]);
 
-            const row = document.createElement('tr');
+            const row = rowTemplate.content.cloneNode(true);
 
-            const nameCell = document.createElement('td');
-            nameCell.innerHTML = `<strong>${page.title}</strong>`;
-            row.appendChild(nameCell);
-
-            const upButtonCell = document.createElement('td');
-            const upButton = document.createElement('a');
-            upButton.href = 'javascript:void(0);';
-            upButton.classList.add('standard-button-link');
-            upButton.classList.add('standard-table-button-link');
-            upButton.innerText = 'Move Up';
-            upButton.onclick = () => this.#movePageUp(page.slug);
-            upButtonCell.appendChild(upButton);
-            row.appendChild(upButtonCell);
-
-            const downButtonCell = document.createElement('td');
-            const downButton = document.createElement('a');
-            downButton.href = 'javascript:void(0);';
-            downButton.classList.add('standard-button-link');
-            downButton.classList.add('standard-table-button-link');
-            downButton.innerText = 'Move Down';
-            downButton.onclick = () => this.#movePageDown(page.slug);
-            downButtonCell.appendChild(downButton);
-            row.appendChild(downButtonCell);
+            row.querySelectorAll('td')[0].innerHTML = `<strong>${page.title}</strong>`;
+            row.querySelectorAll('a')[0].onclick = () => this.#movePageUp(page.slug);
+            row.querySelectorAll('a')[1].onclick = () => this.#movePageDown(page.slug);
 
             orderTable.appendChild(row);
         }

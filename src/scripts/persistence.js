@@ -34,12 +34,11 @@ class Persistence {
         try {
             const stateContainer = this.#utils.getElement(Constants.Ids.stateContainer);
             nextState = JSON.parse(stateContainer.innerText);
+            this.validateState(nextState);
         } catch (error) {
             this.#logger.log('Previous state could not be restored. Continuing with default state.');
-            alert('Previous save data could not be loaded. It may be corrupt or incompatible with this version of MarkdownNotes.');
+            return alert('Previous save data could not be loaded. It may be corrupt or incompatible with this version of MarkdownNotes.');
         }
-
-        this.validateState(nextState);
 
         this.#appState.hydrate(nextState);
     }

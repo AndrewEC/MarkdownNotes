@@ -53,25 +53,33 @@ class Finder {
 
     #onTabPressed(e) {
         if (e.shiftKey) {
-            this.#logger.log(`Shift + Tab pressed. Navigating to previous result from current index [${this.#selectedIndex}].`);
-            if (this.#selectedIndex === -1) {
-                e.preventDefault();
-                this.#selectedIndex = this.#results.length - 1;
-                const links = this.#utils.getElement(Constants.Ids.Fragments.Finder.resultContainer)
-                    .getElementsByTagName('a');
-                links[links.length - 1].focus();
-            } else {
-                this.#selectedIndex--;
-            }
+            this.#highlightPreviousOption();
         } else {
-            this.#logger.log(`Shift + Tab pressed. Navigating to next result from current index [${this.#selectedIndex}].`);
-            if (this.#selectedIndex === this.#results.length - 1) {
-                e.preventDefault();
-                this.#selectedIndex = -1
-                this.#utils.getElement(Constants.Ids.Fragments.Finder.inputTitle).focus();
-            } else {
-                this.#selectedIndex++;
-            }
+            this.#highlightNextOption();
+        }
+    }
+
+    #highlightPreviousOption() {
+        this.#logger.log(`Shift + Tab pressed. Navigating to previous result from current index [${this.#selectedIndex}].`);
+        if (this.#selectedIndex === -1) {
+            e.preventDefault();
+            this.#selectedIndex = this.#results.length - 1;
+            const links = this.#utils.getElement(Constants.Ids.Fragments.Finder.resultContainer)
+                .getElementsByTagName('a');
+            links[links.length - 1].focus();
+        } else {
+            this.#selectedIndex--;
+        }
+    }
+
+    #highlightNextOption() {
+        this.#logger.log(`Shift + Tab pressed. Navigating to next result from current index [${this.#selectedIndex}].`);
+        if (this.#selectedIndex === this.#results.length - 1) {
+            e.preventDefault();
+            this.#selectedIndex = -1
+            this.#utils.getElement(Constants.Ids.Fragments.Finder.inputTitle).focus();
+        } else {
+            this.#selectedIndex++;
         }
     }
 
@@ -112,7 +120,8 @@ class Finder {
         const pageTitle = this.#utils.getElement(Constants.Ids.Fragments.Finder.inputTitle)
             .value.toLowerCase();
 
-        this.#results = this.#appState.pages.filter(page => page.title.toLowerCase().includes(pageTitle));
+        this.#results = this.#appState.pages
+            .filter(page => page.title.toLowerCase().includes(pageTitle));
 
         this.#updateResults();
     }

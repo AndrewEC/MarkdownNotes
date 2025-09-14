@@ -73,41 +73,18 @@ class Images {
 
         imageTable.innerHTML = '<tr><td>Image</td><td>Name</td><td>Rename</td><td>Delete</td></tr>';
 
+        const rowTemplate = this.#utils.getElement(Constants.Ids.Fragments.Images.templateTableRow);
+
         const imagesByName = images.sort((first, second) => first.name.localeCompare(second.name));
         for (let i = 0; i < imagesByName.length; i++) {
-            const row = document.createElement('tr');
 
-            const imagecell = document.createElement('td');
-            const image = document.createElement('img');
-            image.setAttribute('src', imagesByName[i].data);
-            image.style.maxWidth = '300px';
-            image.style.maxHeight = '300px';
-            imagecell.appendChild(image);
-            row.appendChild(imagecell);
+            const row = rowTemplate.content.cloneNode(true);
 
-            const imageNameCell = document.createElement('td');
-            imageNameCell.innerText = imagesByName[i].name;
-            row.appendChild(imageNameCell);
+            row.querySelectorAll('img')[0].src = imagesByName[i].data;
+            row.querySelectorAll('td')[1].innerText = imagesByName[i].name;
 
-            const updateNameButtonCell = document.createElement('td');
-            const updateNameButton = document.createElement('a');
-            updateNameButton.href = 'javascript:void(0);';
-            updateNameButton.classList.add('standard-button-link');
-            updateNameButton.classList.add('standard-table-button-link');
-            updateNameButton.innerText = 'Update Name';
-            updateNameButton.onclick = () => this.#onUpdateImageNameClicked(imagesByName[i].name);
-            updateNameButtonCell.appendChild(updateNameButton);
-            row.append(updateNameButtonCell);
-
-            const deleteButtonCell = document.createElement('td');
-            const deleteButton = document.createElement('a');
-            deleteButton.href = 'javascript:void(0);';
-            deleteButton.classList.add('standard-button-link');
-            deleteButton.classList.add('standard-table-button-link');
-            deleteButton.innerText = 'Delete';
-            deleteButton.onclick = () => this.#onDeleteImageClicked(imagesByName[i].name);
-            deleteButtonCell.appendChild(deleteButton);
-            row.append(deleteButtonCell);
+            row.querySelectorAll('a')[0].onclick = () => this.#onUpdateImageNameClicked(imagesByName[i].name);
+            row.querySelectorAll('a')[1].onclick = () => this.#onDeleteImageClicked(imagesByName[i].name);
 
             imageTable.append(row);
         }

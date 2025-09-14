@@ -347,7 +347,8 @@ td, th {
                 buttonDataImport: 'fragment-settings-button-data-import',
                 versionNumberText: 'fragment-settings-version-number',
                 buttonCopyData: 'fragment-settings-button-data-copy',
-                buttonRevealData: 'fragment-settings-button-reveal-data'
+                buttonRevealData: 'fragment-settings-button-reveal-data',
+                templateOrderTableRow: 'fragment-settings-template-order-row'
             },
             Navigation: {
                 root: 'fragment-navigation',
@@ -364,7 +365,8 @@ td, th {
                 buttonEmbed: 'fragment-images-button-embed',
                 imageInput: 'fragment-images-image-input',
                 imageName: 'fragment-images-input-name',
-                imageTable: 'fragment-images-display-table'
+                imageTable: 'fragment-images-display-table',
+                templateTableRow: 'fragment-images-template-table-row'
             },
             Search: {
                 root: 'fragment-search',
@@ -435,7 +437,7 @@ td, th {
             Current: '1',
             v1: '1'
         },
-        App: '0.1.0'
+        App: '0.1.1'
     }
 };
                 const LOGGER_ENABLED = false;
@@ -876,12 +878,11 @@ class AppState {
         try {
             const stateContainer = this.#utils.getElement(Constants.Ids.stateContainer);
             nextState = JSON.parse(stateContainer.innerText);
+            this.validateState(nextState);
         } catch (error) {
             this.#logger.log('Previous state could not be restored. Continuing with default state.');
-            alert('Previous save data could not be loaded. It may be corrupt or incompatible with this version of MarkdownNotes.');
+            return alert('Previous save data could not be loaded. It may be corrupt or incompatible with this version of MarkdownNotes.');
         }
-
-        this.validateState(nextState);
 
         this.#appState.hydrate(nextState);
     }
@@ -1276,6 +1277,15 @@ class AppState {
         }
     }
 
+    /**
+     * Utilizes a MutationObserver to watch for changes in the
+     * style attribute of the Editor fragment's root element.
+     * 
+     * The purpose of this is to ensure the app state is not
+     * left in an isEditing=true state if the user navigates away
+     * from a page they are currently editing without explicitly
+     * saving or cancelling their current changes.
+     */
     #watchForVisibilityChanges() {
         let currentState = null;
         const observer = new MutationObserver((mutations) => {
@@ -1355,7 +1365,7 @@ class AppState {
                     return;
                 }
 
-                let pageSlug = thisRef.#appState.currentPage.slug;
+                const pageSlug = thisRef.#appState.currentPage.slug;
                 thisRef.#appState.addAutoSaveChange(pageSlug, currentContent);
             }
         }, 1_000);
@@ -1476,9 +1486,9 @@ class AppState {
      * Populates a dropdown that allows the user to select which page should
      * be a parent of the page being currently edited.
      * 
-     * @param {object} page The page currently being edited.
+     * @param {object} pageBeingEdited The page currently being edited.
      */
-    #populateParentPageSelect(page) {
+    #populateParentPageSelect(pageBeingEdited) {
         const select = this.#utils.getElement(Constants.Ids.Fragments.Editor.selectParent);
         select.innerHTML = '';
 
@@ -1487,17 +1497,20 @@ class AppState {
         defaultNone.text = 'None';
         select.appendChild(defaultNone);
 
-        const order = this.#appState.order;
-        for (let i = 0; i < order.length; i++) {
-            const otherPage = this.#appState.getPage(order[i]);
-            if (page && (otherPage.slug === page.slug || this.#isParentOf(page, otherPage))) {
+        const orderedPages = this.#appState.getPagesInOrder();
+        for (let i = 0; i < orderedPages.length; i++) {
+            const otherPage = orderedPages[i]
+
+            if (pageBeingEdited
+                && (otherPage.slug === pageBeingEdited.slug
+                    || this.#isParentOf(pageBeingEdited, otherPage))) {
                 continue;
             }
 
             const option = document.createElement('option');
             option.setAttribute('value', otherPage.slug);
             option.innerText = otherPage.title;
-            if (page && page.parent === otherPage.slug) {
+            if (pageBeingEdited && pageBeingEdited.parent === otherPage.slug) {
                 option.setAttribute('selected', '');
             }
             select.appendChild(option);
@@ -1868,34 +1881,16 @@ class AppState {
         const orderTable = this.#utils.getElement(Constants.Ids.Fragments.Settings.orderTable);
         orderTable.innerHTML = headerMarkup;
 
+        const rowTemplate = this.#utils.getElement(Constants.Ids.Fragments.Settings.templateOrderTableRow);
+
         for (let i = 0; i < this.#nextOrder.length; i++) {
             const page = this.#appState.getPage(this.#nextOrder[i]);
 
-            const row = document.createElement('tr');
+            const row = rowTemplate.content.cloneNode(true);
 
-            const nameCell = document.createElement('td');
-            nameCell.innerHTML = `<strong>${page.title}</strong>`;
-            row.appendChild(nameCell);
-
-            const upButtonCell = document.createElement('td');
-            const upButton = document.createElement('a');
-            upButton.href = 'javascript:void(0);';
-            upButton.classList.add('standard-button-link');
-            upButton.classList.add('standard-table-button-link');
-            upButton.innerText = 'Move Up';
-            upButton.onclick = () => this.#movePageUp(page.slug);
-            upButtonCell.appendChild(upButton);
-            row.appendChild(upButtonCell);
-
-            const downButtonCell = document.createElement('td');
-            const downButton = document.createElement('a');
-            downButton.href = 'javascript:void(0);';
-            downButton.classList.add('standard-button-link');
-            downButton.classList.add('standard-table-button-link');
-            downButton.innerText = 'Move Down';
-            downButton.onclick = () => this.#movePageDown(page.slug);
-            downButtonCell.appendChild(downButton);
-            row.appendChild(downButtonCell);
+            row.querySelectorAll('td')[0].innerHTML = `<strong>${page.title}</strong>`;
+            row.querySelectorAll('a')[0].onclick = () => this.#movePageUp(page.slug);
+            row.querySelectorAll('a')[1].onclick = () => this.#movePageDown(page.slug);
 
             orderTable.appendChild(row);
         }
@@ -2084,41 +2079,18 @@ class AppState {
 
         imageTable.innerHTML = '<tr><td>Image</td><td>Name</td><td>Rename</td><td>Delete</td></tr>';
 
+        const rowTemplate = this.#utils.getElement(Constants.Ids.Fragments.Images.templateTableRow);
+
         const imagesByName = images.sort((first, second) => first.name.localeCompare(second.name));
         for (let i = 0; i < imagesByName.length; i++) {
-            const row = document.createElement('tr');
 
-            const imagecell = document.createElement('td');
-            const image = document.createElement('img');
-            image.setAttribute('src', imagesByName[i].data);
-            image.style.maxWidth = '300px';
-            image.style.maxHeight = '300px';
-            imagecell.appendChild(image);
-            row.appendChild(imagecell);
+            const row = rowTemplate.content.cloneNode(true);
 
-            const imageNameCell = document.createElement('td');
-            imageNameCell.innerText = imagesByName[i].name;
-            row.appendChild(imageNameCell);
+            row.querySelectorAll('img')[0].src = imagesByName[i].data;
+            row.querySelectorAll('td')[1].innerText = imagesByName[i].name;
 
-            const updateNameButtonCell = document.createElement('td');
-            const updateNameButton = document.createElement('a');
-            updateNameButton.href = 'javascript:void(0);';
-            updateNameButton.classList.add('standard-button-link');
-            updateNameButton.classList.add('standard-table-button-link');
-            updateNameButton.innerText = 'Update Name';
-            updateNameButton.onclick = () => this.#onUpdateImageNameClicked(imagesByName[i].name);
-            updateNameButtonCell.appendChild(updateNameButton);
-            row.append(updateNameButtonCell);
-
-            const deleteButtonCell = document.createElement('td');
-            const deleteButton = document.createElement('a');
-            deleteButton.href = 'javascript:void(0);';
-            deleteButton.classList.add('standard-button-link');
-            deleteButton.classList.add('standard-table-button-link');
-            deleteButton.innerText = 'Delete';
-            deleteButton.onclick = () => this.#onDeleteImageClicked(imagesByName[i].name);
-            deleteButtonCell.appendChild(deleteButton);
-            row.append(deleteButtonCell);
+            row.querySelectorAll('a')[0].onclick = () => this.#onUpdateImageNameClicked(imagesByName[i].name);
+            row.querySelectorAll('a')[1].onclick = () => this.#onDeleteImageClicked(imagesByName[i].name);
 
             imageTable.append(row);
         }
@@ -2422,25 +2394,33 @@ class AppState {
 
     #onTabPressed(e) {
         if (e.shiftKey) {
-            this.#logger.log(`Shift + Tab pressed. Navigating to previous result from current index [${this.#selectedIndex}].`);
-            if (this.#selectedIndex === -1) {
-                e.preventDefault();
-                this.#selectedIndex = this.#results.length - 1;
-                const links = this.#utils.getElement(Constants.Ids.Fragments.Finder.resultContainer)
-                    .getElementsByTagName('a');
-                links[links.length - 1].focus();
-            } else {
-                this.#selectedIndex--;
-            }
+            this.#highlightPreviousOption();
         } else {
-            this.#logger.log(`Shift + Tab pressed. Navigating to next result from current index [${this.#selectedIndex}].`);
-            if (this.#selectedIndex === this.#results.length - 1) {
-                e.preventDefault();
-                this.#selectedIndex = -1
-                this.#utils.getElement(Constants.Ids.Fragments.Finder.inputTitle).focus();
-            } else {
-                this.#selectedIndex++;
-            }
+            this.#highlightNextOption();
+        }
+    }
+
+    #highlightPreviousOption() {
+        this.#logger.log(`Shift + Tab pressed. Navigating to previous result from current index [${this.#selectedIndex}].`);
+        if (this.#selectedIndex === -1) {
+            e.preventDefault();
+            this.#selectedIndex = this.#results.length - 1;
+            const links = this.#utils.getElement(Constants.Ids.Fragments.Finder.resultContainer)
+                .getElementsByTagName('a');
+            links[links.length - 1].focus();
+        } else {
+            this.#selectedIndex--;
+        }
+    }
+
+    #highlightNextOption() {
+        this.#logger.log(`Shift + Tab pressed. Navigating to next result from current index [${this.#selectedIndex}].`);
+        if (this.#selectedIndex === this.#results.length - 1) {
+            e.preventDefault();
+            this.#selectedIndex = -1
+            this.#utils.getElement(Constants.Ids.Fragments.Finder.inputTitle).focus();
+        } else {
+            this.#selectedIndex++;
         }
     }
 
@@ -2481,7 +2461,8 @@ class AppState {
         const pageTitle = this.#utils.getElement(Constants.Ids.Fragments.Finder.inputTitle)
             .value.toLowerCase();
 
-        this.#results = this.#appState.pages.filter(page => page.title.toLowerCase().includes(pageTitle));
+        this.#results = this.#appState.pages
+            .filter(page => page.title.toLowerCase().includes(pageTitle));
 
         this.#updateResults();
     }
@@ -2708,6 +2689,25 @@ class AppState {
             <td>Down</td>
         </tr>
     </table>
+    <template id="fragment-settings-template-order-row">
+        <tr>
+            <td>Page Title</td>
+            <td>
+                <a
+                    href="javascript:void(0)"
+                    class="standard-button-link standard-table-button-link">
+                    Move Up
+                </a>
+            </td>
+            <td>
+                <a
+                    href="javascript:void(0)"
+                    class="standard-button-link standard-table-button-link">
+                    Move Down
+                </a>
+            </td>
+        </tr>
+    </template>
     <br />
     <a href="javascript:void(0);"
         id="fragment-settings-button-save-order"
@@ -2758,6 +2758,31 @@ class AppState {
 
     <br/>
     <hr />
+
+    <template id="fragment-images-template-table-row">
+        <tr>
+            <td>
+                <img style="max-width: 300px; max-height: 300px;" />
+            </td>
+            <td>
+                Image Name
+            </td>
+            <td>
+                <a
+                    href="javascript:void(0);"
+                    class="standard-button-link standard-table-button-link">
+                    Update Name
+                </a>
+            </td>
+            <td>
+                <a
+                    href="javascript:void(0);"
+                    class="standard-button-link standard-table-button-link">
+                    Delete
+                </a>
+            </td>
+        </tr>
+    </template>
 
     <table id="fragment-images-display-table"></table>
 </div>

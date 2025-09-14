@@ -117,7 +117,7 @@ class Editor {
                     return;
                 }
 
-                let pageSlug = thisRef.#appState.currentPage.slug;
+                const pageSlug = thisRef.#appState.currentPage.slug;
                 thisRef.#appState.addAutoSaveChange(pageSlug, currentContent);
             }
         }, 1_000);
@@ -238,9 +238,9 @@ class Editor {
      * Populates a dropdown that allows the user to select which page should
      * be a parent of the page being currently edited.
      * 
-     * @param {object} page The page currently being edited.
+     * @param {object} pageBeingEdited The page currently being edited.
      */
-    #populateParentPageSelect(page) {
+    #populateParentPageSelect(pageBeingEdited) {
         const select = this.#utils.getElement(Constants.Ids.Fragments.Editor.selectParent);
         select.innerHTML = '';
 
@@ -249,17 +249,20 @@ class Editor {
         defaultNone.text = 'None';
         select.appendChild(defaultNone);
 
-        const order = this.#appState.order;
-        for (let i = 0; i < order.length; i++) {
-            const otherPage = this.#appState.getPage(order[i]);
-            if (page && (otherPage.slug === page.slug || this.#isParentOf(page, otherPage))) {
+        const orderedPages = this.#appState.getPagesInOrder();
+        for (let i = 0; i < orderedPages.length; i++) {
+            const otherPage = orderedPages[i]
+
+            if (pageBeingEdited
+                && (otherPage.slug === pageBeingEdited.slug
+                    || this.#isParentOf(pageBeingEdited, otherPage))) {
                 continue;
             }
 
             const option = document.createElement('option');
             option.setAttribute('value', otherPage.slug);
             option.innerText = otherPage.title;
-            if (page && page.parent === otherPage.slug) {
+            if (pageBeingEdited && pageBeingEdited.parent === otherPage.slug) {
                 option.setAttribute('selected', '');
             }
             select.appendChild(option);
