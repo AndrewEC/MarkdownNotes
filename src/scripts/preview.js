@@ -15,29 +15,6 @@ class Preview {
         this.#registerButtonClickEvents();
     }
 
-    onKeyPressed(e) {
-        const isPreviewingPage = () => !this.#appState.isEditing
-            && !this.#appState.isFinding
-            && !visibility.isImagesPageVisible()
-            && !visibility.isSettingsPageVisible();
-
-        if (e.keyCode === Constants.KeyCodes.comma && e.ctrlKey) {
-            if (isPreviewingPage) {
-                this.#logger.log('Control + , pressed. Previewing previous page.');
-                this.#previewPreviousPage();
-                return true;
-            }
-        } else if (e.keyCode === Constants.KeyCodes.period && e.ctrlKey) {
-            if (isPreviewingPage) {
-                this.#logger.log('Control + . pressed. Previewing next page.');
-                this.#previewNextPage();
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     #registerButtonClickEvents() {
         this.#utils.registerButtonClicks([
             {
@@ -65,28 +42,6 @@ class Preview {
         viewContainer.innerHTML = marked.parse(page.contents);
         this.#addEmbededImages(viewContainer);
         this.#addPageLinks(viewContainer);
-    }
-
-    #previewPreviousPage() {
-        const order = this.#appState.order;
-        const currentIndex = order.findIndex(o => o === this.#appState.currentPage.slug);
-        if (currentIndex <= 0) {
-            return;
-        }
-
-        const nextPage = this.#appState.getPage(order[currentIndex - 1]);
-        this.#utils.updateQuery(nextPage.title);
-    }
-
-    #previewNextPage() {
-        const order = this.#appState.order;
-        const currentIndex = order.findIndex(o => o === this.#appState.currentPage.slug);
-        if (currentIndex < 0 || currentIndex >= order.length - 1) {
-            return;
-        }
-
-        const nextPage = this.#appState.getPage(order[currentIndex + 1]);
-        this.#utils.updateQuery(nextPage.title);
     }
 
     /**

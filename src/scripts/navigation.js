@@ -196,8 +196,7 @@ class Navigation {
             .innerText = notebookTitle;
         
         const pageTitle = this.#appState.currentPage.title;
-        const nextTitle = `${notebookTitle} | ${pageTitle}`;
-        document.title = nextTitle
+        document.title = `${notebookTitle} | ${pageTitle}`;
     }
 
     #navigateTo(pageTitle) {

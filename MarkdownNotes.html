@@ -71,7 +71,10 @@ td, th {
     border: 1px solid #ccc;
     padding: 3px;
 }
+/* ===== ===== Global Styles ===== ===== */
 
+
+/* ===== ===== Global Classes ===== ===== */
 .standard-button {
     margin: 2px;
     min-width: 200px;
@@ -86,20 +89,20 @@ td, th {
     background-color: #2CB83C;
 }
 
+.standard-button-link:hover {
+    background-color: #60D96E;
+}
+
 .standard-button-link-fixed {
     display: inline-block;
     width: 200px;
-}
-
-.standard-button-link:hover {
-    background-color: #60D96E;
 }
 
 .standard-table-button-link {
     padding: 2px;
     display: inline;
 }
-/* ===== ===== Global Styles ===== ===== */
+/* ===== ===== Global Classes ===== ===== */
 
 
 /* ===== ===== Root Styles ===== ===== */
@@ -134,6 +137,11 @@ td, th {
     overflow-y: scroll;
     display: none;
 }
+
+.fragment-images-table-row-image {
+    max-width: 300px;
+    max-height: 300px;
+}
 /* ===== ===== Images Fragment Styles ===== ===== */
 
 
@@ -149,16 +157,16 @@ td, th {
     max-width: 800px;
 }
 
-.lookup-error {
-    color: #f11;
-}
-
 #fragment-preview-view-container li {
     margin-bottom: 7px;
 }
 
 #fragment-preview-view-container td, #fragment-preview-view-container th {
     padding: 5px;
+}
+
+.fragment-preview-lookup-error {
+    color: #f11;
 }
 /* ===== ===== Preview Fragment Styles ===== ===== */
 
@@ -170,7 +178,7 @@ td, th {
     padding-bottom: 50px;
 }
 
-#root-nav-container {
+#fragment-navigation-root-container {
     width: 23%;
     background-color: #ddd;
 }
@@ -405,7 +413,7 @@ td, th {
         isFinding: 'isFinding'
     },
     noParentOption: 'none',
-    lookupErrorClass: 'lookup-error',
+    lookupErrorClass: 'fragment-preview-lookup-error',
     VisibilityOptions: {
         revealEditor: 'revealEditor',
         revealPreview: 'revealPreview',
@@ -437,7 +445,7 @@ td, th {
             Current: '1',
             v1: '1'
         },
-        App: '0.1.1'
+        App: '0.1.2'
     }
 };
                 const LOGGER_ENABLED = false;
@@ -748,9 +756,7 @@ class AppState {
         if (!additionalProperties) {
             history.pushState(null, '', `?page=${encodeURIComponent(pageTitle)}`);
         } else {
-            let queryString = '?';
-
-            queryString += `page=${encodeURIComponent(pageTitle)}`;
+            let queryString = `?page=${encodeURIComponent(pageTitle)}`;
             for (const key in additionalProperties) {
                 queryString += `&${key}=${encodeURIComponent(additionalProperties[key])}`;
             }
@@ -926,9 +932,9 @@ class AppState {
             } else if (!this.#isNonEmptyString(page.title)) {
                 throw new Error(`Invalid pages value. Page at index [${i}] has an empty or non-string title property.`);
             } else if (!this.#isString(page.contents)) {
-                throw new Error(`Invalid pages value. Page at index [${i}] has an empty or non-string contents property.`);
+                throw new Error(`Invalid pages value. Page at index [${i}] has a non-string contents property.`);
             } else if (this.#isReservedPageTitle(page.title)) {
-                throw new Error(`Invalid pages value. Page at index [${i}] has a title that is reserved and can't be used.`);
+                throw new Error(`Invalid pages value. Page at index [${i}] has a title of [${page.title}] that is reserved and can't be used.`);
             }
         }
         if (!this.#areAllUnique(state.pages.map(page => page.title))) {
@@ -950,7 +956,7 @@ class AppState {
             }
         }
         if (!this.#areAllUnique(state.images.map(image => image.name))) {
-            throw new Error('Invalid images. All image must have a unique name.');
+            throw new Error('Invalid images. All images must have a unique name.');
         }
         
         // Validate order array.
@@ -1192,8 +1198,7 @@ class AppState {
             .innerText = notebookTitle;
         
         const pageTitle = this.#appState.currentPage.title;
-        const nextTitle = `${notebookTitle} | ${pageTitle}`;
-        document.title = nextTitle
+        document.title = `${notebookTitle} | ${pageTitle}`;
     }
 
     #navigateTo(pageTitle) {
@@ -1248,22 +1253,27 @@ class AppState {
 }
                 class Editor {
 
-    #easyMdeInstance = null;
+    #logger = new Logger('Editor');
 
     #appState = null;
     #visibility = null;
     #utils = null;
+
+    #easyMdeInstance = null;
+
+    #autosaveInterval = 500;
     #lastAutosaveCheckTime = null;
-    #logger = new Logger('Editor');
 
     constructor(appState, visibility, utils) {
         this.#appState = appState;
         this.#visibility = visibility;
         this.#utils = utils;
+
         this.#registerButtonClickEvents();
-        this.#startPageEditListener();
 
         this.#appState.addPropertyChangedListener(this.#onPropertyChanged.bind(this));
+
+        this.#startPageEditListener();
         this.#watchForVisibilityChanges();
     }
 
@@ -1354,7 +1364,7 @@ class AppState {
 
                 const currentTime = Date.now();
                 const diff = currentTime - thisRef.#lastAutosaveCheckTime;
-                if (diff < 1_000) {
+                if (diff < thisRef.#autosaveInterval) {
                     return;
                 }
                 thisRef.#lastAutosaveCheckTime = currentTime;
@@ -1368,7 +1378,7 @@ class AppState {
                 const pageSlug = thisRef.#appState.currentPage.slug;
                 thisRef.#appState.addAutoSaveChange(pageSlug, currentContent);
             }
-        }, 1_000);
+        }, thisRef.#autosaveInterval);
     }
 
     #registerButtonClickEvents() {
@@ -1391,6 +1401,12 @@ class AppState {
     #cancelEdit() {
         const currentPageSlug = this.#appState.currentPage.slug;
         this.#logger.log(`Cancelling edit of current page: [${currentPageSlug}].`);
+
+        const unsavedChanges = this.#appState.getAutoSaveChange(currentPageSlug);
+        if (unsavedChanges && !confirm('You have unsaved changes. Are you sure you want to dispose of your changes?')) {
+            return;
+        }
+
         this.#appState.removeAutoSaveChange(currentPageSlug);
         this.#visibility.showPreview();
         this.#appState.isEditing = false;
@@ -1398,7 +1414,7 @@ class AppState {
 
     /**
      * When initializing EasyMDE it automatically injects some elements into the
-     * page. If the page is repeatedly saved and reloaded EasyMDE will effectively
+     * page. If the page is repeatedly saved and reloaded EasyMDE will
      * inject duplicate elements causing the page size to grow indefinitely.
      * 
      * To prevent said issue this will remove all EasyMDE generated elements from the
@@ -1569,29 +1585,6 @@ class AppState {
         this.#registerButtonClickEvents();
     }
 
-    onKeyPressed(e) {
-        const isPreviewingPage = () => !this.#appState.isEditing
-            && !this.#appState.isFinding
-            && !visibility.isImagesPageVisible()
-            && !visibility.isSettingsPageVisible();
-
-        if (e.keyCode === Constants.KeyCodes.comma && e.ctrlKey) {
-            if (isPreviewingPage) {
-                this.#logger.log('Control + , pressed. Previewing previous page.');
-                this.#previewPreviousPage();
-                return true;
-            }
-        } else if (e.keyCode === Constants.KeyCodes.period && e.ctrlKey) {
-            if (isPreviewingPage) {
-                this.#logger.log('Control + . pressed. Previewing next page.');
-                this.#previewNextPage();
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     #registerButtonClickEvents() {
         this.#utils.registerButtonClicks([
             {
@@ -1619,28 +1612,6 @@ class AppState {
         viewContainer.innerHTML = marked.parse(page.contents);
         this.#addEmbededImages(viewContainer);
         this.#addPageLinks(viewContainer);
-    }
-
-    #previewPreviousPage() {
-        const order = this.#appState.order;
-        const currentIndex = order.findIndex(o => o === this.#appState.currentPage.slug);
-        if (currentIndex <= 0) {
-            return;
-        }
-
-        const nextPage = this.#appState.getPage(order[currentIndex - 1]);
-        this.#utils.updateQuery(nextPage.title);
-    }
-
-    #previewNextPage() {
-        const order = this.#appState.order;
-        const currentIndex = order.findIndex(o => o === this.#appState.currentPage.slug);
-        if (currentIndex < 0 || currentIndex >= order.length - 1) {
-            return;
-        }
-
-        const nextPage = this.#appState.getPage(order[currentIndex + 1]);
-        this.#utils.updateQuery(nextPage.title);
     }
 
     /**
@@ -1847,7 +1818,7 @@ class AppState {
     }
 
     #updateNotebookTitle() {
-        let nextTitle = prompt('New Notebook title:');
+        let nextTitle = prompt('New Notebook title:', this.#appState.title);
         if (nextTitle === null) {
             return;
         }
@@ -1937,12 +1908,20 @@ class AppState {
     #importData() {
         this.#logger.log('Importing user entered JSON data.');
 
-        let newState = this.#utils.getElement(Constants.Ids.Fragments.Settings.dataArea).value;
+        const dataArea = this.#utils.getElement(Constants.Ids.Fragments.Settings.dataArea);
+
+        let newState = null;
+        if (dataArea.style.display == Constants.Display.none) {
+            newState = JSON.stringify(this.#appState.getSerializableState());
+        } else {
+            newState = this.#utils.getElement(Constants.Ids.Fragments.Settings.dataArea).value;
+        }
+
         try {
             newState = JSON.parse(newState);
         } catch (error) {
             this.#logger.error(`Data could not be parsed as JSON. Cause: [${error}].`);
-            return alert('The data provided could not be parsed as JSON. Error: ' + error);
+            return alert(`The data provided could not be parsed as JSON. Error: [${error}]`);
         }
 
         if (!this.#persistence.validateState(newState)) {
@@ -2097,7 +2076,7 @@ class AppState {
     }
 
     #onUpdateImageNameClicked(currentImageName) {
-        let newImageName = prompt('Enter new name for image:');
+        let newImageName = prompt('Enter new name for image:', currentImageName);
         if (!newImageName) {
             return;
         }
@@ -2130,6 +2109,7 @@ class AppState {
 
     #highlightSpanStart = '<span class="search-highlight">';
     #highlightSpanEnd = '</span>';
+    #numberOfSurroundingCharsToShow = 50;
 
     #logger = new Logger('Search');
 
@@ -2156,7 +2136,7 @@ class AppState {
             if (nextQuery === thisRef.#currentQuery) {
                 return;
             }
-            thisRef.#logger.log(`Search detected change in query. Performing search with new query: [${query}].`);
+            thisRef.#logger.log(`Search detected change in query. Performing search with new query: [${nextQuery}].`);
             thisRef.#currentQuery = nextQuery;
 
             this.#performSearch();
@@ -2215,6 +2195,8 @@ class AppState {
             const resultSectionElement = this.#buildElementForResultsForPage(page, results[pageSlug], query);
             resultContainer.appendChild(resultSectionElement);
         }
+
+        resultContainer.getElementsByTagName('a')[0].focus();
     }
 
     /**
@@ -2231,13 +2213,10 @@ class AppState {
      * @returns A div HTMLElement.
      */
     #buildElementForResultsForPage(page, indexes, query) {
-        // All elements to be created will be contained within this div.
         const container = document.createElement('div');
 
         container.appendChild(document.createElement('hr'));
 
-        // Create a link that, onclick, will trigger a function to update
-        // the page query element to navigate the user to the selected page.
         const pageLink = document.createElement('a');
         pageLink.innerText = page.title;
         pageLink.setAttribute('href', 'javascript:void(0);');
@@ -2261,9 +2240,18 @@ class AppState {
     }
 
     /**
-     * Surrounds part of the "pageContents" with a span element
-     * so the "query" value, as it appears within the "pageContents", can be
-     * highlighted and displayed to the user.
+     * Modifies the input "pageContents" to wrap the "query" text
+     * within a span element. The Span element specifies a class that
+     * applies a background colour to the query text to make it appear
+     * highlighted.
+     * 
+     * For example the given values:
+     * - pageContents = This is an example value.
+     * - index = 8
+     * - query = an
+     * 
+     * Would result in:
+     * - This is <span class="search-highlight">an</span> example value.
      * 
      * @param {string} pageContents The markdown contents of the page.
      * @param {int} index The numerical index representing where the input
@@ -2279,9 +2267,30 @@ class AppState {
             + pageContents.slice(index + query.length, pageContents.length);
     }
 
+    /**
+     * Extracts the "query" text from the "pageContents" plus up 50 characters
+     * that appear before and 50 characters that appear after the "query" text
+     * plus the HTML characters that make up the "span" element used to provide
+     * a background highlight.
+     * 
+     * It is expected that the "pageContents" value be the result of the
+     * #highlightResult function call.
+     * 
+     * For example if we are assuming that we are extracting only 5 characters before
+     * and after the "query" then given the following values:
+     * - pageContents = This is <span class="search-highlight">an</span> example value.
+     * - index = 8
+     * - query = an
+     * 
+     * Would result in a value of:
+     * - ...s is <span class="search-highlight">an</span> exam...
+     */
     #extractHighlightedSection(pageContents, index, query) {
-        const start = Math.max(0, index - 50 - this.#highlightSpanStart.length);
-        const end = Math.min(pageContents.length, index + query.length + 50 + this.#highlightSpanEnd.length);
+        const start = Math.max(0,
+            index - this.#numberOfSurroundingCharsToShow - this.#highlightSpanStart.length);
+
+        const end = Math.min(pageContents.length,
+            index + query.length + this.#numberOfSurroundingCharsToShow + this.#highlightSpanEnd.length);
 
         let surroundingContent = pageContents.slice(start, end);
         if (start > 0) {
@@ -2290,6 +2299,7 @@ class AppState {
         if (end < pageContents.length - 1) {
             surroundingContent = surroundingContent + '...';
         }
+
         return surroundingContent;
     }
 
@@ -2334,7 +2344,7 @@ class AppState {
                 break;
             }
             indexes.push(index);
-            i = index;
+            i = index + searchQuery.length;
         }
         return indexes;
     }
@@ -2475,15 +2485,14 @@ class AppState {
             return;
         }
 
+        const thisRef = this;
         const ul = document.createElement('ul');
-
         for (const result of this.#results) {
             const li = document.createElement('li');
 
             const link = document.createElement('a');
             link.href = 'javascript:void(0);';
             link.innerText = result.title;
-            const thisRef = this;
             link.onclick = () => {
                 thisRef.#logger.log(`User selected result link with title: [${result.title}].`);
                 thisRef.#appState.isFinding = false;
@@ -2543,9 +2552,9 @@ class AppState {
     const editor = new Editor(appState, visibility, utils);
     const persistence = new Persistence(appState, utils);
     const navigation = new Navigation(appState, utils, visibility);
-    const preview = new Preview(appState, utils, visibility);
     const settings = new Settings(appState, utils, persistence);
     const finder = new Finder(appState, utils);
+    new Preview(appState, utils, visibility);
     new Images(appState, utils);
     new Search(appState, utils);
 
@@ -2553,8 +2562,7 @@ class AppState {
         finder,
         editor,
         navigation,
-        settings,
-        preview
+        settings
     ];
 
     const resizeHandlers = [
@@ -2576,14 +2584,13 @@ class AppState {
     };
 
     // Resize handlers.
-    for (const fragment of resizeHandlers) {
-        fragment.resize();
-    }
-    window.onresize = () => {
+    const doResize = () => {
         for (const fragment of resizeHandlers) {
             fragment.resize();
         }
     };
+    doResize();
+    window.onresize = doResize;
 
     // Misc. event handlers.
     window.onbeforeunload = () => utils.beforeUnload();
@@ -2594,7 +2601,7 @@ class AppState {
 
     <body>
         <div id="root-container">
-            <div id="root-nav-container" class="root-container">
+            <div id="fragment-navigation-root-container" class="root-container">
                 <div id="fragment-navigation">
     <h2 id="fragment-navigation-title" class="navigation-title"></h2>
 
@@ -2681,7 +2688,7 @@ class AppState {
 
     <hr />
 
-    <h3>Page order</h3>
+    <h3>Page Order</h3>
     <table id="fragment-settings-table-order">
         <tr>
             <td>Page Name</td>
@@ -2689,6 +2696,7 @@ class AppState {
             <td>Down</td>
         </tr>
     </table>
+
     <template id="fragment-settings-template-order-row">
         <tr>
             <td>Page Title</td>
@@ -2708,7 +2716,9 @@ class AppState {
             </td>
         </tr>
     </template>
+
     <br />
+
     <a href="javascript:void(0);"
         id="fragment-settings-button-save-order"
         class="standard-button-link standard-button-link-fixed">Save Order</a>
@@ -2762,7 +2772,7 @@ class AppState {
     <template id="fragment-images-template-table-row">
         <tr>
             <td>
-                <img style="max-width: 300px; max-height: 300px;" />
+                <img class="fragment-images-table-row-image" />
             </td>
             <td>
                 Image Name

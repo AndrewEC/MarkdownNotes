@@ -7,9 +7,9 @@ window.onload = () => {
     const editor = new Editor(appState, visibility, utils);
     const persistence = new Persistence(appState, utils);
     const navigation = new Navigation(appState, utils, visibility);
-    const preview = new Preview(appState, utils, visibility);
     const settings = new Settings(appState, utils, persistence);
     const finder = new Finder(appState, utils);
+    new Preview(appState, utils, visibility);
     new Images(appState, utils);
     new Search(appState, utils);
 
@@ -17,8 +17,7 @@ window.onload = () => {
         finder,
         editor,
         navigation,
-        settings,
-        preview
+        settings
     ];
 
     const resizeHandlers = [
@@ -40,14 +39,13 @@ window.onload = () => {
     };
 
     // Resize handlers.
-    for (const fragment of resizeHandlers) {
-        fragment.resize();
-    }
-    window.onresize = () => {
+    const doResize = () => {
         for (const fragment of resizeHandlers) {
             fragment.resize();
         }
     };
+    doResize();
+    window.onresize = doResize;
 
     // Misc. event handlers.
     window.onbeforeunload = () => utils.beforeUnload();

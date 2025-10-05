@@ -91,7 +91,7 @@ class Images {
     }
 
     #onUpdateImageNameClicked(currentImageName) {
-        let newImageName = prompt('Enter new name for image:');
+        let newImageName = prompt('Enter new name for image:', currentImageName);
         if (!newImageName) {
             return;
         }

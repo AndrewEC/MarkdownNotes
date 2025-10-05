@@ -44,9 +44,7 @@ class Utils {
         if (!additionalProperties) {
             history.pushState(null, '', `?page=${encodeURIComponent(pageTitle)}`);
         } else {
-            let queryString = '?';
-
-            queryString += `page=${encodeURIComponent(pageTitle)}`;
+            let queryString = `?page=${encodeURIComponent(pageTitle)}`;
             for (const key in additionalProperties) {
                 queryString += `&${key}=${encodeURIComponent(additionalProperties[key])}`;
             }

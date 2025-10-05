@@ -1,21 +1,26 @@
 class Editor {
 
-    #easyMdeInstance = null;
+    #logger = new Logger('Editor');
 
     #appState = null;
     #visibility = null;
     #utils = null;
+
+    #easyMdeInstance = null;
+
+    #autosaveInterval = 500;
     #lastAutosaveCheckTime = null;
-    #logger = new Logger('Editor');
 
     constructor(appState, visibility, utils) {
         this.#appState = appState;
         this.#visibility = visibility;
         this.#utils = utils;
+
         this.#registerButtonClickEvents();
-        this.#startPageEditListener();
 
         this.#appState.addPropertyChangedListener(this.#onPropertyChanged.bind(this));
+
+        this.#startPageEditListener();
         this.#watchForVisibilityChanges();
     }
 
@@ -106,7 +111,7 @@ class Editor {
 
                 const currentTime = Date.now();
                 const diff = currentTime - thisRef.#lastAutosaveCheckTime;
-                if (diff < 1_000) {
+                if (diff < thisRef.#autosaveInterval) {
                     return;
                 }
                 thisRef.#lastAutosaveCheckTime = currentTime;
@@ -120,7 +125,7 @@ class Editor {
                 const pageSlug = thisRef.#appState.currentPage.slug;
                 thisRef.#appState.addAutoSaveChange(pageSlug, currentContent);
             }
-        }, 1_000);
+        }, thisRef.#autosaveInterval);
     }
 
     #registerButtonClickEvents() {
@@ -143,6 +148,12 @@ class Editor {
     #cancelEdit() {
         const currentPageSlug = this.#appState.currentPage.slug;
         this.#logger.log(`Cancelling edit of current page: [${currentPageSlug}].`);
+
+        const unsavedChanges = this.#appState.getAutoSaveChange(currentPageSlug);
+        if (unsavedChanges && !confirm('You have unsaved changes. Are you sure you want to dispose of your changes?')) {
+            return;
+        }
+
         this.#appState.removeAutoSaveChange(currentPageSlug);
         this.#visibility.showPreview();
         this.#appState.isEditing = false;
@@ -150,7 +161,7 @@ class Editor {
 
     /**
      * When initializing EasyMDE it automatically injects some elements into the
-     * page. If the page is repeatedly saved and reloaded EasyMDE will effectively
+     * page. If the page is repeatedly saved and reloaded EasyMDE will
      * inject duplicate elements causing the page size to grow indefinitely.
      * 
      * To prevent said issue this will remove all EasyMDE generated elements from the

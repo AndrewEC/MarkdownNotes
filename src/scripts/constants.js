@@ -85,7 +85,7 @@ const Constants = {
         isFinding: 'isFinding'
     },
     noParentOption: 'none',
-    lookupErrorClass: 'lookup-error',
+    lookupErrorClass: 'fragment-preview-lookup-error',
     VisibilityOptions: {
         revealEditor: 'revealEditor',
         revealPreview: 'revealPreview',
@@ -117,6 +117,6 @@ const Constants = {
             Current: '1',
             v1: '1'
         },
-        App: '0.1.1'
+        App: '0.1.2'
     }
 };

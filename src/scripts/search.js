@@ -2,6 +2,7 @@ class Search {
 
     #highlightSpanStart = '<span class="search-highlight">';
     #highlightSpanEnd = '</span>';
+    #numberOfSurroundingCharsToShow = 50;
 
     #logger = new Logger('Search');
 
@@ -28,7 +29,7 @@ class Search {
             if (nextQuery === thisRef.#currentQuery) {
                 return;
             }
-            thisRef.#logger.log(`Search detected change in query. Performing search with new query: [${query}].`);
+            thisRef.#logger.log(`Search detected change in query. Performing search with new query: [${nextQuery}].`);
             thisRef.#currentQuery = nextQuery;
 
             this.#performSearch();
@@ -87,6 +88,8 @@ class Search {
             const resultSectionElement = this.#buildElementForResultsForPage(page, results[pageSlug], query);
             resultContainer.appendChild(resultSectionElement);
         }
+
+        resultContainer.getElementsByTagName('a')[0].focus();
     }
 
     /**
@@ -103,13 +106,10 @@ class Search {
      * @returns A div HTMLElement.
      */
     #buildElementForResultsForPage(page, indexes, query) {
-        // All elements to be created will be contained within this div.
         const container = document.createElement('div');
 
         container.appendChild(document.createElement('hr'));
 
-        // Create a link that, onclick, will trigger a function to update
-        // the page query element to navigate the user to the selected page.
         const pageLink = document.createElement('a');
         pageLink.innerText = page.title;
         pageLink.setAttribute('href', 'javascript:void(0);');
@@ -133,9 +133,18 @@ class Search {
     }
 
     /**
-     * Surrounds part of the "pageContents" with a span element
-     * so the "query" value, as it appears within the "pageContents", can be
-     * highlighted and displayed to the user.
+     * Modifies the input "pageContents" to wrap the "query" text
+     * within a span element. The Span element specifies a class that
+     * applies a background colour to the query text to make it appear
+     * highlighted.
+     * 
+     * For example the given values:
+     * - pageContents = This is an example value.
+     * - index = 8
+     * - query = an
+     * 
+     * Would result in:
+     * - This is <span class="search-highlight">an</span> example value.
      * 
      * @param {string} pageContents The markdown contents of the page.
      * @param {int} index The numerical index representing where the input
@@ -151,9 +160,30 @@ class Search {
             + pageContents.slice(index + query.length, pageContents.length);
     }
 
+    /**
+     * Extracts the "query" text from the "pageContents" plus up 50 characters
+     * that appear before and 50 characters that appear after the "query" text
+     * plus the HTML characters that make up the "span" element used to provide
+     * a background highlight.
+     * 
+     * It is expected that the "pageContents" value be the result of the
+     * #highlightResult function call.
+     * 
+     * For example if we are assuming that we are extracting only 5 characters before
+     * and after the "query" then given the following values:
+     * - pageContents = This is <span class="search-highlight">an</span> example value.
+     * - index = 8
+     * - query = an
+     * 
+     * Would result in a value of:
+     * - ...s is <span class="search-highlight">an</span> exam...
+     */
     #extractHighlightedSection(pageContents, index, query) {
-        const start = Math.max(0, index - 50 - this.#highlightSpanStart.length);
-        const end = Math.min(pageContents.length, index + query.length + 50 + this.#highlightSpanEnd.length);
+        const start = Math.max(0,
+            index - this.#numberOfSurroundingCharsToShow - this.#highlightSpanStart.length);
+
+        const end = Math.min(pageContents.length,
+            index + query.length + this.#numberOfSurroundingCharsToShow + this.#highlightSpanEnd.length);
 
         let surroundingContent = pageContents.slice(start, end);
         if (start > 0) {
@@ -162,6 +192,7 @@ class Search {
         if (end < pageContents.length - 1) {
             surroundingContent = surroundingContent + '...';
         }
+
         return surroundingContent;
     }
 
@@ -206,7 +237,7 @@ class Search {
                 break;
             }
             indexes.push(index);
-            i = index;
+            i = index + searchQuery.length;
         }
         return indexes;
     }

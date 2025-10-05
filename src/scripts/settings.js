@@ -99,7 +99,7 @@ class Settings {
     }
 
     #updateNotebookTitle() {
-        let nextTitle = prompt('New Notebook title:');
+        let nextTitle = prompt('New Notebook title:', this.#appState.title);
         if (nextTitle === null) {
             return;
         }
@@ -189,12 +189,20 @@ class Settings {
     #importData() {
         this.#logger.log('Importing user entered JSON data.');
 
-        let newState = this.#utils.getElement(Constants.Ids.Fragments.Settings.dataArea).value;
+        const dataArea = this.#utils.getElement(Constants.Ids.Fragments.Settings.dataArea);
+
+        let newState = null;
+        if (dataArea.style.display == Constants.Display.none) {
+            newState = JSON.stringify(this.#appState.getSerializableState());
+        } else {
+            newState = this.#utils.getElement(Constants.Ids.Fragments.Settings.dataArea).value;
+        }
+
         try {
             newState = JSON.parse(newState);
         } catch (error) {
             this.#logger.error(`Data could not be parsed as JSON. Cause: [${error}].`);
-            return alert('The data provided could not be parsed as JSON. Error: ' + error);
+            return alert(`The data provided could not be parsed as JSON. Error: [${error}]`);
         }
 
         if (!this.#persistence.validateState(newState)) {

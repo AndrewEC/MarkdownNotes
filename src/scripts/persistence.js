@@ -82,9 +82,9 @@ class Persistence {
             } else if (!this.#isNonEmptyString(page.title)) {
                 throw new Error(`Invalid pages value. Page at index [${i}] has an empty or non-string title property.`);
             } else if (!this.#isString(page.contents)) {
-                throw new Error(`Invalid pages value. Page at index [${i}] has an empty or non-string contents property.`);
+                throw new Error(`Invalid pages value. Page at index [${i}] has a non-string contents property.`);
             } else if (this.#isReservedPageTitle(page.title)) {
-                throw new Error(`Invalid pages value. Page at index [${i}] has a title that is reserved and can't be used.`);
+                throw new Error(`Invalid pages value. Page at index [${i}] has a title of [${page.title}] that is reserved and can't be used.`);
             }
         }
         if (!this.#areAllUnique(state.pages.map(page => page.title))) {
@@ -106,7 +106,7 @@ class Persistence {
             }
         }
         if (!this.#areAllUnique(state.images.map(image => image.name))) {
-            throw new Error('Invalid images. All image must have a unique name.');
+            throw new Error('Invalid images. All images must have a unique name.');
         }
         
         // Validate order array.

@@ -134,15 +134,14 @@ class Finder {
             return;
         }
 
+        const thisRef = this;
         const ul = document.createElement('ul');
-
         for (const result of this.#results) {
             const li = document.createElement('li');
 
             const link = document.createElement('a');
             link.href = 'javascript:void(0);';
             link.innerText = result.title;
-            const thisRef = this;
             link.onclick = () => {
                 thisRef.#logger.log(`User selected result link with title: [${result.title}].`);
                 thisRef.#appState.isFinding = false;

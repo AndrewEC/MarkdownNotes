@@ -27,7 +27,10 @@ td, th {
     border: 1px solid #ccc;
     padding: 3px;
 }
+/* ===== ===== Global Styles ===== ===== */
 
+
+/* ===== ===== Global Classes ===== ===== */
 .standard-button {
     margin: 2px;
     min-width: 200px;
@@ -42,20 +45,20 @@ td, th {
     background-color: #2CB83C;
 }
 
+.standard-button-link:hover {
+    background-color: #60D96E;
+}
+
 .standard-button-link-fixed {
     display: inline-block;
     width: 200px;
-}
-
-.standard-button-link:hover {
-    background-color: #60D96E;
 }
 
 .standard-table-button-link {
     padding: 2px;
     display: inline;
 }
-/* ===== ===== Global Styles ===== ===== */
+/* ===== ===== Global Classes ===== ===== */
 
 
 /* ===== ===== Root Styles ===== ===== */
@@ -90,6 +93,11 @@ td, th {
     overflow-y: scroll;
     display: none;
 }
+
+.fragment-images-table-row-image {
+    max-width: 300px;
+    max-height: 300px;
+}
 /* ===== ===== Images Fragment Styles ===== ===== */
 
 
@@ -105,16 +113,16 @@ td, th {
     max-width: 800px;
 }
 
-.lookup-error {
-    color: #f11;
-}
-
 #fragment-preview-view-container li {
     margin-bottom: 7px;
 }
 
 #fragment-preview-view-container td, #fragment-preview-view-container th {
     padding: 5px;
+}
+
+.fragment-preview-lookup-error {
+    color: #f11;
 }
 /* ===== ===== Preview Fragment Styles ===== ===== */
 
@@ -126,7 +134,7 @@ td, th {
     padding-bottom: 50px;
 }
 
-#root-nav-container {
+#fragment-navigation-root-container {
     width: 23%;
     background-color: #ddd;
 }
