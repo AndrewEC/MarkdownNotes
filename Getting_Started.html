@@ -408,7 +408,8 @@ td, th {
         autoSavedChanges: 'autoSavedChanges',
         hasUnsavedChanges: 'hasUnsavedChanges',
         isEditing: 'isEditing',
-        isFinding: 'isFinding'
+        isFinding: 'isFinding',
+        queryParams: 'queryParams'
     },
     noParentOption: 'none',
     lookupErrorClass: 'fragment-preview-lookup-error',
@@ -443,7 +444,7 @@ td, th {
             Current: '1',
             v1: '1'
         },
-        App: '0.1.2'
+        App: '0.1.3'
     }
 };
                 const LOGGER_ENABLED = false;
@@ -502,6 +503,7 @@ class AppState {
     #autoSavedChanges = [];
     #isEditing = false;
     #isFinding = false;
+    #queryParams = new Map();
 
     #invokePropertyChangedCallbacks(propertyName) {
         this.#logger.log(`Invoking property change callbacks for updated property [${propertyName}].`);
@@ -544,6 +546,10 @@ class AppState {
     }
 
     set currentPage(nextPage) {
+        if (this.#currentPage === nextPage) {
+            return;
+        }
+
         this.#currentPage = nextPage;
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.currentPage);
     }
@@ -559,7 +565,7 @@ class AppState {
     set pages(nextPages) {
         this.#serializableState.pages = nextPages;
         this.#serializableState.order = this.#serializableState.order
-            .filter(o => nextPages.find(page => page.slug === o));
+            .filter(orderSlug => nextPages.find(page => page.slug === orderSlug));
 
         this.hasUnsavedChanges = true;
 
@@ -608,6 +614,10 @@ class AppState {
 
         this.#isFinding = isFinding;
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.isFinding);
+    }
+
+    get queryParams() {
+        return this.#queryParams;
     }
 
     addImage(image) {
@@ -706,6 +716,31 @@ class AppState {
 
     hasAnyUnsavedChange() {
         return this.#hasUnsavedChanges || this.#autoSavedChanges.length > 0;
+    }
+
+    updateQueryParams(queryParams) {
+        if (!this.#haveQueryParamsChanged(queryParams)) {
+            this.#logger.log('updateQueryParams called but query params have not changed.');
+            return;
+        }
+
+        this.#queryParams = queryParams;
+        this.#invokePropertyChangedCallbacks(Constants.StateProperties.queryParams);
+    }
+
+    #haveQueryParamsChanged(queryParams) {
+        if (queryParams.size !== this.#queryParams.size) {
+            return true;
+        }
+
+        for (const [key, value] of queryParams.entries()) {
+            const otherValue = this.#queryParams.get(key);
+            if (value !== otherValue) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
                 class Utils {
@@ -1067,6 +1102,40 @@ class AppState {
                 this.#updateTitle();
                 this.#updateNavList();
                 break;
+            case Constants.StateProperties.queryParams:
+                this.#queryParamsUpdated();
+                break;
+        }
+    }
+
+    #queryParamsUpdated() {
+        const queryParams = this.#appState.queryParams;
+        const page = queryParams.get('page');
+
+        this.#appState.currentPage = page;
+
+        if (!page) {
+            const firstPage = this.#appState.getPagesInOrder()[0].title;
+            this.#logger.log(`Query param page was undefined. Defaulting to [${firstPage}].`);
+            this.#utils.updateQuery(firstPage);
+            return;
+        }
+
+        this.#logger.log(`Page query param was updated to: [${page}].`);
+
+        switch (page) {
+            case Constants.LocationHashes.settings:
+                this.#showSettings();
+                break;
+            case Constants.LocationHashes.images:
+                this.#showImages();
+                break;
+            case Constants.LocationHashes.search:
+                this.#showSearch();
+                break;
+            default:
+                this.#navigateTo(page);
+                break;
         }
     }
 
@@ -1087,7 +1156,7 @@ class AppState {
             return alert('The page title provided is a reserved value and cannot be used.')
         }
 
-        const pageSlug = crypto.randomUUID();
+        const pageSlug = this.#generatePageSlug();
         this.#logger.log(`Creating new page with title [${newPageTitle}] and slug [${pageSlug}].`);
 
         const newPage = {
@@ -1099,6 +1168,15 @@ class AppState {
 
         this.#appState.addPage(newPage);
         this.#utils.updateQuery(newPage.title);
+    }
+
+    #generatePageSlug() {
+        const existingPageSlugs = this.#appState.pages.map(page => page.slug);
+        let pageSlug = crypto.randomUUID();
+        while (existingPageSlugs.includes(pageSlug)) {
+            pageSlug = crypto.randomUUID();
+        }
+        return pageSlug;
     }
 
     #showSettings() {
@@ -1200,12 +1278,12 @@ class AppState {
     }
 
     #navigateTo(pageTitle) {
-        pageTitle = decodeURIComponent(pageTitle);
         this.#logger.log(`Navigating to page with title: [${pageTitle}]`);
         const nextPage = this.#appState.pages.find(page => page.title === pageTitle);
         if (!nextPage) {
-            this.#logger.log(`Page with matching title could not be found. Defaulting to first page.`);
-            this.#appState.currentPage = this.#appState.getFirstPage();
+            const firstPageTitle = this.#appState.getFirstPage().title;
+            this.#logger.log(`Page with title [${pageTitle}] could not be found. Defaulting to first page of [${firstPageTitle}].`);
+            this.#utils.updateQuery(firstPageTitle);
             return;
         }
         this.#appState.currentPage = nextPage;
@@ -1213,38 +1291,22 @@ class AppState {
 
     #listenForUrlChanges() {
         const thisRef = this;
-        let currentUrl = '';
+        let lastUrl = null;
         setInterval(() => {
             const nextUrl = window.location.href;
-            if (nextUrl === currentUrl) {
+            if (lastUrl === nextUrl) {
                 return;
             }
-            currentUrl = nextUrl;
+            lastUrl = nextUrl;
             thisRef.#logger.log(`URL changed to: [${nextUrl}].`);
 
-            let pageTitle = '';
             if (window.location.search) {
-                const page = new URLSearchParams(window.location.search).get('page');
-                if (page) {
-                    pageTitle = decodeURIComponent(page);
+                const queryParams = new URLSearchParams(window.location.search);
+                const paramMap = new Map();
+                for (const [key, value] of queryParams.entries()) {
+                    paramMap.set(key, decodeURIComponent(value));
                 }
-            }
-
-            thisRef.#logger.log(`URL contains page title of: [${pageTitle}].`);
-
-            switch (pageTitle) {
-                case Constants.LocationHashes.settings:
-                    thisRef.#showSettings();
-                    break;
-                case Constants.LocationHashes.images:
-                    thisRef.#showImages();
-                    break;
-                case Constants.LocationHashes.search:
-                    thisRef.#showSearch();
-                    break;
-                default:
-                    thisRef.#navigateTo(pageTitle);
-                    break;
+                thisRef.#appState.updateQueryParams(paramMap);
             }
         }, 100);
     }
@@ -1317,11 +1379,11 @@ class AppState {
 
     onKeyPressed(e) {
         if (e.keyCode === Constants.KeyCodes.e && e.ctrlKey) {
-            if (!this.#appState.isEditing) {
+            if (!this.#appState.isEditing && this.#isOnEditablePage()) {
                 this.#logger.log('Control + E pressed. Starting editor.');
                 this.#appState.isEditing = true;
-                return true;
             }
+            return true;
         } else if (e.keyCode === Constants.KeyCodes.escape) {
             if (this.#appState.isEditing) {
                 this.#logger.log('Escape pressed. Cancelling current edits.');
@@ -1337,6 +1399,11 @@ class AppState {
         }
 
         return false;
+    }
+
+    #isOnEditablePage() {
+        return this.#appState.currentPage
+            && !Constants.reservedPageTitles.includes(this.#appState.currentPage.title);
     }
 
     /**
@@ -1602,6 +1669,11 @@ class AppState {
 
     #previewPage() {
         const page = this.#appState.currentPage;
+
+        if (!page || !page.title || Constants.reservedPageTitles.includes(page.title)) {
+            return;
+        }
+
         this.#logger.log(`Previewing page titled [${page.title}].`);
 
         this.#visibility.showPreview();
@@ -2119,26 +2191,29 @@ class AppState {
     constructor(appState, utils) {
         this.#appState = appState;
         this.#utils = utils;
+
+        this.#appState.addPropertyChangedListener(this.#onPropertyChanged.bind(this));
+
         this.#listenForVisibilityChanges();
-        this.#listenForUrlChanges();
     }
 
-    #listenForUrlChanges() {
-        const thisRef = this;
-        setInterval(() => {
-            if (!thisRef.#visible) {
-                return;
-            }
+    #onPropertyChanged(propertyName) {
+        if (propertyName != Constants.StateProperties.queryParams) {
+            return;
+        }
 
-            const nextQuery = new URLSearchParams(window.location.search).get('query');
-            if (nextQuery === thisRef.#currentQuery) {
-                return;
-            }
-            thisRef.#logger.log(`Search detected change in query. Performing search with new query: [${nextQuery}].`);
-            thisRef.#currentQuery = nextQuery;
+        const nextQuery = this.#appState.queryParams.get('query');
+        if (!nextQuery) {
+            return;
+        }
 
-            this.#performSearch();
-        }, 100);
+        if (nextQuery === this.#currentQuery) {
+            return;
+        }
+        this.#currentQuery = nextQuery;
+
+        this.#logger.log(`Search detected change in query. Performing search with new query: [${nextQuery}].`);
+        this.#performSearch();
     }
 
     /**
@@ -2194,7 +2269,9 @@ class AppState {
             resultContainer.appendChild(resultSectionElement);
         }
 
-        resultContainer.getElementsByTagName('a')[0].focus();
+        setTimeout(function() {
+            resultContainer.getElementsByTagName('a')[0].focus();
+        }, 0);
     }
 
     /**
@@ -2600,7 +2677,7 @@ class AppState {
     <body>
         <div id="root-container">
             <div id="fragment-navigation-root-container" class="root-container">
-                <div id="fragment-navigation" style="height: 549px;">
+                <div id="fragment-navigation" style="height: 693px;">
     <h2 id="fragment-navigation-title" class="navigation-title">MarkdownNotes - Getting Started</h2>
 
     <hr class="navigation-rule">
@@ -2624,7 +2701,7 @@ class AppState {
 </div>
             </div>
             <div id="root-content-container" class="root-container">
-                <div id="fragment-preview" style="display: block; height: 549px;">
+                <div id="fragment-preview" style="display: block; height: 693px;">
 
     <a id="fragment-preview-button-edit" class="standard-button-link standard-button-link-fixed" href="javascript:void(0);">Edit</a>
 
@@ -2638,7 +2715,7 @@ class AppState {
 </div>
 
 </div>
-                <div id="fragment-editor" style="display: none; height: 549px;">
+                <div id="fragment-editor" style="display: none; height: 693px;">
 
     <a href="javascript:void(0);" id="fragment-editor-button-update" class="standard-button-link standard-button-link-fixed">Update Page</a>
 
@@ -2659,9 +2736,9 @@ class AppState {
         <textarea id="fragment-editor-area" style="display: none;"></textarea>
     </div>
 </div>
-                <div id="fragment-settings" style="display: none; height: 549px;">
+                <div id="fragment-settings" style="display: none; height: 693px;">
     <h1>Settings</h1>
-    <p>Version: <span id="fragment-settings-version-number">0.1.2</span></p>
+    <p>Version: <span id="fragment-settings-version-number">0.1.3</span></p>
 
     <hr>
 
@@ -2829,7 +2906,7 @@ class AppState {
 
     <textarea id="fragment-settings-data-area" style="display: none;"></textarea>
 </div>
-                <div id="fragment-images" style="display: none; height: 549px;">
+                <div id="fragment-images" style="display: none; height: 693px;">
     <h1>Images</h1>
 
     <label>
@@ -2916,7 +2993,7 @@ class AppState {
         </tr>
     </table>
 </div>
-                <div id="fragment-search" style="display: none; height: 549px;">
+                <div id="fragment-search" style="display: none; height: 693px;">
     <h1>Search</h1>
     <div id="fragment-search-results-container"></div>
 </div>

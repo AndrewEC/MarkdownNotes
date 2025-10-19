@@ -34,6 +34,11 @@ class Preview {
 
     #previewPage() {
         const page = this.#appState.currentPage;
+
+        if (!page || !page.title || Constants.reservedPageTitles.includes(page.title)) {
+            return;
+        }
+
         this.#logger.log(`Previewing page titled [${page.title}].`);
 
         this.#visibility.showPreview();

@@ -14,26 +14,29 @@ class Search {
     constructor(appState, utils) {
         this.#appState = appState;
         this.#utils = utils;
+
+        this.#appState.addPropertyChangedListener(this.#onPropertyChanged.bind(this));
+
         this.#listenForVisibilityChanges();
-        this.#listenForUrlChanges();
     }
 
-    #listenForUrlChanges() {
-        const thisRef = this;
-        setInterval(() => {
-            if (!thisRef.#visible) {
-                return;
-            }
+    #onPropertyChanged(propertyName) {
+        if (propertyName != Constants.StateProperties.queryParams) {
+            return;
+        }
 
-            const nextQuery = new URLSearchParams(window.location.search).get('query');
-            if (nextQuery === thisRef.#currentQuery) {
-                return;
-            }
-            thisRef.#logger.log(`Search detected change in query. Performing search with new query: [${nextQuery}].`);
-            thisRef.#currentQuery = nextQuery;
+        const nextQuery = this.#appState.queryParams.get('query');
+        if (!nextQuery) {
+            return;
+        }
 
-            this.#performSearch();
-        }, 100);
+        if (nextQuery === this.#currentQuery) {
+            return;
+        }
+        this.#currentQuery = nextQuery;
+
+        this.#logger.log(`Search detected change in query. Performing search with new query: [${nextQuery}].`);
+        this.#performSearch();
     }
 
     /**
@@ -89,7 +92,9 @@ class Search {
             resultContainer.appendChild(resultSectionElement);
         }
 
-        resultContainer.getElementsByTagName('a')[0].focus();
+        setTimeout(function() {
+            resultContainer.getElementsByTagName('a')[0].focus();
+        }, 0);
     }
 
     /**

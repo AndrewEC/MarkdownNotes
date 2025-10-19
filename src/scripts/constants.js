@@ -82,7 +82,8 @@ const Constants = {
         autoSavedChanges: 'autoSavedChanges',
         hasUnsavedChanges: 'hasUnsavedChanges',
         isEditing: 'isEditing',
-        isFinding: 'isFinding'
+        isFinding: 'isFinding',
+        queryParams: 'queryParams'
     },
     noParentOption: 'none',
     lookupErrorClass: 'fragment-preview-lookup-error',
@@ -117,6 +118,6 @@ const Constants = {
             Current: '1',
             v1: '1'
         },
-        App: '0.1.2'
+        App: '0.1.3'
     }
 };

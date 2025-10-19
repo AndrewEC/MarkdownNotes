@@ -22,6 +22,7 @@ class AppState {
     #autoSavedChanges = [];
     #isEditing = false;
     #isFinding = false;
+    #queryParams = new Map();
 
     #invokePropertyChangedCallbacks(propertyName) {
         this.#logger.log(`Invoking property change callbacks for updated property [${propertyName}].`);
@@ -64,6 +65,10 @@ class AppState {
     }
 
     set currentPage(nextPage) {
+        if (this.#currentPage === nextPage) {
+            return;
+        }
+
         this.#currentPage = nextPage;
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.currentPage);
     }
@@ -79,7 +84,7 @@ class AppState {
     set pages(nextPages) {
         this.#serializableState.pages = nextPages;
         this.#serializableState.order = this.#serializableState.order
-            .filter(o => nextPages.find(page => page.slug === o));
+            .filter(orderSlug => nextPages.find(page => page.slug === orderSlug));
 
         this.hasUnsavedChanges = true;
 
@@ -128,6 +133,10 @@ class AppState {
 
         this.#isFinding = isFinding;
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.isFinding);
+    }
+
+    get queryParams() {
+        return this.#queryParams;
     }
 
     addImage(image) {
@@ -226,5 +235,30 @@ class AppState {
 
     hasAnyUnsavedChange() {
         return this.#hasUnsavedChanges || this.#autoSavedChanges.length > 0;
+    }
+
+    updateQueryParams(queryParams) {
+        if (!this.#haveQueryParamsChanged(queryParams)) {
+            this.#logger.log('updateQueryParams called but query params have not changed.');
+            return;
+        }
+
+        this.#queryParams = queryParams;
+        this.#invokePropertyChangedCallbacks(Constants.StateProperties.queryParams);
+    }
+
+    #haveQueryParamsChanged(queryParams) {
+        if (queryParams.size !== this.#queryParams.size) {
+            return true;
+        }
+
+        for (const [key, value] of queryParams.entries()) {
+            const otherValue = this.#queryParams.get(key);
+            if (value !== otherValue) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

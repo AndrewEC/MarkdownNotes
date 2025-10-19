@@ -67,6 +67,40 @@ class Navigation {
                 this.#updateTitle();
                 this.#updateNavList();
                 break;
+            case Constants.StateProperties.queryParams:
+                this.#queryParamsUpdated();
+                break;
+        }
+    }
+
+    #queryParamsUpdated() {
+        const queryParams = this.#appState.queryParams;
+        const page = queryParams.get('page');
+
+        this.#appState.currentPage = page;
+
+        if (!page) {
+            const firstPage = this.#appState.getPagesInOrder()[0].title;
+            this.#logger.log(`Query param page was undefined. Defaulting to [${firstPage}].`);
+            this.#utils.updateQuery(firstPage);
+            return;
+        }
+
+        this.#logger.log(`Page query param was updated to: [${page}].`);
+
+        switch (page) {
+            case Constants.LocationHashes.settings:
+                this.#showSettings();
+                break;
+            case Constants.LocationHashes.images:
+                this.#showImages();
+                break;
+            case Constants.LocationHashes.search:
+                this.#showSearch();
+                break;
+            default:
+                this.#navigateTo(page);
+                break;
         }
     }
 
@@ -87,7 +121,7 @@ class Navigation {
             return alert('The page title provided is a reserved value and cannot be used.')
         }
 
-        const pageSlug = crypto.randomUUID();
+        const pageSlug = this.#generatePageSlug();
         this.#logger.log(`Creating new page with title [${newPageTitle}] and slug [${pageSlug}].`);
 
         const newPage = {
@@ -99,6 +133,15 @@ class Navigation {
 
         this.#appState.addPage(newPage);
         this.#utils.updateQuery(newPage.title);
+    }
+
+    #generatePageSlug() {
+        const existingPageSlugs = this.#appState.pages.map(page => page.slug);
+        let pageSlug = crypto.randomUUID();
+        while (existingPageSlugs.includes(pageSlug)) {
+            pageSlug = crypto.randomUUID();
+        }
+        return pageSlug;
     }
 
     #showSettings() {
@@ -200,12 +243,12 @@ class Navigation {
     }
 
     #navigateTo(pageTitle) {
-        pageTitle = decodeURIComponent(pageTitle);
         this.#logger.log(`Navigating to page with title: [${pageTitle}]`);
         const nextPage = this.#appState.pages.find(page => page.title === pageTitle);
         if (!nextPage) {
-            this.#logger.log(`Page with matching title could not be found. Defaulting to first page.`);
-            this.#appState.currentPage = this.#appState.getFirstPage();
+            const firstPageTitle = this.#appState.getFirstPage().title;
+            this.#logger.log(`Page with title [${pageTitle}] could not be found. Defaulting to first page of [${firstPageTitle}].`);
+            this.#utils.updateQuery(firstPageTitle);
             return;
         }
         this.#appState.currentPage = nextPage;
@@ -213,38 +256,22 @@ class Navigation {
 
     #listenForUrlChanges() {
         const thisRef = this;
-        let currentUrl = '';
+        let lastUrl = null;
         setInterval(() => {
             const nextUrl = window.location.href;
-            if (nextUrl === currentUrl) {
+            if (lastUrl === nextUrl) {
                 return;
             }
-            currentUrl = nextUrl;
+            lastUrl = nextUrl;
             thisRef.#logger.log(`URL changed to: [${nextUrl}].`);
 
-            let pageTitle = '';
             if (window.location.search) {
-                const page = new URLSearchParams(window.location.search).get('page');
-                if (page) {
-                    pageTitle = decodeURIComponent(page);
+                const queryParams = new URLSearchParams(window.location.search);
+                const paramMap = new Map();
+                for (const [key, value] of queryParams.entries()) {
+                    paramMap.set(key, decodeURIComponent(value));
                 }
-            }
-
-            thisRef.#logger.log(`URL contains page title of: [${pageTitle}].`);
-
-            switch (pageTitle) {
-                case Constants.LocationHashes.settings:
-                    thisRef.#showSettings();
-                    break;
-                case Constants.LocationHashes.images:
-                    thisRef.#showImages();
-                    break;
-                case Constants.LocationHashes.search:
-                    thisRef.#showSearch();
-                    break;
-                default:
-                    thisRef.#navigateTo(pageTitle);
-                    break;
+                thisRef.#appState.updateQueryParams(paramMap);
             }
         }, 100);
     }

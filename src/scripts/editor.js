@@ -66,11 +66,11 @@ class Editor {
 
     onKeyPressed(e) {
         if (e.keyCode === Constants.KeyCodes.e && e.ctrlKey) {
-            if (!this.#appState.isEditing) {
+            if (!this.#appState.isEditing && this.#isOnEditablePage()) {
                 this.#logger.log('Control + E pressed. Starting editor.');
                 this.#appState.isEditing = true;
-                return true;
             }
+            return true;
         } else if (e.keyCode === Constants.KeyCodes.escape) {
             if (this.#appState.isEditing) {
                 this.#logger.log('Escape pressed. Cancelling current edits.');
@@ -86,6 +86,11 @@ class Editor {
         }
 
         return false;
+    }
+
+    #isOnEditablePage() {
+        return this.#appState.currentPage
+            && !Constants.reservedPageTitles.includes(this.#appState.currentPage.title);
     }
 
     /**
