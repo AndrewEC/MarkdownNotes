@@ -21,7 +21,7 @@ Optionally you can add the `-Open` switch to the `Build.ps1` script invocation t
 ---
 
 ### Architecture
-This project attempts to stay relatively simple. It does not require any special build tools (except for the `Build.ps1` script), node/npm, and only a few external dependencies (dependencies are listed at the bottom of this readme).
+This project attempts to stay relatively simple. It does not require any special build tools (except for the `Build.ps1` script), and only a few external dependencies (dependencies are listed at the bottom of this readme).
 
 #### Fragments
 The app's source is broken down into fragments. A fragment will consist of a partial .html file and a single .js file. These files are ultimately combined into the resulting bundle file.

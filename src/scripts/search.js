@@ -102,7 +102,7 @@ class Search {
      * was found within the contents of the input "page".
      * 
      * This div will consist of a link element to navigate the user to the page,
-     * and one paragraph element to show each instance where the "query" was
+     * and one paragraph element per instance where the "query" was
      * found within the "page" contents.
      * 
      * @param {object} page 

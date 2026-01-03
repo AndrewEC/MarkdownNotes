@@ -85,12 +85,15 @@ class Settings {
         this.#resetOrder();
         this.#resetTitle();
         this.#displayData();
-        this.#displayCurrentAppVersion();
+        this.#displayCurrentVersions();
     };
 
-    #displayCurrentAppVersion() {
-        this.#utils.getElement(Constants.Ids.Fragments.Settings.versionNumberText)
+    #displayCurrentVersions() {
+        this.#utils.getElement(Constants.Ids.Fragments.Settings.appVersionNumberText)
             .innerText = Constants.Versions.App;
+        
+        this.#utils.getElement(Constants.Ids.Fragments.Settings.saveVersionNumberText)
+            .innerText = Constants.Versions.Save.Current;
     }
 
     #copyStateJsonToClipboard() {

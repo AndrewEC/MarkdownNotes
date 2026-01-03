@@ -25,7 +25,8 @@ const Constants = {
                 orderTable: 'fragment-settings-table-order',
                 dataArea: 'fragment-settings-data-area',
                 buttonDataImport: 'fragment-settings-button-data-import',
-                versionNumberText: 'fragment-settings-version-number',
+                appVersionNumberText: 'fragment-settings-app-version-number',
+                saveVersionNumberText: 'fragment-settings-save-version-number',
                 buttonCopyData: 'fragment-settings-button-data-copy',
                 buttonRevealData: 'fragment-settings-button-reveal-data',
                 templateOrderTableRow: 'fragment-settings-template-order-row'
@@ -118,6 +119,6 @@ const Constants = {
             Current: '1',
             v1: '1'
         },
-        App: '0.1.3'
+        App: '0.1.4'
     }
 };
