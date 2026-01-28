@@ -351,7 +351,8 @@ td, th {
                 orderTable: 'fragment-settings-table-order',
                 dataArea: 'fragment-settings-data-area',
                 buttonDataImport: 'fragment-settings-button-data-import',
-                versionNumberText: 'fragment-settings-version-number',
+                appVersionNumberText: 'fragment-settings-app-version-number',
+                saveVersionNumberText: 'fragment-settings-save-version-number',
                 buttonCopyData: 'fragment-settings-button-data-copy',
                 buttonRevealData: 'fragment-settings-button-reveal-data',
                 templateOrderTableRow: 'fragment-settings-template-order-row'
@@ -444,7 +445,7 @@ td, th {
             Current: '1',
             v1: '1'
         },
-        App: '0.1.3'
+        App: '0.1.5'
     }
 };
                 const LOGGER_ENABLED = false;
@@ -899,8 +900,12 @@ class AppState {
         const stateContainer = this.#utils.getElement(Constants.Ids.stateContainer);
         stateContainer.innerText = JSON.stringify(this.#appState.getSerializableState());
 
+        const documentHtml = document.documentElement.cloneNode(true);
+        const previewContainerId = `#${Constants.Ids.Fragments.Preview.viewContainer}`;
+        documentHtml.querySelectorAll(previewContainerId)[0].innerHTML = '';
+
         // Prepend the DOCTYPE declaration since it's not part of the outerHTML property.
-        const documentString = `<!DOCTYPE html>${document.documentElement.outerHTML}`;
+        const documentString = `<!DOCTYPE html>${documentHtml.outerHTML}`;
         const blob = new Blob([documentString], { type: 'text' });
 
         const objectUrl = URL.createObjectURL(blob)
@@ -928,6 +933,7 @@ class AppState {
 
     #getVersion(state) {
         if (!state || !state.version || typeof state.version !== 'string') {
+            this.#logger.log('No valid version could be found within state object. Default to current save version.');
             state.version = Constants.Versions.Save.Current;
         }
         return state.version;
@@ -1874,12 +1880,15 @@ class AppState {
         this.#resetOrder();
         this.#resetTitle();
         this.#displayData();
-        this.#displayCurrentAppVersion();
+        this.#displayCurrentVersions();
     };
 
-    #displayCurrentAppVersion() {
-        this.#utils.getElement(Constants.Ids.Fragments.Settings.versionNumberText)
+    #displayCurrentVersions() {
+        this.#utils.getElement(Constants.Ids.Fragments.Settings.appVersionNumberText)
             .innerText = Constants.Versions.App;
+        
+        this.#utils.getElement(Constants.Ids.Fragments.Settings.saveVersionNumberText)
+            .innerText = Constants.Versions.Save.Current;
     }
 
     #copyStateJsonToClipboard() {
@@ -2279,7 +2288,7 @@ class AppState {
      * was found within the contents of the input "page".
      * 
      * This div will consist of a link element to navigate the user to the page,
-     * and one paragraph element to show each instance where the "query" was
+     * and one paragraph element per instance where the "query" was
      * found within the "page" contents.
      * 
      * @param {object} page 
@@ -2677,7 +2686,7 @@ class AppState {
     <body>
         <div id="root-container">
             <div id="fragment-navigation-root-container" class="root-container">
-                <div id="fragment-navigation" style="height: 693px;">
+                <div id="fragment-navigation" style="height: 549px;">
     <h2 id="fragment-navigation-title" class="navigation-title">MarkdownNotes - Getting Started</h2>
 
     <hr class="navigation-rule">
@@ -2701,21 +2710,16 @@ class AppState {
 </div>
             </div>
             <div id="root-content-container" class="root-container">
-                <div id="fragment-preview" style="display: block; height: 693px;">
+                <div id="fragment-preview" style="display: block; height: 549px;">
 
     <a id="fragment-preview-button-edit" class="standard-button-link standard-button-link-fixed" href="javascript:void(0);">Edit</a>
 
     <a id="fragment-preview-button-delete" class="standard-button-link standard-button-link-fixed" href="javascript:void(0);">Delete</a>
 
-    <div id="fragment-preview-view-container"><h1>Welcome to MarkdownNotes!!!</h1>
-<p>MarkdownNotes is a single, self-contained, HTML file that provides functionality to edit and view Markdown formatted text in a Notebook esque format.</p>
-<p>To help get you started there a few <a href="javascript:void(0);">How-To</a> pages available that explain some of the specifics of this program.</p>
-<p>Additionally, there is a <a href="javascript:void(0);">Markdown Cheat Sheet</a> page that provides a summary of the common markdown notations that are supported by MarkdownNotes.</p>
-<p>You can navigate to these pages by clicking the link in the previous sentence or clicking one of the links in the left-hand nav.</p>
-</div>
+    <div id="fragment-preview-view-container"></div>
 
 </div>
-                <div id="fragment-editor" style="display: none; height: 693px;">
+                <div id="fragment-editor" style="display: none; height: 549px;">
 
     <a href="javascript:void(0);" id="fragment-editor-button-update" class="standard-button-link standard-button-link-fixed">Update Page</a>
 
@@ -2736,9 +2740,10 @@ class AppState {
         <textarea id="fragment-editor-area" style="display: none;"></textarea>
     </div>
 </div>
-                <div id="fragment-settings" style="display: none; height: 693px;">
+                <div id="fragment-settings" style="display: none; height: 549px;">
     <h1>Settings</h1>
-    <p>Version: <span id="fragment-settings-version-number">0.1.3</span></p>
+    <p>App Version: <span id="fragment-settings-app-version-number">0.1.5</span></p>
+    <p>Save Version: <span id="fragment-settings-save-version-number">1</span></p>
 
     <hr>
 
@@ -2890,7 +2895,7 @@ class AppState {
     <h3>Data Import/Export</h3>
     <p>The text below is the JSON representation of the data store in this Notebook.</p>
     <p>
-        You can copy date from another Notebook into the area below and click the
+        You can copy data from another Notebook into the area below and click the
         <strong>Import</strong> button to sync this Notebook with the data entered.
     </p>
 
@@ -2906,7 +2911,7 @@ class AppState {
 
     <textarea id="fragment-settings-data-area" style="display: none;"></textarea>
 </div>
-                <div id="fragment-images" style="display: none; height: 693px;">
+                <div id="fragment-images" style="display: none; height: 549px;">
     <h1>Images</h1>
 
     <label>
@@ -2993,7 +2998,7 @@ class AppState {
         </tr>
     </table>
 </div>
-                <div id="fragment-search" style="display: none; height: 693px;">
+                <div id="fragment-search" style="display: none; height: 549px;">
     <h1>Search</h1>
     <div id="fragment-search-results-container"></div>
 </div>

@@ -16,8 +16,15 @@ class Persistence {
         const stateContainer = this.#utils.getElement(Constants.Ids.stateContainer);
         stateContainer.innerText = JSON.stringify(this.#appState.getSerializableState());
 
+        // Remove the content of the preview div before saving.
+        // All the content within the preview div is already included
+        // in the serializable state object.
+        const documentHtml = document.documentElement.cloneNode(true);
+        const previewContainerId = `#${Constants.Ids.Fragments.Preview.viewContainer}`;
+        documentHtml.querySelectorAll(previewContainerId)[0].innerHTML = '';
+
         // Prepend the DOCTYPE declaration since it's not part of the outerHTML property.
-        const documentString = `<!DOCTYPE html>${document.documentElement.outerHTML}`;
+        const documentString = `<!DOCTYPE html>${documentHtml.outerHTML}`;
         const blob = new Blob([documentString], { type: 'text' });
 
         const objectUrl = URL.createObjectURL(blob)
@@ -45,6 +52,7 @@ class Persistence {
 
     #getVersion(state) {
         if (!state || !state.version || typeof state.version !== 'string') {
+            this.#logger.log('No valid version could be found within state object. Default to current save version.');
             state.version = Constants.Versions.Save.Current;
         }
         return state.version;
@@ -130,7 +138,7 @@ class Persistence {
         return Constants.reservedPageTitles.includes(pageTitle);
     }
 
-    #areAllUnique(values){
+    #areAllUnique(values) {
         return [...new Set(values)].length === values.length;
     }
 
@@ -142,7 +150,7 @@ class Persistence {
         return this.#isString(value) && value.trim() !== ''
     }
     
-    #isArray(value){
+    #isArray(value) {
         return value && Array.isArray(value)
     }
 
