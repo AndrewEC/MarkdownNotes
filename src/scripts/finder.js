@@ -76,7 +76,7 @@ class Finder {
         this.#logger.log(`Shift + Tab pressed. Navigating to next result from current index [${this.#selectedIndex}].`);
         if (this.#selectedIndex === this.#results.length - 1) {
             e.preventDefault();
-            this.#selectedIndex = -1
+            this.#selectedIndex = -1;
             this.#utils.getElement(Constants.Ids.Fragments.Finder.inputTitle).focus();
         } else {
             this.#selectedIndex++;

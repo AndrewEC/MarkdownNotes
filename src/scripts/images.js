@@ -43,7 +43,7 @@ class Images {
 
         const thisRef = this;
         const reader = new FileReader();
-        reader.onloadend = function() {
+        reader.onloadend = () => {
             thisRef.#appState.addImage({
                 name: imageName,
                 data: reader.result
@@ -51,7 +51,7 @@ class Images {
 
             imageInput.value = null;
             imageNameInput.value = null;
-        }
+        };
         const file = imageInput.files[0];
         this.#logger.log(`Embedding image from file: [${file}], with name: [${imageName}].`);
         reader.readAsDataURL(file);

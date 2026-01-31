@@ -87,7 +87,7 @@ class Search {
         this.#logger.log(`Search produced [${results.length}] results.`);
 
         for (const pageSlug in results) {
-            const page = this.#appState.pages.find((page) => page.slug === pageSlug)
+            const page = this.#appState.pages.find((page) => page.slug === pageSlug);
             const resultSectionElement = this.#buildElementForResultsForPage(page, results[pageSlug], query);
             resultContainer.appendChild(resultSectionElement);
         }

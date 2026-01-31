@@ -27,7 +27,7 @@ class Persistence {
         const documentString = `<!DOCTYPE html>${documentHtml.outerHTML}`;
         const blob = new Blob([documentString], { type: 'text' });
 
-        const objectUrl = URL.createObjectURL(blob)
+        const objectUrl = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = objectUrl;
         link.download = `${this.#appState.title}.html`;

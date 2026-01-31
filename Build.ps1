@@ -2,6 +2,33 @@ param(
     [switch]$Open
 )
 
+function Get-MinifiedContent {
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory)]
+        [string]$Content
+    )
+
+    $Lines = $Content -split "`n"
+
+    $MinifiedContent = ""
+    foreach ($Line in $Lines) {
+        $TrimmedLine = $Line.Trim() + " "
+        if (
+            -not (
+                $TrimmedLine.StartsWith("//") `
+                -or $TrimmedLine.StartsWith("/*") `
+                -or $TrimmedLine.StartsWith("*")
+            )
+        )
+        {
+            $MinifiedContent = $MinifiedContent + $TrimmedLine
+        }
+    }
+
+    return $MinifiedContent
+}
+
 function Get-SourceDirectory {
     [OutputType([string])]
     param(
@@ -71,7 +98,11 @@ function Get-MergedContents {
     )
 
     $Lines = Get-Content $FilePath
-    return $Lines | Join-String -Separator "`r`n"
+    $Contents = ($Lines | Join-String -Separator "`r`n")
+    if ($FilePath.Contains("markup") -or $FilePath.Contains("scripts")) {
+        return (Get-MinifiedContent $Contents)
+    }
+    return $Contents
 }
 
 function Get-IndexOfAll {

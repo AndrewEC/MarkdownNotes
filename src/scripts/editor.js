@@ -267,7 +267,7 @@ class Editor {
 
         const orderedPages = this.#appState.getPagesInOrder();
         for (let i = 0; i < orderedPages.length; i++) {
-            const otherPage = orderedPages[i]
+            const otherPage = orderedPages[i];
 
             if (pageBeingEdited
                 && (otherPage.slug === pageBeingEdited.slug
