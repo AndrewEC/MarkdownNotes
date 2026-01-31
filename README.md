@@ -2,7 +2,7 @@
 
 MarkdownNotes is a single, self-contained, HTML file that provides functionality to edit and view Markdown formatted text in a Notebook esque format.
 
-The getting started documentation is provided a the [Getting_Started.html](./Getting_Started.html) HTML file.
+A sample notebook with some beginner documentation if provided in [Getting_Started.html](./Getting_Started.html).
 
 An empty file ready for editing is available at [MarkdownNotes.html](./MarkdownNotes.html).
 
@@ -14,7 +14,7 @@ This project is heavily inspired by [FeatherWiki](https://codeberg.org/Alamantus
 
 To update MarkdownNotes simply make a change to any of the source files provided then run the `Build.ps1` script.
 
-This script will combine all the source files into a single html file and write it to `./build/MarkdownNotes.html`
+This script will naively minify and combine all the source files into a single html file and write it to `./build/MarkdownNotes.html`
 
 Optionally you can add the `-Open` switch to the `Build.ps1` script invocation to open the generated HTML file when the build process is complete.
 
@@ -28,7 +28,7 @@ The app's source is broken down into fragments. A fragment will consist of a par
 
 The partial .html files are located in `src/markup` and contain the markup specific to the fragment.
 
-The .js files are located in `src/scripts` and contain logic for managing fragment specific state, responding to global state updates, handle button click events, and pushing changes to the global state.
+The .js files are located in `src/scripts` and contain logic for managing fragment specific state, responding to global state updates, handling button click events, and pushing changes to the global state.
 
 #### State Management
 The global, serializable, properties of the app are located in the `State` class in the `state.js` file. A singleton instance of this class is shared among all the fragments.
@@ -52,4 +52,6 @@ There are two versions within the app. One is the app's version and the other is
 
 This version is used by the app to determine how to "upgrade" the save data from an older version to a newer version and to properly validate the state properties.
 
-The app version version works like most other versioning systems (Major.Minor.Patch) and the current version of the app can be found in the `Settings` page of MarkdownNotes.
+The app version version works like most other versioning systems (Major.Minor.Patch).
+
+Both the save version and the app version can be found on the `Settings` page of MarkdownNotes.
