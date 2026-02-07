@@ -11,7 +11,9 @@ class Persistence {
     }
 
     save() {
-        this.#appState.hasUnsavedChanges = false;
+        if (this.#appState.autoSavedChanges.length === 0) {
+            this.#appState.hasUnsavedChanges = false;
+        }
 
         const stateContainer = this.#utils.getElement(Constants.Ids.stateContainer);
         stateContainer.innerText = JSON.stringify(this.#appState.getSerializableState());

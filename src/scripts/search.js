@@ -8,12 +8,15 @@ class Search {
 
     #appState = null;
     #utils = null;
+    #visibility = null;
+
     #visible = false;
     #currentQuery = '';
 
-    constructor(appState, utils) {
+    constructor(appState, utils, visibility) {
         this.#appState = appState;
         this.#utils = utils;
+        this.#visibility = visibility;
 
         this.#appState.addPropertyChangedListener(this.#onPropertyChanged.bind(this));
 
@@ -21,10 +24,24 @@ class Search {
     }
 
     #onPropertyChanged(propertyName) {
-        if (propertyName != Constants.StateProperties.queryParams) {
+        if (propertyName !== Constants.StateProperties.queryParams) {
             return;
         }
 
+        this.#showSearch();
+        this.#updateSearch();
+    }
+
+    #showSearch() {
+        const page = this.#appState.queryParams.get('page');
+        if (page === Constants.LocationHashes.search && !this.#visible) {
+            this.#logger.log('Showing search page...');
+            document.title = `${this.#appState.title} | Search Results`;
+            this.#visibility.showSearch();
+        }
+    }
+
+    #updateSearch() {
         const nextQuery = this.#appState.queryParams.get('query');
         if (!nextQuery) {
             return;
@@ -79,12 +96,13 @@ class Search {
         resultContainer.innerHTML = `<p>Search results for: <strong>${query}</strong></p>`;
 
         const results = this.#findOccurrences(query);
-        if (Object.keys(results).length === 0) {
+        const resultCount = Object.keys(results).length;
+        if (resultCount === 0) {
             resultContainer.innerHTML += '<p>No results found.</p>';
             return;
         }
 
-        this.#logger.log(`Search produced [${results.length}] results.`);
+        this.#logger.log(`Search produced [${resultCount}] results.`);
 
         for (const pageSlug in results) {
             const page = this.#appState.pages.find((page) => page.slug === pageSlug);

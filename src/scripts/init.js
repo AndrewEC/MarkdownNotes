@@ -1,17 +1,19 @@
 window.onload = () => {
 
+    // Utilities and state.
     const appState = new AppState();
     const utils = new Utils(appState);
     const visibility = new Visibility(utils);
-
-    const editor = new Editor(appState, visibility, utils);
     const persistence = new Persistence(appState, utils);
-    const navigation = new Navigation(appState, utils, visibility);
-    const settings = new Settings(appState, utils, persistence);
+
+    // Fragments
+    const editor = new Editor(appState, visibility, utils);
+    const navigation = new Navigation(appState, utils);
+    const settings = new Settings(appState, utils, persistence, visibility);
     const finder = new Finder(appState, utils);
     new Preview(appState, utils, visibility);
-    new Images(appState, utils);
-    new Search(appState, utils);
+    new Images(appState, utils, visibility);
+    new Search(appState, utils, visibility);
 
     const keyboardHandlers = [
         finder,

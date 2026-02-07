@@ -2,6 +2,8 @@ param(
     [switch]$Open
 )
 
+Set-StrictMode -Version Latest
+
 function Get-MinifiedContent {
     [OutputType([string])]
     param(

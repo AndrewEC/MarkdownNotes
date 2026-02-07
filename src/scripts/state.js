@@ -16,6 +16,7 @@ class AppState {
     };
 
     #logger = new Logger('AppState');
+
     #hasUnsavedChanges = false;
     #currentPage = this.#serializableState.pages[0];
     #onChangeCallbacks = [];
@@ -65,10 +66,6 @@ class AppState {
     }
 
     set currentPage(nextPage) {
-        if (this.#currentPage === nextPage) {
-            return;
-        }
-
         this.#currentPage = nextPage;
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.currentPage);
     }
@@ -180,6 +177,10 @@ class AppState {
 
     doesPageTitleExist(pageTitle) {
         return this.#serializableState.pages.find(page => page.title === pageTitle) !== undefined;
+    }
+
+    get autoSavedChanges() {
+        return this.#autoSavedChanges;
     }
 
     addAutoSaveChange(pageSlug, content) {

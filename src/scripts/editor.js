@@ -1,3 +1,6 @@
+const AUTO_SAVE_INTERVAL = 500;
+
+
 class Editor {
 
     #logger = new Logger('Editor');
@@ -7,8 +10,6 @@ class Editor {
     #utils = null;
 
     #easyMdeInstance = null;
-
-    #autosaveInterval = 500;
     #lastAutosaveCheckTime = null;
 
     constructor(appState, visibility, utils) {
@@ -21,7 +22,6 @@ class Editor {
         this.#appState.addPropertyChangedListener(this.#onPropertyChanged.bind(this));
 
         this.#startPageEditListener();
-        this.#watchForVisibilityChanges();
     }
 
     #onPropertyChanged(propertyName) {
@@ -31,37 +31,11 @@ class Editor {
             } else {
                 this.#removeEditor();
             }
-        }
-    }
-
-    /**
-     * Utilizes a MutationObserver to watch for changes in the
-     * style attribute of the Editor fragment's root element.
-     * 
-     * The purpose of this is to ensure the app state is not
-     * left in an isEditing=true state if the user navigates away
-     * from a page they are currently editing without explicitly
-     * saving or cancelling their current changes.
-     */
-    #watchForVisibilityChanges() {
-        let currentState = null;
-        const observer = new MutationObserver((mutations) => {
-            for (let mutation of mutations) {
-                const nextState = mutation.target.style.display;
-                if (currentState !== nextState) {
-                    currentState = nextState;
-                    const isVisible = mutation.target.style.display === Constants.Display.block;
-                    if (!isVisible) {
-                        this.#logger.log('Editor has become hidden. Setting isEditing to false.');
-                        this.#appState.isEditing = false;
-                    }
-                }
+        } else if (propertyName === Constants.StateProperties.queryParams) {
+            if (this.#appState.isEditing) {
+                this.#appState.isEditing = false;
             }
-        });
-
-        const target = this.#utils.getElement(Constants.Ids.Fragments.Editor.root);
-        currentState = target.style.display;
-        observer.observe(target, { attributes: true, attributeFilter: ['style'] });
+        }
     }
 
     onKeyPressed(e) {
@@ -116,7 +90,7 @@ class Editor {
 
                 const currentTime = Date.now();
                 const diff = currentTime - thisRef.#lastAutosaveCheckTime;
-                if (diff < thisRef.#autosaveInterval) {
+                if (diff < AUTO_SAVE_INTERVAL) {
                     return;
                 }
                 thisRef.#lastAutosaveCheckTime = currentTime;
@@ -130,7 +104,7 @@ class Editor {
                 const pageSlug = thisRef.#appState.currentPage.slug;
                 thisRef.#appState.addAutoSaveChange(pageSlug, currentContent);
             }
-        }, thisRef.#autosaveInterval);
+        }, AUTO_SAVE_INTERVAL);
     }
 
     #registerButtonClickEvents() {

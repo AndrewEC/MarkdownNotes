@@ -4,12 +4,10 @@ class Navigation {
 
     #appState = null;
     #utils = null;
-    #visibility = null;
 
-    constructor(appState, utils, visibility) {
+    constructor(appState, utils) {
         this.#appState = appState;
         this.#utils = utils;
-        this.#visibility = visibility;
 
         this.#appState.addPropertyChangedListener(this.#onStatePropertyChanged.bind(this));
         this.#registerButtonClickEvents();
@@ -67,40 +65,6 @@ class Navigation {
                 this.#updateTitle();
                 this.#updateNavList();
                 break;
-            case Constants.StateProperties.queryParams:
-                this.#queryParamsUpdated();
-                break;
-        }
-    }
-
-    #queryParamsUpdated() {
-        const queryParams = this.#appState.queryParams;
-        const page = queryParams.get('page');
-
-        this.#appState.currentPage = page;
-
-        if (!page) {
-            const firstPage = this.#appState.getPagesInOrder()[0].title;
-            this.#logger.log(`Query param page was undefined. Defaulting to [${firstPage}].`);
-            this.#utils.updateQuery(firstPage);
-            return;
-        }
-
-        this.#logger.log(`Page query param was updated to: [${page}].`);
-
-        switch (page) {
-            case Constants.LocationHashes.settings:
-                this.#showSettings();
-                break;
-            case Constants.LocationHashes.images:
-                this.#showImages();
-                break;
-            case Constants.LocationHashes.search:
-                this.#showSearch();
-                break;
-            default:
-                this.#navigateTo(page);
-                break;
         }
     }
 
@@ -142,24 +106,6 @@ class Navigation {
             pageSlug = crypto.randomUUID();
         }
         return pageSlug;
-    }
-
-    #showSettings() {
-        this.#logger.log('Navigating to settings.');
-        this.#visibility.showSettings();
-        document.title = `${this.#appState.title} | Settings`;
-    }
-
-    #showImages() {
-        this.#logger.log('Navigating to images.');
-        this.#visibility.showImages();
-        document.title = `${this.#appState.title} | Images`;
-    }
-
-    #showSearch() {
-        this.#logger.log('Navigating to search results.');
-        this.#visibility.showSearch();
-        document.title = `${this.#appState.title} | Search Results`;
     }
 
     #rehydrate() {
@@ -240,18 +186,6 @@ class Navigation {
         
         const pageTitle = this.#appState.currentPage.title;
         document.title = `${notebookTitle} | ${pageTitle}`;
-    }
-
-    #navigateTo(pageTitle) {
-        this.#logger.log(`Navigating to page with title: [${pageTitle}]`);
-        const nextPage = this.#appState.pages.find(page => page.title === pageTitle);
-        if (!nextPage) {
-            const firstPageTitle = this.#appState.getFirstPage().title;
-            this.#logger.log(`Page with title [${pageTitle}] could not be found. Defaulting to first page of [${firstPageTitle}].`);
-            this.#utils.updateQuery(firstPageTitle);
-            return;
-        }
-        this.#appState.currentPage = nextPage;
     }
 
     #listenForUrlChanges() {

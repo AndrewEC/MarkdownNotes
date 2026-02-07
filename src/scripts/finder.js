@@ -53,13 +53,13 @@ class Finder {
 
     #onTabPressed(e) {
         if (e.shiftKey) {
-            this.#highlightPreviousOption();
+            this.#highlightPreviousOption(e);
         } else {
-            this.#highlightNextOption();
+            this.#highlightNextOption(e);
         }
     }
 
-    #highlightPreviousOption() {
+    #highlightPreviousOption(e) {
         this.#logger.log(`Shift + Tab pressed. Navigating to previous result from current index [${this.#selectedIndex}].`);
         if (this.#selectedIndex === -1) {
             e.preventDefault();
@@ -72,7 +72,7 @@ class Finder {
         }
     }
 
-    #highlightNextOption() {
+    #highlightNextOption(e) {
         this.#logger.log(`Shift + Tab pressed. Navigating to next result from current index [${this.#selectedIndex}].`);
         if (this.#selectedIndex === this.#results.length - 1) {
             e.preventDefault();

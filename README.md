@@ -2,7 +2,7 @@
 
 MarkdownNotes is a single, self-contained, HTML file that provides functionality to edit and view Markdown formatted text in a Notebook esque format.
 
-A sample notebook with some beginner documentation if provided in [Getting_Started.html](./Getting_Started.html).
+A sample notebook with some beginner documentation is provided in [Getting_Started.html](./Getting_Started.html).
 
 An empty file ready for editing is available at [MarkdownNotes.html](./MarkdownNotes.html).
 

@@ -25,11 +25,34 @@ class Preview {
     }
 
     #onAppStateChanged(propertyName) {
-        if (propertyName === Constants.StateProperties.state
-            || propertyName === Constants.StateProperties.currentPage) {
-
-            this.#previewPage();
+        switch (propertyName) {
+            case Constants.StateProperties.state:
+            case Constants.StateProperties.currentPage:
+                this.#previewPage();
+                break;
+            case Constants.StateProperties.queryParams:
+                this.#navigateToPage();
+                break;
         }
+    }
+
+    #navigateToPage() {
+        const pageTitle = this.#appState.queryParams.get('page');
+        if (Constants.reservedPageTitles.includes(pageTitle)) {
+            return;
+        }
+
+        this.#logger.log(`Navigating to page with title: [${pageTitle}].`);
+
+        const nextPage = this.#appState.pages.find(page => page.title === pageTitle);
+        if (!nextPage) {
+            const firstPageTitle = this.#appState.getFirstPage().title;
+            this.#logger.log(`Page with title [${pageTitle}] could not be found. Defaulting to first page of [${firstPageTitle}].`);
+            this.#utils.updateQuery(firstPageTitle);
+            return;
+        }
+
+        this.#appState.currentPage = nextPage;
     }
 
     #previewPage() {

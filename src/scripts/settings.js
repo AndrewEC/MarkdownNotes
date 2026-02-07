@@ -5,12 +5,15 @@ class Settings {
     #appState = null;
     #utils = null;
     #persistence = null;
+    #visibility = null;
+
     #nextOrder = [];
 
-    constructor(appState, utils, persistence) {
+    constructor(appState, utils, persistence, visibility) {
         this.#appState = appState;
         this.#utils = utils;
         this.#persistence = persistence;
+        this.#visibility = visibility;
 
         this.#appState.addPropertyChangedListener(this.#onPropertyChanged.bind(this));
         this.#registerButtonClickEvents();
@@ -78,6 +81,18 @@ class Settings {
                 this.#resetOrder();
                 this.#displayData();
                 break;
+            case Constants.StateProperties.queryParams:
+                this.#showSettingsPage();
+                break;
+        }
+    }
+
+    #showSettingsPage() {
+        const page = this.#appState.queryParams.get('page');
+        if (page === Constants.LocationHashes.settings) {
+            this.#logger.log('Showing settings page...');
+            document.title = `${this.#appState.title} | Settings`;
+            this.#visibility.showSettings();
         }
     }
 

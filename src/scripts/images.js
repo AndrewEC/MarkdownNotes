@@ -3,10 +3,12 @@ class Images {
     #logger = new Logger('Images');
     #appState = null;
     #utils = null;
+    #visibility = null;
 
-    constructor(appState, utils) {
+    constructor(appState, utils, visibility) {
         this.#appState = appState;
         this.#utils = utils;
+        this.#visibility = visibility;
 
         this.#appState.addPropertyChangedListener(this.#onStatePropertyChanged.bind(this));
         this.#registerButtonClickEvents();
@@ -18,10 +20,23 @@ class Images {
     }
 
     #onStatePropertyChanged(propertyName) {
-        if (propertyName === Constants.StateProperties.images
-            || propertyName === Constants.StateProperties.state) {
+        switch (propertyName) {
+            case Constants.StateProperties.images:
+            case Constants.StateProperties.state:
+                this.#updateImageTable();
+                break;
+            case Constants.StateProperties.queryParams:
+                this.#showImagesPage();
+                break;
+        }
+    }
 
-            this.#updateImageTable();
+    #showImagesPage() {
+        const page = this.#appState.queryParams.get('page');
+        if (page === Constants.LocationHashes.images) {
+            this.#logger.log('Showing images page...');
+            document.title = `${this.#appState.title} | Images`;
+            this.#visibility.showImages();
         }
     }
 
