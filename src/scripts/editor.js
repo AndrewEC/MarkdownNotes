@@ -1,6 +1,5 @@
 const AUTO_SAVE_INTERVAL = 500;
 
-
 class Editor {
 
     #logger = new Logger('Editor');

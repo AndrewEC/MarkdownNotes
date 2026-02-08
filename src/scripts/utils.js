@@ -1,3 +1,5 @@
+const MOBILE_VIEW_MAX_WIDTH = 800;
+
 class Utils {
 
     #state = null;
@@ -22,7 +24,11 @@ class Utils {
     }
 
     resize() {
-        const height = `${window.innerHeight - 10}px`;
+        let height = `${window.innerHeight - 10}px`;
+
+        if (window.innerWidth < MOBILE_VIEW_MAX_WIDTH) {
+            height = '100%';
+        }
 
         this.#getElementsAndApply([
             Constants.Ids.Fragments.Navigation.root,

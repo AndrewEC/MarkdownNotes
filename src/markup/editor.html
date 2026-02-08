@@ -9,15 +9,17 @@
         class="standard-button-link standard-button-link-fixed">Cancel</a>
 
     <br/>
-    <label>
-        Page Title: 
-        <input type="text" id="fragment-editor-input-title" class="editor-title-input"/>
-    </label>
-    <label>
-        Parent:
-        <select id="fragment-editor-select-parent" class="standard-button"></select>
-    </label>
-    <br/>
+
+    <div class="editor-metadata-container">
+        <label class="editor-metadata-input-border">
+            Page Title: 
+            <input type="text" id="fragment-editor-input-title" class="editor-metadata-input"/>
+        </label>
+        <label class="editor-metadata-input-border">
+            Parent:
+            <select id="fragment-editor-select-parent" class="editor-metadata-input"></select>
+        </label>
+    </div>
 
     <div id="fragment-editor-area-container">
         <textarea id="fragment-editor-area" style="display: none;"></textarea>

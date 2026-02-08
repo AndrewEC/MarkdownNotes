@@ -80,9 +80,21 @@ td, th {
     padding: 5px;
 }
 
-#root-content-container{
+@media (max-width: 800px) {
+    .root-container {
+        float: none;
+    }
+}
+
+#root-content-container {
     width: 77%;
     background-color: #eee;
+}
+
+@media (max-width: 800px) {
+    #root-content-container {
+        width: 100%;
+    }
 }
 /* ===== ===== Root Styles ===== ===== */
 
@@ -134,9 +146,21 @@ td, th {
     padding-bottom: 50px;
 }
 
+@media (max-width: 800px) {
+    #fragment-navigation {
+        padding-bottom: 0px;
+    }
+}
+
 #fragment-navigation-root-container {
     width: 23%;
     background-color: #ddd;
+}
+
+@media (max-width: 800px) {
+    #fragment-navigation-root-container {
+        width: 100%;
+    }
 }
 
 #fragment-navigation-button-container {
@@ -155,6 +179,13 @@ td, th {
     color: #20852b;
 }
 
+@media (max-width: 800px) {
+    .navigation-title {
+        margin-top: 5px;
+        margin-bottom: 5px;
+    }
+}
+
 .link-title {
     margin-bottom: 5px;
 }
@@ -165,10 +196,23 @@ td, th {
     display: block;
 }
 
+@media (max-width: 800px) {
+    .navigation-button {
+        border-bottom: 1px solid white;
+        width: 100%;
+    }
+}
+
 .navigation-rule {
     width: 90%;
     color: #2CB83C;
     background-color: #2CB83C;
+}
+
+@media (max-width: 800px) {
+    .navigation-rule {
+        display: none;
+    }
 }
 
 .navigation-input {
@@ -195,14 +239,37 @@ td, th {
     max-width: 800px;
 }
 
-.editor-button {
-    margin: 2px;
+.editor-metadata-input {
+    margin: 10px;
     min-width: 200px;
 }
 
-.editor-title-input {
-    margin: 10px;
-    min-width: 200px;
+@media (max-width: 800px) {
+    .editor-metadata-input {
+        margin: 3px;
+    }
+}
+
+.editor-metadata-container {
+    display: table;
+}
+
+.editor-metadata-input-border {
+    float: left;
+}
+
+.editor-metadata-input-border:after {
+    clear: both;
+    float: none;
+    content: ' ';
+    height: 0;
+    display: table;
+}
+
+@media (max-width: 800px) {
+    .editor-metadata-inputs {
+        float: none;
+    }
 }
 /* ===== ===== Editor Fragment Styles ===== ===== */
 
