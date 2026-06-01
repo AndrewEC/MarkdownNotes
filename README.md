@@ -14,7 +14,9 @@ This project is heavily inspired by [FeatherWiki](https://codeberg.org/Alamantus
 
 To update MarkdownNotes simply make a change to any of the source files provided then run the `Build.ps1` script.
 
-This script will naively minify and combine all the source files into a single html file and write it to `./build/MarkdownNotes.html`
+If you want to create a new file (.html, .js, or .css) then create the new file within the appropriate directory then add a reference to the new file within the `_template.html` located within the root of the project. References are in the format {{&lt;file&gt;}} where &lt;file&gt; is the name of the file including the extension but not the path.
+
+The build script will naively minify and combine all the source files into a single html file and write it to `./build/MarkdownNotes.html`
 
 Optionally you can add the `-Open` switch to the `Build.ps1` script invocation to open the generated HTML file when the build process is complete.
 

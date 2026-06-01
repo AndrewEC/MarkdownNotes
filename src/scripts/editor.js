@@ -31,6 +31,10 @@ class Editor {
                 this.#removeEditor();
             }
         } else if (propertyName === Constants.StateProperties.queryParams) {
+            // If the query params changed it likely means the user has
+            // navigated away from the current page and may not have explicitly closed
+            // the editor. We should ensure the editor is properly disposed of when
+            // this occurs.
             if (this.#appState.isEditing) {
                 this.#appState.isEditing = false;
             }
@@ -269,13 +273,13 @@ class Editor {
     #updatePage() {
         const currentPage = this.#appState.currentPage;
         this.#logger.log(`Saving edits of current page [${currentPage.slug}].`);
-        
-        this.#appState.removeAutoSaveChange(this.#appState.currentPage.slug);
 
         const nextPageTitle = this.#getTitleValue();
         if (this.#doesPageTitleExist(nextPageTitle, currentPage.slug)) {
             return alert('A page with this title already exists. Ensure that all page titles are unique.');
         }
+
+        this.#appState.removeAutoSaveChange(currentPage.slug);
 
         currentPage.contents = this.#easyMdeInstance.value();
         currentPage.title = nextPageTitle;

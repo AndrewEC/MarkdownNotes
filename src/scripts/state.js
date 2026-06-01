@@ -1,15 +1,17 @@
-const defaultSlug = crypto.randomUUID();
+const DEFAULT_SLUG = crypto.randomUUID();
+
 class AppState {
+
     #serializableState = {
         pages: [
             {
                 title: 'Welcome',
                 contents: '# Welcome to MarkdownNotes!!!',
-                slug: defaultSlug,
+                slug: DEFAULT_SLUG,
                 parent: null
             }
         ],
-        order: [defaultSlug],
+        order: [DEFAULT_SLUG],
         title: 'MarkdownNotes',
         images: [],
         version: '1'
@@ -32,16 +34,16 @@ class AppState {
         }
     }
 
-    addPropertyChangedListener(callback) {
-        this.#onChangeCallbacks.push(callback);
-    }
-
     hydrate(nextState) {
         this.#serializableState = nextState;
 
         this.#currentPage = this.getFirstPage();
 
         this.#invokePropertyChangedCallbacks(Constants.StateProperties.state);
+    }
+
+    addPropertyChangedListener(callback) {
+        this.#onChangeCallbacks.push(callback);
     }
 
     set hasUnsavedChanges(hasUnsavedChanges) {
@@ -136,6 +138,10 @@ class AppState {
         return this.#queryParams;
     }
 
+    get autoSavedChanges() {
+        return this.#autoSavedChanges;
+    }
+
     addImage(image) {
         this.#serializableState.images.push(image);
         this.hasUnsavedChanges = true;
@@ -177,10 +183,6 @@ class AppState {
 
     doesPageTitleExist(pageTitle) {
         return this.#serializableState.pages.find(page => page.title === pageTitle) !== undefined;
-    }
-
-    get autoSavedChanges() {
-        return this.#autoSavedChanges;
     }
 
     addAutoSaveChange(pageSlug, content) {

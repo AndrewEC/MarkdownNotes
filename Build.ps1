@@ -4,11 +4,18 @@ param(
 
 Set-StrictMode -Version Latest
 
+enum MinifiableContentType {
+    JsHtml
+    Css
+}
+
 function Get-MinifiedContent {
     [OutputType([string])]
     param(
         [Parameter(Mandatory)]
-        [string]$Content
+        [string]$Content,
+        [Parameter(Mandatory)]
+        [MinifiableContentType]$ContentType
     )
 
     $Lines = $Content -split "`n"
@@ -20,7 +27,7 @@ function Get-MinifiedContent {
             -not (
                 $TrimmedLine.StartsWith("//") `
                 -or $TrimmedLine.StartsWith("/*") `
-                -or $TrimmedLine.StartsWith("*")
+                -or ($TrimmedLine.StartsWith("*") -and ($ContentType -ne [MinifiableContentType]::Css))
             )
         )
         {
@@ -102,7 +109,9 @@ function Get-MergedContents {
     $Lines = Get-Content $FilePath
     $Contents = ($Lines | Join-String -Separator "`r`n")
     if ($FilePath.Contains("markup") -or $FilePath.Contains("scripts")) {
-        return (Get-MinifiedContent $Contents)
+        return (Get-MinifiedContent $Contents ([MinifiableContentType]::JsHtml))
+    } elseif ($FilePath.Contains("styles")) {
+        return (Get-MinifiedContent $Contents ([MinifiableContentType]::Css))
     }
     return $Contents
 }
